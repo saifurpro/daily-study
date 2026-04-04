@@ -950,13 +950,60 @@ function renderAgentQuestion(state='asking', userAns='', feedback='', correct=nu
   document.getElementById('listenProgFill').style.width=(agentIdx/agentQueue.length*100)+'%';
 }
 
+/* ভাষা detect করার helper — বাংলা নাকি ইংরেজি? */
+function detectLang(text){
+  const banglaChars=(text.match(/[\u0980-\u09FF]/g)||[]).length;
+  const total=text.replace(/\s/g,'').length;
+  return (banglaChars/total)>0.3 ? 'bn' : 'en';
+}
+
+/* বাংলা ভয়েস খোঁজার helper */
+function getBanglaVoice(){
+  const voices=speechSynthesis.getVoices();
+  return voices.find(v=>v.lang==='bn-BD')
+    || voices.find(v=>v.lang==='bn-IN')
+    || voices.find(v=>v.lang.startsWith('bn'))
+    || voices.find(v=>/bangla|bengali/i.test(v.name))
+    || null;
+}
+
+/* ইংরেজি ভয়েস খোঁজার helper */
+function getEnglishVoice(){
+  const voices=speechSynthesis.getVoices();
+  return voices.find(v=>v.lang==='en-US'&&v.localService)
+    || voices.find(v=>v.lang==='en-GB'&&v.localService)
+    || voices.find(v=>v.lang.startsWith('en')&&v.localService)
+    || voices.find(v=>v.lang.startsWith('en'))
+    || null;
+}
+
 function agentSpeak(text, onDone){
   speechSynthesis.cancel();
-  const utter=new SpeechSynthesisUtterance(text);
-  utter.lang='bn-BD'; utter.rate=0.9;
-  utter.onend=()=>{ if(agentActive&&onDone) onDone(); };
-  utter.onerror=()=>{ if(agentActive&&onDone) onDone(); };
-  speechSynthesis.speak(utter);
+  const doSpeak=()=>{
+    const lang=detectLang(text);
+    const utter=new SpeechSynthesisUtterance(text);
+    if(lang==='bn'){
+      const voice=getBanglaVoice();
+      if(voice){ utter.voice=voice; utter.lang=voice.lang; }
+      else { utter.lang='bn-BD'; }
+      utter.rate=0.88;
+    } else {
+      const voice=getEnglishVoice();
+      if(voice){ utter.voice=voice; utter.lang=voice.lang; }
+      else { utter.lang='en-US'; }
+      utter.rate=0.92;
+    }
+    utter.pitch=1; utter.volume=1;
+    // Chrome stuck bug watchdog
+    const watchdog=setTimeout(()=>{ speechSynthesis.cancel(); if(agentActive&&onDone) onDone(); }, text.length*180+4000);
+    utter.onend=()=>{ clearTimeout(watchdog); if(agentActive&&onDone) onDone(); };
+    utter.onerror=()=>{ clearTimeout(watchdog); if(agentActive&&onDone) onDone(); };
+    speechSynthesis.speak(utter);
+  };
+  if(speechSynthesis.getVoices().length===0){
+    speechSynthesis.onvoiceschanged=()=>{ speechSynthesis.onvoiceschanged=null; doSpeak(); };
+    setTimeout(doSpeak, 600);
+  } else { doSpeak(); }
 }
 
 function agentStartListening(){
@@ -964,29 +1011,54 @@ function agentStartListening(){
   renderAgentQuestion('listening');
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ agentManualFallback(); return; }
-  agentRecog=new SR();
-  agentRecog.lang='bn-BD';
-  agentRecog.interimResults=true;
-  agentRecog.maxAlternatives=3;
 
-  agentRecog.onresult=e=>{
-    let interim='', final='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal) final+=e.results[i][0].transcript;
-      else interim+=e.results[i][0].transcript;
-    }
-    const el=document.getElementById('liveTranscript');
-    if(el) el.textContent=final||interim;
-    if(final) agentCheckAnswer(final.trim());
+  const qLang=detectLang(agentCurrentItem.q);
+  const primaryLang=qLang==='en'?'en-US':'bn-BD';
+  const fallbackLang=qLang==='en'?'en-GB':'bn-IN';
+  let finalTranscript='';
+  let retryCount=0;
+
+  const startRecog=(lang)=>{
+    agentRecog=new SR();
+    agentRecog.lang=lang;
+    agentRecog.interimResults=true;
+    agentRecog.maxAlternatives=5;
+    agentRecog.continuous=false;
+
+    agentRecog.onresult=e=>{
+      let interim='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        if(e.results[i].isFinal) finalTranscript+=e.results[i][0].transcript;
+        else interim+=e.results[i][0].transcript;
+      }
+      const el=document.getElementById('liveTranscript');
+      if(el) el.textContent=finalTranscript||interim;
+    };
+
+    agentRecog.onerror=(e)=>{
+      if(e.error==='no-speech'&&retryCount<1){
+        // no-speech হলে একবার retry
+        retryCount++;
+        try{ agentRecog.start(); }catch(err){ agentManualFallback(); }
+      } else { agentManualFallback(); }
+    };
+
+    agentRecog.onend=()=>{
+      if(!agentActive) return;
+      if(finalTranscript.trim()){
+        agentCheckAnswer(finalTranscript.trim());
+      } else if(retryCount<1){
+        retryCount++;
+        setTimeout(()=>startRecog(fallbackLang), 200);
+      } else {
+        agentManualFallback();
+      }
+    };
+
+    try{ agentRecog.start(); }catch(e){ agentManualFallback(); }
   };
-  agentRecog.onerror=()=>agentManualFallback();
-  agentRecog.onend=()=>{
-    // কোনো result না আসলে fallback
-    if(agentActive&&document.getElementById('liveTranscript')&&!document.getElementById('liveTranscript').textContent){
-      agentManualFallback();
-    }
-  };
-  agentRecog.start();
+
+  startRecog(primaryLang);
 }
 
 function agentManualFallback(){
