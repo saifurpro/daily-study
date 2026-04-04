@@ -326,7 +326,7 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
         <div class="g-step"><span class="g-num">৩</span><span>ফোল্ডারের লিংক নিচে পেস্ট করুন → <b>সিংক করুন</b></span></div>
       </div>
       <div class="fl">Drive Folder Link:</div>
-      <input class="link-inp" id="folderInp" placeholder="https://drive.google.com/drive/folders/XXXX">
+      <input class="link-inp" id="folderInp" placeholder="https://drive.google.com/drive/folders/XXXX" value="https://drive.google.com/drive/folders/1II32nWydobACdl7eKzyi0s7jy2H5Nz8X?usp=drive_link">
       <button class="primary-btn" id="syncBtn" onclick="syncFolder()">🔄 সিংক করুন</button>
       <div id="syncStatus" style="font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:8px;min-height:18px;"></div>
       <div class="saved-section" id="savedFolderSection"></div>
@@ -649,7 +649,10 @@ function renderContent(){
   }
   let h=`<div class="day-title-bar"><span class="day-badge">দিন ${bn(currentDay)}</span><span class="day-subtitle">${day.title||''}</span></div>`;
   day.topics.forEach((t,ti)=>{
-    const cols=t.columns||2, hdrs=t.columnHeaders||t.headers||(cols===3?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর']);
+    // কলাম বাগ ফিক্স: t.columns না থাকলে item.ex দেখে auto-detect করো
+    const hasEx=t.items.some(item=>item.ex||item.example);
+    const cols=t.columns||(hasEx?3:2);
+    const hdrs=t.columnHeaders||t.headers||(cols===3?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর']);
     const rc=t.items.filter((_,ii)=>revealed[`${currentDay}_${ti}_${ii}`]).length, done=rc===t.items.length;
     h+=`<div class="topic-block">
       <div class="topic-header">
@@ -771,11 +774,13 @@ function toast(msg,err){
 /* ══════════════════════════════════════
    EXAM MODE
 ══════════════════════════════════════ */
-let examQueue=[], examIdx=0, examKnow=0, examDontKnow=0, examAnsRevealed=false, examSelectedDay=null;
+let examQueue=[], examIdx=0, examKnow=0, examDontKnow=0, examAnsRevealed=false;
+let examSelectedDay=null, examPickerTab='day'; // 'day' বা 'topic'
+let examSelectedTopicKey=null; // "dayNum|topicTitle"
 
 function openExam(){
-  examSelectedDay=null;
-  renderExamDayPicker();
+  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day';
+  renderExamPicker();
   document.getElementById('examOv').classList.add('show');
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
 }
@@ -785,43 +790,119 @@ function closeExam(){
   document.getElementById('navStudy').classList.add('active');
 }
 
-function renderExamDayPicker(){
+/* ── UNIFIED PICKER RENDERER ── */
+function renderExamPicker(){
   document.getElementById('examProgFill').style.width='0%';
-  const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+  const isDay=examPickerTab==='day';
   let h=`<div class="exam-day-picker">
-    <div class="exam-pick-title">কোন দিনের পরীক্ষা দেবেন?</div>
-    <div class="exam-pick-sub">একটি দিন বেছে নিন — সেই দিনের সব প্রশ্ন এলোমেলোভাবে আসবে।</div>
-    <div class="exam-day-grid">`;
-  days.forEach(d=>{
-    h+=`<div class="exam-day-item${examSelectedDay===d?' selected':''}" onclick="selectExamDay(${d})">
-      <div class="edi-num">${bn(d)}</div><div class="edi-lbl">দিন</div>
+    <div class="exam-pick-title">পরীক্ষার ধরন বেছে নিন</div>
+    <!-- TAB TOGGLE -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;background:var(--card);border-radius:10px;padding:4px;">
+      <button onclick="examSwitchTab('day')" style="flex:1;padding:8px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.8rem;cursor:pointer;font-weight:600;transition:all .15s;${isDay?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📅 দিন-ভিত্তিক</button>
+      <button onclick="examSwitchTab('topic')" style="flex:1;padding:8px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.8rem;cursor:pointer;font-weight:600;transition:all .15s;${!isDay?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📚 টপিক-ভিত্তিক</button>
     </div>`;
-  });
-  h+=`</div>
-    <button class="exam-start-btn" id="examStartBtn" onclick="startExam()" ${examSelectedDay===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>
-  </div>`;
+
+  if(isDay){
+    /* ─── DAY TAB ─── */
+    const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+    h+=`<div class="exam-pick-sub">একটি দিন বেছে নিন — সেই দিনের সব প্রশ্ন এলোমেলোভাবে আসবে।</div>
+    <div class="exam-day-grid">`;
+    days.forEach(d=>{
+      h+=`<div class="exam-day-item${examSelectedDay===d?' selected':''}" onclick="selectExamDay(${d})">
+        <div class="edi-num">${bn(d)}</div><div class="edi-lbl">দিন</div>
+      </div>`;
+    });
+    h+=`</div>
+    <button class="exam-start-btn" onclick="startExam()" ${examSelectedDay===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>`;
+  } else {
+    /* ─── TOPIC TAB ─── */
+    // সব দিনের সব টপিক সংগ্রহ করো (বাড়ির কাজ বাদ)
+    const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+    // টপিক-নাম অনুযায়ী গ্রুপ করো
+    const topicMap={}; // topicTitle -> [{day, count}]
+    days.forEach(d=>{
+      const day=allDays[d]; if(!day) return;
+      day.topics.forEach(t=>{
+        if(t.title&&(t.title.includes('বাড়ির কাজ')||t.title.includes('বাড়িরকাজ')||t.title.toLowerCase().includes('homework'))) return;
+        const key=t.title;
+        if(!topicMap[key]) topicMap[key]={icon:t.icon||'📖',days:[],totalItems:0};
+        topicMap[key].days.push(d);
+        topicMap[key].totalItems+=t.items.length;
+      });
+    });
+    const topicKeys=Object.keys(topicMap);
+    // index→key ম্যাপ window এ রাখো যাতে onclick এ string quote সমস্যা না হয়
+    window._examTopicKeys=topicKeys;
+    if(!topicKeys.length){
+      h+=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:.85rem;">কোনো টপিক পাওয়া যায়নি</div>`;
+    } else {
+      h+=`<div class="exam-pick-sub">একটি টপিক বেছে নিন — সব দিনের ওই টপিকের প্রশ্ন একসাথে আসবে।</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px;">`;
+      topicKeys.forEach((key,idx)=>{
+        const info=topicMap[key];
+        const isSel=examSelectedTopicKey===key;
+        h+=`<div onclick="selectExamTopic(${idx})" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;border:1.5px solid ${isSel?'var(--accent)':'var(--border)'};background:${isSel?'rgba(79,142,247,.12)':'var(--card)'};cursor:pointer;transition:all .15s;">
+          <span style="font-size:1.1rem;">${info.icon}</span>
+          <div style="flex:1;">
+            <div style="font-size:.85rem;font-weight:600;color:${isSel?'var(--accent)':'var(--text)'};">${key}</div>
+            <div style="font-size:.65rem;color:var(--muted);margin-top:2px;">${bn(info.days.length)}টি দিন · মোট ${bn(info.totalItems)}টি প্রশ্ন</div>
+          </div>
+          ${isSel?'<span style="color:var(--accent);font-size:.9rem;">✓</span>':''}
+        </div>`;
+      });
+      h+=`</div>
+      <button class="exam-start-btn" onclick="startTopicExam()" ${examSelectedTopicKey===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>`;
+    }
+  }
+  h+=`</div>`;
   document.getElementById('examBody').innerHTML=h;
+}
+
+function examSwitchTab(tab){
+  examPickerTab=tab;
+  examSelectedDay=null; examSelectedTopicKey=null;
+  renderExamPicker();
 }
 
 function selectExamDay(d){
   examSelectedDay=d;
-  // re-render picker with selection
-  renderExamDayPicker();
+  startExam();
+}
+
+function selectExamTopic(idx){
+  examSelectedTopicKey=(window._examTopicKeys&&window._examTopicKeys[idx])||null;
+  startTopicExam();
 }
 
 function startExam(){
   if(examSelectedDay===null) return;
   const day=allDays[examSelectedDay]; if(!day) return;
-  // build flat question list (বাড়ির কাজ টপিক বাদ)
   let q=[];
-  day.topics.forEach((t,ti)=>{
+  day.topics.forEach(t=>{
     if(t.title&&(t.title.includes('বাড়ির কাজ')||t.title.includes('বাড়িরকাজ')||t.title.toLowerCase().includes('homework'))) return;
-    t.items.forEach((item,ii)=>q.push({q:item.q,a:item.a,topic:t.title}));
+    t.items.forEach(item=>q.push({q:item.q,a:item.a,topic:t.title}));
   });
-  // shuffle
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
   document.getElementById('examTopTitle').textContent=`📝 দিন ${bn(examSelectedDay)} পরীক্ষা`;
+  renderExamCard();
+}
+
+function startTopicExam(){
+  if(!examSelectedTopicKey) return;
+  const key=examSelectedTopicKey;
+  const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+  let q=[];
+  days.forEach(d=>{
+    const day=allDays[d]; if(!day) return;
+    day.topics.forEach(t=>{
+      if(t.title!==key) return;
+      t.items.forEach(item=>q.push({q:item.q,a:item.a,topic:`দিন ${bn(d)} · ${t.title}`}));
+    });
+  });
+  for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
+  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  document.getElementById('examTopTitle').textContent=`📝 ${key} পরীক্ষা`;
   renderExamCard();
 }
 
@@ -832,6 +913,22 @@ function renderExamCard(){
   document.getElementById('examProgFill').style.width=pct+'%';
   const item=examQueue[examIdx];
   examAnsRevealed=false;
+  // লাইভ স্কোর হিসাব (এখন পর্যন্ত উত্তর দেওয়া প্রশ্নের ভিত্তিতে)
+  const answered=examKnow+examDontKnow;
+  const livePct=answered>0?Math.round(examKnow/answered*100):null;
+  const scoreHtml=answered>0?`
+    <div style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 14px;margin-top:14px;display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;">
+        <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">এখন পর্যন্ত স্কোর (${bn(answered)}/${bn(total)})</div>
+        <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${livePct}%;background:${livePct>=60?'var(--green)':'#e74c3c'};border-radius:3px;transition:width .3s;"></div>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:1.1rem;font-weight:700;color:${livePct>=60?'var(--green)':'#e74c3c'};">${bn(livePct)}%</div>
+        <div style="font-size:.6rem;color:var(--muted);">✅${bn(examKnow)} ❌${bn(examDontKnow)}</div>
+      </div>
+    </div>`:'';
   const h=`
     <div class="exam-counter">${bn(examIdx+1)} / ${bn(total)}</div>
     <div class="exam-topic-badge">${item.topic}</div>
@@ -843,7 +940,8 @@ function renderExamCard(){
     <div class="exam-actions">
       <button class="exam-dontknow" onclick="examAnswer(false)">❌ জানি না</button>
       <button class="exam-know" onclick="examAnswer(true)">✅ জানি</button>
-    </div>`;
+    </div>
+    ${scoreHtml}`;
   document.getElementById('examBody').innerHTML=h;
   document.getElementById('examBody').scrollTop=0;
 }
@@ -876,8 +974,8 @@ function renderExamResult(){
       <div class="rstat red"><div class="rstat-num">${bn(examDontKnow)}</div><div class="rstat-lbl">❌ জানি না</div></div>
       <div class="rstat"><div class="rstat-num">${bn(total)}</div><div class="rstat-lbl">মোট প্রশ্ন</div></div>
     </div>
-    <button class="result-retry" onclick="startExam()">🔄 আবার পরীক্ষা দিন</button>
-    <button class="result-back" onclick="renderExamDayPicker()">← অন্য দিন বেছে নিন</button>
+    <button class="result-retry" onclick="${examPickerTab==='topic'?'startTopicExam':'startExam'}()">🔄 আবার পরীক্ষা দিন</button>
+    <button class="result-back" onclick="renderExamPicker()">← অন্য পরীক্ষা বেছে নিন</button>
   </div>`;
   document.getElementById('examBody').innerHTML=h;
 }
@@ -912,7 +1010,7 @@ function showInstallBanner(){
     <span style="font-size:1.4rem">📲</span>
     <div style="flex:1">
       <div style="font-size:.82rem;font-weight:700;color:#e8eaf0;margin-bottom:2px;">হোম স্ক্রিনে ইনস্টল করুন</div>
-      <div style="font-size:.7rem;color:#7a8099;line-height:1.4;">অ্যাপের মতো খুলবে, লিংক সমস্যা থাকবে না</div>
+      <div style="font-size:.7rem;color:#7a8099;line-height:1.4;">PWA হিসেবে অ্যাপের মতো খুলবে</div>
     </div>
     <button onclick="doInstallPWA()" style="background:#4f8ef7;color:#fff;border:none;border-radius:9px;padding:7px 13px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:SolaimanLipi,sans-serif;white-space:nowrap;">ইনস্টল</button>
     <button onclick="dismissInstall()" style="background:transparent;border:none;color:#7a8099;font-size:1rem;cursor:pointer;padding:4px;">✕</button>
