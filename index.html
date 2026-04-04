@@ -267,6 +267,17 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 .rstat.green .rstat-num{color:var(--green)}.rstat.red .rstat-num{color:#e74c3c}
 .result-retry{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:11px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:SolaimanLipi,sans-serif;margin-bottom:8px}
 .result-back{width:100%;padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:11px;font-size:.88rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
+
+/* Exam landscape mode */
+.exam-overlay.exam-landscape{flex-direction:row;flex-wrap:wrap}
+.exam-overlay.exam-landscape .exam-topbar{width:100%;flex-shrink:0}
+.exam-overlay.exam-landscape .exam-progress-bar{width:100%;flex-shrink:0}
+.exam-overlay.exam-landscape .exam-body{flex:1;padding:16px 24px 20px;max-width:100%}
+.exam-overlay.exam-landscape .exam-q-card{font-size:1.1rem}
+.exam-overlay.exam-landscape .exam-ans-wrap{font-size:1rem}
+.exam-overlay.exam-landscape .exam-actions{gap:14px}
+.exam-overlay.exam-landscape .exam-know,
+.exam-overlay.exam-landscape .exam-dontknow{font-size:1rem;padding:14px}
 </style>
 </head>
 <body>
@@ -369,6 +380,7 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 let allDays={}, currentDay=1, revealed={}, completedDays={}, streak=0, savedLinks={};
 let savedFolderUrl='';
 let isLandscape=false;
+let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট সিংকের জন্য
 
 /* ══════════════════════════════════════
    INIT
@@ -385,6 +397,7 @@ function save(){
   localStorage.setItem('ds_d',JSON.stringify(allDays));
   localStorage.setItem('ds_l',JSON.stringify(savedLinks));
   localStorage.setItem('ds_folder',savedFolderUrl);
+  localStorage.setItem('ds_modtime',JSON.stringify(fileModTimeCache));
 }
 function loadState(){
   try{
@@ -393,7 +406,8 @@ function loadState(){
     const d=localStorage.getItem('ds_d'); if(d){ allDays=JSON.parse(d); const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b); if(k.length) currentDay=k[0]; }
     const l=localStorage.getItem('ds_l'); if(l) savedLinks=JSON.parse(l);
     const f=localStorage.getItem('ds_folder'); if(f) savedFolderUrl=f;
-    recalcStreak(); // সেভ করা streak নয়, নতুন করে হিসাব করো
+    const m=localStorage.getItem('ds_modtime'); if(m) fileModTimeCache=JSON.parse(m);
+    recalcStreak();
   }catch(e){}
 }
 
@@ -554,24 +568,47 @@ async function syncFolder(){
     const files=await listResp.json();
     if(!Array.isArray(files)||!files.length){toast('❌ ফোল্ডারে কোনো JSON নেই!',1);if(btn){btn.disabled=false;btn.textContent='🔄 সিংক করুন';}if(status)status.textContent='';return;}
 
-    if(status) status.textContent=`${files.length}টি ফাইল পাওয়া গেছে, লোড হচ্ছে...`;
+    // স্মার্ট সিংক: শুধু নতুন বা পরিবর্তিত ফাইল fetch করো
+    const toFetch=files.filter(f=>{
+      if(!f.modifiedTime) return true; // modifiedTime না থাকলে সবসময় fetch
+      return fileModTimeCache[f.id]!==f.modifiedTime;
+    });
+    const skipped=files.length-toFetch.length;
+
+    if(toFetch.length===0){
+      if(status) status.textContent=`✅ সব ফাইল আপ-টু-ডেট (${bn(files.length)}টি)`;
+      toast(`✅ কোনো পরিবর্তন নেই — সব আপ-টু-ডেট!`);
+      savedFolderUrl=url; save();
+      setTimeout(()=>closeDrive(),1600);
+      if(btn){btn.disabled=false;btn.textContent='🔄 সিংক করুন';}
+      return;
+    }
+
+    if(status) status.textContent=`${bn(toFetch.length)}টি পরিবর্তিত ফাইল পাওয়া গেছে${skipped>0?` (${bn(skipped)}টি অপরিবর্তিত, skip)`:''}, লোড হচ্ছে...`;
+
     let loaded=0,failed=0;
-    for(const file of files){
+    for(const file of toFetch){
       try{
         const resp=await fetch(`${APPS_SCRIPT_URL}?fileId=${file.id}`);
         if(!resp.ok) throw new Error();
         const data=await resp.json();
-        if(data.day&&data.topics){allDays[data.day]=data;loaded++;}
-        if(status) status.textContent=`লোড হচ্ছে: ${loaded}/${files.length}`;
+        if(data.day&&data.topics){
+          allDays[data.day]=data;
+          // সফল হলে modifiedTime ক্যাশ আপডেট করো
+          if(file.modifiedTime) fileModTimeCache[file.id]=file.modifiedTime;
+          loaded++;
+        }
+        if(status) status.textContent=`লোড হচ্ছে: ${bn(loaded)}/${bn(toFetch.length)}${skipped>0?` (${bn(skipped)}টি skip)`:''}`;
       }catch(e){failed++;}
     }
     savedFolderUrl=url;
     const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
     if(k.length) currentDay=k[0];
     save();renderDays();renderContent();renderSavedFolder();
-    if(status) status.textContent=`✅ ${loaded}টি দিন সিংক হয়েছে${failed?` (${failed}টি ব্যর্থ)`:''}`;
-    toast(`✅ ${loaded}টি দিন সিংক হয়েছে!`);
-    setTimeout(()=>closeDrive(),1400);
+    const skipMsg=skipped>0?`, ${bn(skipped)}টি অপরিবর্তিত`:'';
+    if(status) status.textContent=`✅ ${bn(loaded)}টি আপডেট হয়েছে${skipMsg}${failed?` (${bn(failed)}টি ব্যর্থ)`:''}`;
+    toast(`✅ ${bn(loaded)}টি ফাইল আপডেট হয়েছে!`);
+    setTimeout(()=>closeDrive(),1600);
   }catch(e){
     toast('❌ সিংক ব্যর্থ! Apps Script চেক করুন।',1);
     if(status) status.textContent='';
@@ -785,9 +822,34 @@ function openExam(){
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
 }
 function closeExam(){
+  if(document.getElementById('examOv').classList.contains('exam-landscape')) toggleExamLandscape();
   document.getElementById('examOv').classList.remove('show');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('navStudy').classList.add('active');
+}
+
+let examIsLandscape=false;
+async function toggleExamLandscape(){
+  examIsLandscape=!examIsLandscape;
+  const btn=document.getElementById('examRotateBtn');
+  const ov=document.getElementById('examOv');
+  btn.classList.toggle('active',examIsLandscape);
+  btn.textContent=examIsLandscape?'↩ সোজা':'⟳ আড়াআড়ি';
+  ov.classList.toggle('exam-landscape',examIsLandscape);
+  if(examIsLandscape){
+    try{
+      const el=document.documentElement;
+      if(el.requestFullscreen) await el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      if(screen.orientation&&screen.orientation.lock) await screen.orientation.lock('landscape');
+    }catch(e){}
+  } else {
+    try{
+      if(screen.orientation&&screen.orientation.unlock) screen.orientation.unlock();
+      if(document.exitFullscreen) await document.exitFullscreen();
+      else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }catch(e){}
+  }
 }
 
 /* ── UNIFIED PICKER RENDERER ── */
@@ -913,20 +975,22 @@ function renderExamCard(){
   document.getElementById('examProgFill').style.width=pct+'%';
   const item=examQueue[examIdx];
   examAnsRevealed=false;
-  // লাইভ স্কোর হিসাব (এখন পর্যন্ত উত্তর দেওয়া প্রশ্নের ভিত্তিতে)
   const answered=examKnow+examDontKnow;
-  const livePct=answered>0?Math.round(examKnow/answered*100):null;
   const scoreHtml=answered>0?`
-    <div style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 14px;margin-top:14px;display:flex;align-items:center;gap:12px;">
-      <div style="flex:1;">
-        <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">এখন পর্যন্ত স্কোর (${bn(answered)}/${bn(total)})</div>
-        <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
-          <div style="height:100%;width:${livePct}%;background:${livePct>=60?'var(--green)':'#e74c3c'};border-radius:3px;transition:width .3s;"></div>
-        </div>
+    <div style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-top:14px;display:flex;justify-content:center;gap:20px;align-items:center;">
+      <div style="text-align:center;">
+        <div style="font-size:1.6rem;font-weight:700;color:var(--green);">${bn(examKnow)}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">✅ জানি</div>
       </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:1.1rem;font-weight:700;color:${livePct>=60?'var(--green)':'#e74c3c'};">${bn(livePct)}%</div>
-        <div style="font-size:.6rem;color:var(--muted);">✅${bn(examKnow)} ❌${bn(examDontKnow)}</div>
+      <div style="width:1px;height:36px;background:var(--border);"></div>
+      <div style="text-align:center;">
+        <div style="font-size:1.6rem;font-weight:700;color:#e74c3c;">${bn(examDontKnow)}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">❌ জানি না</div>
+      </div>
+      <div style="width:1px;height:36px;background:var(--border);"></div>
+      <div style="text-align:center;">
+        <div style="font-size:1.6rem;font-weight:700;color:var(--muted);">${bn(answered)}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">মোট দেওয়া</div>
       </div>
     </div>`:'';
   const h=`
@@ -1090,7 +1154,10 @@ window.addEventListener('load', () => {
 <div class="exam-overlay" id="examOv">
   <div class="exam-topbar">
     <span class="exam-title" id="examTopTitle">📝 পরীক্ষা</span>
-    <button class="exam-close-btn" onclick="closeExam()">✕ বন্ধ</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="rotate-btn" id="examRotateBtn" onclick="toggleExamLandscape()">⟳ আড়াআড়ি</button>
+      <button class="exam-close-btn" onclick="closeExam()">✕ বন্ধ</button>
+    </div>
   </div>
   <div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgFill" style="width:0%"></div></div>
   <div class="exam-body" id="examBody"></div>
