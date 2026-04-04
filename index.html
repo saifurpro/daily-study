@@ -269,15 +269,36 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 .result-back{width:100%;padding:11px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:11px;font-size:.88rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
 
 /* Exam landscape mode */
-.exam-overlay.exam-landscape{flex-direction:row;flex-wrap:wrap}
-.exam-overlay.exam-landscape .exam-topbar{width:100%;flex-shrink:0}
-.exam-overlay.exam-landscape .exam-progress-bar{width:100%;flex-shrink:0}
-.exam-overlay.exam-landscape .exam-body{flex:1;padding:16px 24px 20px;max-width:100%}
-.exam-overlay.exam-landscape .exam-q-card{font-size:1.1rem}
-.exam-overlay.exam-landscape .exam-ans-wrap{font-size:1rem}
-.exam-overlay.exam-landscape .exam-actions{gap:14px}
+.exam-overlay.exam-landscape{flex-direction:column}
+.exam-overlay.exam-landscape .exam-topbar{flex-shrink:0;padding:7px 12px}
+.exam-overlay.exam-landscape .exam-progress-bar{flex-shrink:0}
+.exam-overlay.exam-landscape .exam-body{flex:1;overflow-y:auto;padding:8px 14px 10px;display:flex;flex-direction:column;align-items:center}
+.exam-overlay.exam-landscape .exam-title{font-size:.82rem}
+.exam-overlay.exam-landscape .exam-close-btn{font-size:.7rem;padding:3px 8px}
+.exam-overlay.exam-landscape .rotate-btn{font-size:.7rem;padding:3px 7px}
+/* picker - topic list scrollable */
+.exam-overlay.exam-landscape .exam-day-picker{width:100%}
+.exam-overlay.exam-landscape .exam-day-grid{grid-template-columns:repeat(6,1fr);gap:6px}
+.exam-overlay.exam-landscape .exam-day-item{padding:6px 2px}
+.exam-overlay.exam-landscape .exam-day-item .edi-num{font-size:.85rem}
+.exam-overlay.exam-landscape .exam-day-item .edi-lbl{font-size:.5rem}
+.exam-overlay.exam-landscape .exam-pick-title{font-size:.85rem}
+.exam-overlay.exam-landscape .exam-pick-sub{font-size:.7rem;margin-bottom:10px}
+/* question card */
+.exam-overlay.exam-landscape .exam-counter{font-size:.72rem}
+.exam-overlay.exam-landscape .exam-topic-badge{font-size:.66rem}
+.exam-overlay.exam-landscape .exam-q-card{font-size:1.15rem;padding:13px 13px;margin-bottom:8px}
+.exam-overlay.exam-landscape .exam-ans-wrap{padding:9px 12px;margin-bottom:10px}
+.exam-overlay.exam-landscape .exam-ans-text{font-size:.9rem}
+.exam-overlay.exam-landscape .exam-actions{gap:8px;margin-top:0}
 .exam-overlay.exam-landscape .exam-know,
-.exam-overlay.exam-landscape .exam-dontknow{font-size:1rem;padding:14px}
+.exam-overlay.exam-landscape .exam-dontknow{font-size:.88rem;padding:9px 6px}
+/* live score card */
+.exam-overlay.exam-landscape .exam-body>div[style*="margin-top:14px"]{margin-top:6px!important;padding:6px 10px!important}
+/* live score card landscape */
+.exam-overlay.exam-landscape .exam-score-card{padding:6px 10px!important;margin-top:6px!important;gap:12px!important}
+.exam-overlay.exam-landscape .score-num{font-size:.95rem!important}
+.exam-overlay.exam-landscape .score-lbl{font-size:.6rem!important}
 /* ── AI AGENT MODE ── */
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
 </style>
@@ -388,7 +409,60 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); };
+window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); requestWakeLock(); };
+
+/* ══════════════════════════════════════
+   WAKE LOCK — স্ক্রিন অটো-অফ বন্ধ
+   অ্যাপ খোলা থাকলে মোবাইল স্লিপ মোডে যাবে না
+══════════════════════════════════════ */
+let wakeLock = null;
+
+async function requestWakeLock(){
+  if(!('wakeLock' in navigator)) return; // পুরোনো ব্রাউজার সাপোর্ট না করলে বাদ
+  try{
+    wakeLock = await navigator.wakeLock.request('screen');
+  } catch(e){
+    console.log('Wake lock failed:', e);
+  }
+}
+
+
+/* ══════════════════════════════════════
+   VISIBILITY CHANGE — লক/আনলক হ্যান্ডলার
+   ১. Wake lock রি-অ্যাকোয়ার
+   ২. Landscape state রি-অ্যাপ্লাই (হাফ ভিউ প্রতিরোধ)
+══════════════════════════════════════ */
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState === 'visible'){
+    // Wake lock রি-অ্যাকোয়ার (লক হলে release হয়ে যায়)
+    if(wakeLock === null) await requestWakeLock();
+
+    // Landscape state রি-অ্যাপ্লাই — viewport settle হতে একটু সময় দিই
+    setTimeout(()=>{
+      document.body.classList.toggle('landscape', isLandscape);
+      const btn = document.getElementById('rotateBtn');
+      if(btn){
+        btn.classList.toggle('active', isLandscape);
+        btn.textContent = isLandscape ? '↩ সোজা' : '⟳ আড়াআড়ি';
+      }
+      const examOv = document.getElementById('examOv');
+      const _examLS = typeof examIsLandscape !== 'undefined' && examIsLandscape;
+      if(examOv) examOv.classList.toggle('exam-landscape', _examLS);
+      const examRotBtn = document.getElementById('examRotateBtn');
+      if(examRotBtn){
+        examRotBtn.classList.toggle('active', _examLS);
+        examRotBtn.textContent = _examLS ? '↩ সোজা' : '⟳ আড়াআড়ি';
+      }
+      const metaVP = document.querySelector('meta[name=viewport]');
+      if(metaVP) metaVP.content = isLandscape
+        ? 'width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes'
+        : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+    }, 150);
+  } else {
+    // স্ক্রিন অফ/ট্যাব ছাড়লে wake lock release হয় — null করে রাখি
+    if(wakeLock){ wakeLock = null; }
+  }
+});
 
 /* ══════════════════════════════════════
    STORAGE
@@ -1513,20 +1587,20 @@ function renderExamCard(){
   examAnsRevealed=false;
   const answered=examKnow+examDontKnow;
   const scoreHtml=answered>0?`
-    <div style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-top:14px;display:flex;justify-content:center;gap:20px;align-items:center;">
+    <div class="exam-score-card" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-top:14px;display:flex;justify-content:center;gap:20px;align-items:center;">
       <div style="text-align:center;">
-        <div style="font-size:1.6rem;font-weight:700;color:var(--green);">${bn(examKnow)}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">✅ জানি</div>
+        <div class="score-num" style="font-size:1.6rem;font-weight:700;color:var(--green);">${bn(examKnow)}</div>
+        <div class="score-lbl" style="font-size:.78rem;color:var(--muted);margin-top:2px;">✅ জানি</div>
       </div>
       <div style="width:1px;height:36px;background:var(--border);"></div>
       <div style="text-align:center;">
-        <div style="font-size:1.6rem;font-weight:700;color:#e74c3c;">${bn(examDontKnow)}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">❌ জানি না</div>
+        <div class="score-num" style="font-size:1.6rem;font-weight:700;color:#e74c3c;">${bn(examDontKnow)}</div>
+        <div class="score-lbl" style="font-size:.78rem;color:var(--muted);margin-top:2px;">❌ জানি না</div>
       </div>
       <div style="width:1px;height:36px;background:var(--border);"></div>
       <div style="text-align:center;">
-        <div style="font-size:1.6rem;font-weight:700;color:var(--muted);">${bn(answered)}</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">মোট দেওয়া</div>
+        <div class="score-num" style="font-size:1.6rem;font-weight:700;color:var(--muted);">${bn(answered)}</div>
+        <div class="score-lbl" style="font-size:.78rem;color:var(--muted);margin-top:2px;">মোট দেওয়া</div>
       </div>
     </div>`:'';
   const h=`
