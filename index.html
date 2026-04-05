@@ -41,9 +41,12 @@
 body{font-family:SolaimanLipi,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:520px;margin:0 auto;overflow-x:hidden}
 
 /* TOP BAR */
-.topbar{background:var(--surface);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;gap:8px}
-.topbar-title{font-size:1rem;font-weight:700;color:var(--accent);white-space:nowrap}
-.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar{background:var(--surface);padding:8px 12px;display:flex;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;gap:8px}
+.topbar-title{font-size:.88rem;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0}
+.topbar-search{flex:1;position:relative;display:flex;align-items:center}
+.topbar-search .search-input{background:var(--card);border-color:var(--border);font-size:.82rem;padding:7px 30px 7px 11px}
+.topbar-search .search-clear{right:8px}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .streak{color:var(--accent2);font-weight:600;font-size:.8rem;white-space:nowrap}
 .rotate-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:4px 9px;border-radius:8px;font-size:.72rem;cursor:pointer;font-family:SolaimanLipi,sans-serif;white-space:nowrap}
 .rotate-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -150,6 +153,9 @@ body.landscape .topic-title{font-size:1.15rem}
 body.landscape .topic-count{font-size:.82rem}
 body.landscape .a-text{white-space:normal;word-break:keep-all;overflow-wrap:break-word}
 body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
+/* Landscape: JS content-based col width via CSS var */
+body.landscape .t-header.ls-sized,
+body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
 
 /* SEARCH RESULTS */
 .search-results{padding:0 14px 90px}
@@ -173,6 +179,11 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:7px 0 10px;z-index:100}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:3px 12px;font-family:SolaimanLipi,sans-serif}
 .nav-btn.active{color:var(--accent)}.nav-btn .ni{font-size:1.15rem}.nav-btn .nl{font-size:.58rem}
+
+/* Calendar date icon */
+#calIcon{font-size:.7rem!important;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:32px;height:32px;border-radius:7px;background:var(--accent);color:#fff;border:none;padding:0}
+#calIcon .cal-month{font-size:.48rem;background:rgba(0,0,0,.25);width:100%;text-align:center;border-radius:5px 5px 0 0;padding:1px 0;letter-spacing:.3px}
+#calIcon .cal-day{font-size:.85rem;font-weight:900;line-height:1.1}
 
 /* FAB removed */
 
@@ -302,12 +313,63 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 .exam-overlay.exam-landscape .score-lbl{font-size:.6rem!important}
 /* ── AI AGENT MODE ── */
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── TRACKER OVERLAY ── */
+.tracker-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:300;flex-direction:column;overflow:hidden}
+.tracker-overlay.show{display:flex}
+.tracker-topbar{background:var(--surface);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0}
+.tracker-title{font-size:.95rem;font-weight:700;color:var(--accent)}
+.tracker-close-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:4px 11px;border-radius:8px;font-size:.78rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
+.tracker-body{flex:1;overflow-y:auto;padding:14px 14px 40px}
+.tracker-tabs{display:flex;gap:6px;margin-bottom:14px;background:var(--card);border-radius:10px;padding:4px}
+.tracker-tab{flex:1;padding:8px;border:none;border-radius:7px;background:transparent;color:var(--muted);font-family:SolaimanLipi,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+.tracker-tab.active{background:var(--accent);color:#fff}
+.routine-day-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px}
+.routine-day-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.routine-day-num{background:var(--accent);color:#fff;border-radius:7px;padding:2px 10px;font-size:.75rem;font-weight:700;white-space:nowrap}
+.routine-day-tasks{display:flex;flex-direction:column;gap:5px}
+.routine-task{display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--text);line-height:1.45}
+.routine-task-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-new{background:var(--accent)}.dot-rev{background:var(--accent2)}.dot-bigrev{background:var(--green)}
+.tracker-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tracker-cal-title{font-size:.9rem;font-weight:700;color:var(--text)}
+.tracker-reset-btn{background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:4px 11px;border-radius:7px;font-size:.7rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
+.tracker-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:16px}
+.tracker-grid-head{text-align:center;font-size:.6rem;color:var(--muted);padding:3px 0;font-weight:600}
+.tracker-day-cell{aspect-ratio:1;border-radius:9px;border:1.5px solid var(--border);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;gap:1px}
+.tracker-day-cell:hover{border-color:var(--accent)}
+.tracker-day-cell.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,142,247,.25)}
+.tracker-day-cell.done{background:rgba(62,207,142,.15);border-color:var(--green)}
+.tracker-day-cell.done .tc-num{color:var(--green)}
+.tracker-day-cell.done::after{content:'✓';position:absolute;top:2px;right:3px;font-size:.5rem;color:var(--green)}
+.tracker-day-cell.future{opacity:.45;cursor:default}
+.tc-num{font-size:.82rem;font-weight:700;color:var(--text);line-height:1}
+.tc-lbl{font-size:.45rem;color:var(--muted);line-height:1}
+.tracker-stats{display:flex;gap:9px;margin-bottom:14px}
+.tstat{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.tstat-num{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.tstat-lbl{font-size:.62rem;color:var(--muted);margin-top:2px}
+.tstat.green .tstat-num{color:var(--green)}.tstat.yellow .tstat-num{color:var(--accent2)}
+.today-task-box{background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;padding:13px 14px;margin-bottom:14px}
+.today-task-title{font-size:.8rem;font-weight:700;color:var(--accent);margin-bottom:9px}
+.today-task-item{display:flex;align-items:center;gap:8px;font-size:.83rem;color:var(--text);margin-bottom:6px;line-height:1.4}
+.today-task-item:last-child{margin-bottom:0}
+.today-task-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tracker-done-btn{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:11px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:SolaimanLipi,sans-serif;margin-bottom:7px;transition:opacity .15s}
+.tracker-done-btn:active{opacity:.8}
+.tracker-done-btn.undone{background:transparent;border:1.5px solid var(--green);color:var(--green)}
+.tracker-streak-box{background:rgba(247,201,79,.08);border:1px solid rgba(247,201,79,.3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.tracker-streak-text{font-size:.82rem;color:var(--accent2);font-weight:600}
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <span class="topbar-title">📚 দৈনিক পড়া</span>
+  <div class="topbar-search">
+    <input class="search-input" id="searchInput" placeholder="🔍 সার্চ করুন..." oninput="handleSearch(this.value);toggleClear(this.value)">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
+  </div>
   <div class="topbar-right">
     <span class="streak" id="streakEl">🔥 ০ দিন</span>
     <button class="rotate-btn" id="rotateBtn" onclick="toggleLandscape()">⟳ আড়াআড়ি</button>
@@ -325,12 +387,6 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
 </div>
 
-<div class="search-wrap">
-  <div class="search-box">
-    <input class="search-input" id="searchInput" placeholder="🔍  প্রশ্ন বা উত্তর সার্চ করুন..." oninput="handleSearch(this.value);toggleClear(this.value)">
-    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
-  </div>
-</div>
 
 <div class="content" id="mainContent"></div>
 <div class="search-results" id="searchResults" style="display:none"></div>
@@ -338,10 +394,11 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 
 
 <div class="bottom-nav">
-  <button class="nav-btn active" id="navStudy" onclick="switchTab('study')"><span class="ni">📅</span><span class="nl">পড়া</span></button>
-  <button class="nav-btn" id="navSearch" onclick="switchTab('search')"><span class="ni">🔍</span><span class="nl">সার্চ</span></button>
+  <button class="nav-btn active" id="navStudy" onclick="switchTab('study')"><span class="ni" id="calIcon">📅</span><span class="nl">পড়া</span></button>
+
   <button class="nav-btn" id="navListen" onclick="openListen()"><span class="ni">🤖</span><span class="nl">AI প্রশ্ন</span></button>
   <button class="nav-btn" id="navExam" onclick="openExam()"><span class="ni">📝</span><span class="nl">পরীক্ষা</span></button>
+  <button class="nav-btn" id="navTracker" onclick="openTracker()"><span class="ni">📊</span><span class="nl">ট্র্যাক</span></button>
   <button class="nav-btn" id="navDrive" onclick="openDrive()"><span class="ni">☁️</span><span class="nl">Drive</span></button>
 </div>
 
@@ -396,7 +453,15 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); requestWakeLock(); };
+window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); requestWakeLock(); updateCalIcon(); };
+
+function updateCalIcon(){
+  const now = new Date();
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const el = document.getElementById('calIcon');
+  if(!el) return;
+  el.innerHTML = `<span class="cal-month">${months[now.getMonth()]}</span><span class="cal-day">${now.getDate()}</span>`;
+}
 
 /* ══════════════════════════════════════
    WAKE LOCK — স্ক্রিন অটো-অফ বন্ধ
@@ -586,6 +651,81 @@ async function toggleLandscape(){
   metaVP.content = isLandscape
     ? 'width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes'
     : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+
+  // Content-based column width
+  if(isLandscape) setTimeout(applyLandscapeColWidths, 80);
+  else resetLandscapeColWidths();
+}
+
+/* ══════════════════════════════════════
+   LANDSCAPE COLUMN AUTO-SIZING
+   প্রতিটি টেবিলে সবচেয়ে বড় content দেখে
+   fr ratio হিসাব করে grid-template-columns সেট করে
+══════════════════════════════════════ */
+function measureTextWidth(text, font){
+  const c = measureTextWidth._canvas || (measureTextWidth._canvas = document.createElement('canvas'));
+  const ctx = c.getContext('2d');
+  ctx.font = font;
+  return ctx.measureText(text).width;
+}
+
+function applyLandscapeColWidths(){
+  // landscape cell font
+  const CELL_FONT = '1.15rem SolaimanLipi, sans-serif';
+  const HDR_FONT  = '0.9rem SolaimanLipi, sans-serif';
+  // eye-btn এর জন্য extra space (px)
+  const EYE_EXTRA = 38;
+
+  document.querySelectorAll('.table-wrap').forEach(wrap => {
+    const headerEl = wrap.querySelector('.t-header');
+    if(!headerEl) return;
+    const cols = headerEl.classList.contains('col3') ? 3 : 2;
+
+    // প্রতি column-এর max width জমা করব
+    const maxW = new Array(cols).fill(0);
+
+    // header cells মাপো
+    wrap.querySelectorAll('.th-cell').forEach((th, i) => {
+      if(i >= cols) return;
+      const w = measureTextWidth(th.textContent.trim(), HDR_FONT);
+      if(w > maxW[i]) maxW[i] = w;
+    });
+
+    // data rows মাপো
+    wrap.querySelectorAll('.t-row').forEach(row => {
+      const cells = row.querySelectorAll('.t-cell');
+      cells.forEach((cell, i) => {
+        if(i >= cols) return;
+        // a-text এর ভেতরের text নাও
+        const txt = (cell.querySelector('.a-text') || cell).textContent.trim();
+        let w = measureTextWidth(txt, CELL_FONT);
+        // answer cell-এ eye button আছে
+        if(cell.classList.contains('a-cell') && i < cols - 1) w += EYE_EXTRA;
+        if(w > maxW[i]) maxW[i] = w;
+      });
+    });
+
+    // min width দিই যাতে একদম ছোট না হয়
+    const MIN_W = 60;
+    for(let i=0;i<cols;i++) if(maxW[i] < MIN_W) maxW[i] = MIN_W;
+
+    // fr ratio তৈরি করো (round to 2 decimal)
+    const total = maxW.reduce((a,b)=>a+b, 0);
+    const frCols = maxW.map(w => (w/total * cols).toFixed(2) + 'fr').join(' ');
+
+    // header এবং সব row-এ CSS var সেট করো
+    [headerEl, ...wrap.querySelectorAll('.t-row')].forEach(el => {
+      el.style.setProperty('--ls-cols', frCols);
+      el.classList.add('ls-sized');
+    });
+  });
+}
+
+function resetLandscapeColWidths(){
+  document.querySelectorAll('.t-header, .t-row').forEach(el => {
+    el.style.removeProperty('--ls-cols');
+    el.classList.remove('ls-sized');
+  });
 }
 
 /* ══════════════════════════════════════
@@ -778,6 +918,7 @@ function renderContent(){
     h+=`</div></div>${t.note?`<div class="topic-note">${t.note}</div>`:''}</div>`;
   });
   mc.innerHTML=h; updateProg();
+  if(isLandscape) setTimeout(applyLandscapeColWidths, 50);
 }
 
 /* ══════════════════════════════════════
@@ -1738,6 +1879,276 @@ window.addEventListener('load', () => {
 })();
 </script>
 
+
+<script>
+/* ══════════════════════════════════════
+   পড়ার ট্র্যাক — ROUTINE + PROGRESS TRACKER
+══════════════════════════════════════ */
+
+/* ── রুটিন জেনারেটর (ডে-১ থেকে ডে-৪০) ──
+   Pattern:
+   - প্রতিটি "cycle" = ৫টি নতুন day + ১টি big revision দিন (৬ দিন)
+   - cycle দিনগুলো:
+     সাইকেল দিন ১: নতুন day পড়া (e.g. ডে-১)
+     সাইকেল দিন ২: আগেরটা revision + নতুন day পড়া
+     সাইকেল দিন ৩: আগেরটা revision + নতুন day পড়া
+     সাইকেল দিন ৪: আগেরটা revision + নতুন day পড়া
+     সাইকেল দিন ৫: আগেরটা revision + নতুন day পড়া
+     সাইকেল দিন ৬: সাইকেলের সব day revision (big revision)
+*/
+function generateRoutine(){
+  const routine = []; // [{routineDay, tasks:[{type,days:[]}]}]
+  let routineDay = 1;
+  let studyDay = 1;
+  const TOTAL_DAYS = 40;
+
+  while(studyDay <= TOTAL_DAYS){
+    // সাইকেল: ৫টি নতুন day
+    const cycleStart = studyDay;
+    const cycleEnd = Math.min(studyDay + 4, TOTAL_DAYS);
+
+    for(let d = cycleStart; d <= cycleEnd; d++){
+      const tasks = [];
+      if(d > cycleStart){
+        tasks.push({type:'revision', days:[d-1], label:`ডে-${d-1} রিভিশন`});
+      }
+      tasks.push({type:'new', days:[d], label:`ডে-${d} পড়া`});
+      routine.push({routineDay, tasks});
+      routineDay++;
+    }
+
+    // Big revision দিন
+    if(cycleEnd <= TOTAL_DAYS){
+      const revDays = [];
+      const labels = [];
+      for(let d=cycleStart; d<=cycleEnd; d++){ revDays.push(d); }
+      labels.push(`ডে-${cycleStart} থেকে ডে-${cycleEnd} রিভিশন`);
+      routine.push({routineDay, tasks:[{type:'bigrev', days:revDays, label:labels[0]}]});
+      routineDay++;
+    }
+
+    studyDay = cycleEnd + 1;
+  }
+  return routine;
+}
+
+const ROUTINE = generateRoutine();
+const TOTAL_ROUTINE_DAYS = ROUTINE.length;
+
+/* ── STATE ── */
+let trackerData = {}; // {routineDay: {done:bool, date:string}}
+let trackerTab = 'progress'; // 'progress' | 'routine'
+let trackerStartDate = null; // ISO date string — কবে শুরু হয়েছে
+
+function loadTrackerData(){
+  try{
+    const t = localStorage.getItem('ds_tracker');
+    if(t){ const p = JSON.parse(t); trackerData=p.data||{}; trackerStartDate=p.startDate||null; }
+  }catch(e){}
+}
+function saveTrackerData(){
+  localStorage.setItem('ds_tracker', JSON.stringify({data:trackerData, startDate:trackerStartDate}));
+}
+
+/* ── OPEN / CLOSE ── */
+function openTracker(){
+  loadTrackerData();
+  document.getElementById('trackerOv').classList.add('show');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('navTracker').classList.add('active');
+  renderTracker();
+}
+function closeTracker(){
+  document.getElementById('trackerOv').classList.remove('show');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('navStudy').classList.add('active');
+}
+
+/* ── MAIN RENDER ── */
+function renderTracker(){
+  const body = document.getElementById('trackerBody');
+  const tabs = `<div class="tracker-tabs">
+    <button class="tracker-tab${trackerTab==='progress'?' active':''}" onclick="switchTrackerTab('progress')">📅 আজকের পড়া</button>
+    <button class="tracker-tab${trackerTab==='routine'?' active':''}" onclick="switchTrackerTab('routine')">📋 রুটিন</button>
+  </div>`;
+
+  if(trackerTab === 'progress'){
+    body.innerHTML = tabs + renderProgressTab();
+  } else {
+    body.innerHTML = tabs + renderRoutineTab();
+  }
+}
+
+function switchTrackerTab(tab){
+  trackerTab = tab;
+  renderTracker();
+}
+
+/* ── TODAY'S ROUTINE DAY ── */
+function getTodayRoutineDay(){
+  if(!trackerStartDate) return 1;
+  const start = new Date(trackerStartDate);
+  const now = new Date();
+  start.setHours(0,0,0,0); now.setHours(0,0,0,0);
+  const diff = Math.floor((now - start)/(1000*60*60*24));
+  return Math.min(diff + 1, TOTAL_ROUTINE_DAYS);
+}
+
+function todayStr(){
+  const n=new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+}
+
+/* ── PROGRESS TAB ── */
+function renderProgressTab(){
+  // প্রথমবার খুললে startDate সেট করি
+  if(!trackerStartDate){
+    trackerStartDate = todayStr();
+    saveTrackerData();
+  }
+
+  const todayRDay = getTodayRoutineDay();
+  const todayRoutine = ROUTINE[todayRDay - 1];
+  const isDone = trackerData[todayRDay] && trackerData[todayRDay].done;
+
+  // Stats
+  const totalDone = Object.values(trackerData).filter(v=>v.done).length;
+  const streak = calcTrackerStreak();
+
+  // Streak box
+  const streakBox = streak > 0
+    ? `<div class="tracker-streak-box"><span style="font-size:1.4rem">🔥</span><span class="tracker-streak-text">পরপর ${bn(streak)} দিন পড়া হয়েছে!</span></div>`
+    : '';
+
+  // Stats row
+  const statsRow = `<div class="tracker-stats">
+    <div class="tstat green"><div class="tstat-num">${bn(totalDone)}</div><div class="tstat-lbl">✅ সম্পন্ন</div></div>
+    <div class="tstat"><div class="tstat-num">${bn(TOTAL_ROUTINE_DAYS - totalDone)}</div><div class="tstat-lbl">📖 বাকি</div></div>
+    <div class="tstat yellow"><div class="tstat-num">${bn(Math.round(totalDone/TOTAL_ROUTINE_DAYS*100))}%</div><div class="tstat-lbl">অগ্রগতি</div></div>
+  </div>`;
+
+  // Today's task box
+  const taskItems = todayRoutine ? todayRoutine.tasks.map(t=>{
+    const dotClass = t.type==='new'?'dot-new':t.type==='bigrev'?'dot-bigrev':'dot-rev';
+    return `<div class="today-task-item"><div class="today-task-dot ${dotClass}"></div>${t.label}</div>`;
+  }).join('') : '';
+
+  const todayBox = `<div class="today-task-box">
+    <div class="today-task-title">📌 রুটিন দিন ${bn(todayRDay)} — আজকের পড়া</div>
+    ${taskItems}
+  </div>`;
+
+  const doneBtn = `<button class="tracker-done-btn${isDone?' undone':''}" onclick="toggleTodayDone()">
+    ${isDone ? '✅ সম্পন্ন হয়েছে — আবার চিহ্ন তুলুন' : '✔ আজকের পড়া সম্পন্ন করেছি'}
+  </button>`;
+
+  // Calendar — ৭ দিন/সপ্তাহ করে দেখাব
+  const calHtml = renderCalendarGrid(todayRDay);
+
+  return `${streakBox}${statsRow}${todayBox}${doneBtn}
+  <div class="tracker-cal-header" style="margin-top:14px">
+    <span class="tracker-cal-title">📆 সব দিনের অবস্থা</span>
+    <button class="tracker-reset-btn" onclick="confirmTrackerReset()">🔄 রিসেট</button>
+  </div>
+  ${calHtml}`;
+}
+
+function renderCalendarGrid(todayRDay){
+  const days = ['র১','র২','র৩','র৪','র৫','র৬','র৭'];
+  let h = `<div class="tracker-grid">`;
+  // Header
+  h += days.map(d=>`<div class="tracker-grid-head">${d}</div>`).join('');
+
+  // Cells — ৭ কলামে সাজাই, শুরু থেকে
+  for(let i=1; i<=TOTAL_ROUTINE_DAYS; i++){
+    const isDone = trackerData[i] && trackerData[i].done;
+    const isToday = i === todayRDay;
+    const isFuture = i > todayRDay;
+    let cls = 'tracker-day-cell';
+    if(isDone) cls += ' done';
+    if(isToday) cls += ' today';
+    if(isFuture) cls += ' future';
+    const onclick = isFuture ? '' : `onclick="toggleDayDone(${i})"`;
+    h += `<div class="${cls}" ${onclick} title="রুটিন দিন ${i}">
+      <span class="tc-num">${bn(i)}</span>
+      <span class="tc-lbl">দিন</span>
+    </div>`;
+  }
+
+  // বাকি ঘর ফাঁকা রাখি (৭-এর গুণিতক করতে)
+  const rem = TOTAL_ROUTINE_DAYS % 7;
+  if(rem > 0){ for(let i=0;i<7-rem;i++) h+=`<div></div>`; }
+
+  h += `</div>`;
+  return h;
+}
+
+function calcTrackerStreak(){
+  const todayRDay = getTodayRoutineDay();
+  let streak = 0;
+  for(let i=todayRDay; i>=1; i--){
+    if(trackerData[i] && trackerData[i].done) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function toggleTodayDone(){
+  const todayRDay = getTodayRoutineDay();
+  toggleDayDone(todayRDay);
+}
+
+function toggleDayDone(routineDay){
+  if(routineDay > getTodayRoutineDay()) return; // future দিন toggle করা যাবে না
+  if(trackerData[routineDay] && trackerData[routineDay].done){
+    trackerData[routineDay].done = false;
+  } else {
+    trackerData[routineDay] = {done:true, date:todayStr()};
+  }
+  saveTrackerData();
+  renderTracker();
+}
+
+function confirmTrackerReset(){
+  if(!confirm('সব অগ্রগতি মুছে নতুন করে শুরু করবেন?')) return;
+  trackerData = {};
+  trackerStartDate = todayStr();
+  saveTrackerData();
+  renderTracker();
+  toast('🔄 ট্র্যাকার রিসেট হয়েছে!');
+}
+
+/* ── ROUTINE TAB ── */
+function renderRoutineTab(){
+  const todayRDay = getTodayRoutineDay();
+  let h = '';
+  ROUTINE.forEach(r=>{
+    const isToday = r.routineDay === todayRDay;
+    const isDone = trackerData[r.routineDay] && trackerData[r.routineDay].done;
+    const borderStyle = isToday ? 'border-color:var(--accent)' : isDone ? 'border-color:var(--green)' : '';
+    const badge = isToday ? `<span style="background:var(--accent);color:#fff;border-radius:5px;padding:1px 7px;font-size:.65rem;font-weight:700;margin-left:6px;">আজ</span>` : isDone ? `<span style="color:var(--green);font-size:.75rem;margin-left:6px;">✅</span>` : '';
+    const tasks = r.tasks.map(t=>{
+      const dotClass = t.type==='new'?'dot-new':t.type==='bigrev'?'dot-bigrev':'dot-rev';
+      return `<div class="routine-task"><div class="routine-task-dot ${dotClass}"></div>${t.label}</div>`;
+    }).join('');
+    h += `<div class="routine-day-card" style="${borderStyle}">
+      <div class="routine-day-header">
+        <span class="routine-day-num">${bn(r.routineDay)}ম দিন</span>${badge}
+      </div>
+      <div class="routine-day-tasks">${tasks}</div>
+    </div>`;
+  });
+
+  const legend = `<div style="display:flex;gap:12px;margin-bottom:12px;font-size:.72rem;color:var(--muted);flex-wrap:wrap;">
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:4px;"></span>নতুন পড়া</span>
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);margin-right:4px;"></span>রিভিশন</span>
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;"></span>বড় রিভিশন</span>
+  </div>`;
+
+  return legend + h;
+}
+</script>
+
 <!-- LISTEN OVERLAY -->
 <div class="exam-overlay" id="listenOv">
   <div class="exam-topbar">
@@ -1746,6 +2157,15 @@ window.addEventListener('load', () => {
   </div>
   <div class="exam-progress-bar"><div class="exam-progress-fill" id="listenProgFill" style="width:0%"></div></div>
   <div class="exam-body" id="listenBody"></div>
+</div>
+
+<!-- TRACKER OVERLAY -->
+<div class="tracker-overlay" id="trackerOv">
+  <div class="tracker-topbar">
+    <span class="tracker-title">📊 পড়ার ট্র্যাক</span>
+    <button class="tracker-close-btn" onclick="closeTracker()">✕ বন্ধ</button>
+  </div>
+  <div class="tracker-body" id="trackerBody"></div>
 </div>
 
 <!-- EXAM OVERLAY -->
