@@ -82,9 +82,12 @@ body.landscape .content{padding:10px 12px 20px}
 
 /* SEARCH */
 .search-wrap{padding:8px 14px;background:var(--bg)}
-.search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 13px;color:var(--text);font-size:.88rem;font-family:SolaimanLipi,sans-serif;outline:none}
+.search-box{position:relative;display:flex;align-items:center}
+.search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 36px 8px 13px;color:var(--text);font-size:.88rem;font-family:SolaimanLipi,sans-serif;outline:none}
 .search-input:focus{border-color:var(--accent)}
 .search-input::placeholder{color:var(--muted)}
+.search-clear{position:absolute;right:10px;background:transparent;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:2px 4px;display:none;line-height:1}
+.search-clear.visible{display:block}
 
 /* CONTENT */
 .content{padding:10px 14px 90px}
@@ -111,15 +114,15 @@ body.landscape .content{padding:10px 12px 20px}
    FIX: nowrap + scroll inside cell so text stays on one line */
 .table-wrap{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
 .t-header{display:grid;background:rgba(79,142,247,.1);border-bottom:1px solid var(--border)}
-.t-header.col2{grid-template-columns:1fr 1fr}
-.t-header.col3{grid-template-columns:1.2fr 1fr 1.5fr}
+.t-header.col2{grid-template-columns:55% 45%}
+.t-header.col3{grid-template-columns:45% 28% 27%}
 .th-cell{padding:6px 8px;font-size:.68rem;font-weight:600;color:var(--accent);letter-spacing:.3px}
 .th-cell:not(:last-child){border-right:1px solid var(--border)}
 .t-row{display:grid;border-bottom:.5px solid var(--border)}
 .t-row:last-child{border-bottom:none}
 .t-row:nth-child(even){background:rgba(255,255,255,.02)}
-.t-row.col2{grid-template-columns:1fr 1fr}
-.t-row.col3{grid-template-columns:1.2fr 1fr 1.5fr}
+.t-row.col2{grid-template-columns:55% 45%}
+.t-row.col3{grid-template-columns:45% 28% 27%}
 .t-cell{padding:9px 8px;font-size:.82rem;border-right:1px solid var(--border);
   word-break:break-word;white-space:normal;line-height:1.55;vertical-align:top}
 .t-cell:last-child{border-right:none}
@@ -138,14 +141,14 @@ body.landscape .content{padding:10px 12px 20px}
 /* Landscape: one line per cell + big font + horizontal scroll */
 body.landscape .bottom-nav{display:none}
 body.landscape .fab{display:none}
-body.landscape .table-wrap{overflow-x:auto}
+body.landscape .table-wrap{overflow-x:visible}
 body.landscape .t-header,
-body.landscape .t-row{min-width:660px}
-body.landscape .t-cell{font-size:1.15rem;padding:12px 14px;line-height:1.4;white-space:nowrap}
-body.landscape .th-cell{font-size:.9rem;padding:9px 14px;white-space:nowrap}
+body.landscape .t-row{min-width:unset}
+body.landscape .t-cell{font-size:1.15rem;padding:12px 14px;line-height:1.4;white-space:normal;word-break:keep-all;overflow-wrap:break-word}
+body.landscape .th-cell{font-size:.9rem;padding:9px 14px;white-space:normal}
 body.landscape .topic-title{font-size:1.15rem}
 body.landscape .topic-count{font-size:.82rem}
-body.landscape .a-text{white-space:nowrap}
+body.landscape .a-text{white-space:normal;word-break:keep-all;overflow-wrap:break-word}
 body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 
 /* SEARCH RESULTS */
@@ -171,9 +174,7 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:3px 12px;font-family:SolaimanLipi,sans-serif}
 .nav-btn.active{color:var(--accent)}.nav-btn .ni{font-size:1.15rem}.nav-btn .nl{font-size:.58rem}
 
-/* FAB */
-.fab{position:fixed;bottom:68px;right:16px;width:46px;height:46px;background:var(--accent);border-radius:50%;border:none;color:#fff;font-size:1.3rem;cursor:pointer;box-shadow:0 3px 12px rgba(79,142,247,.4);display:flex;align-items:center;justify-content:center;z-index:99}
-.fab:active{transform:scale(.92)}
+/* FAB removed */
 
 /* OVERLAYS */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:flex-end;justify-content:center}
@@ -325,13 +326,16 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 </div>
 
 <div class="search-wrap">
-  <input class="search-input" id="searchInput" placeholder="🔍  প্রশ্ন বা উত্তর সার্চ করুন..." oninput="handleSearch(this.value)">
+  <div class="search-box">
+    <input class="search-input" id="searchInput" placeholder="🔍  প্রশ্ন বা উত্তর সার্চ করুন..." oninput="handleSearch(this.value);toggleClear(this.value)">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
+  </div>
 </div>
 
 <div class="content" id="mainContent"></div>
 <div class="search-results" id="searchResults" style="display:none"></div>
 
-<button class="fab" id="fabBtn" onclick="openAdd()">＋</button>
+
 
 <div class="bottom-nav">
   <button class="nav-btn active" id="navStudy" onclick="switchTab('study')"><span class="ni">📅</span><span class="nl">পড়া</span></button>
@@ -378,24 +382,7 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
   </div>
 </div>
 
-<!-- ADD OVERLAY -->
-<div class="add-overlay" id="addOv" onclick="if(event.target===this)closeAdd()">
-  <div class="add-box">
-    <div class="add-title">➕ নতুন প্রশ্ন-উত্তর যোগ করুন</div>
-    <div class="f-label">টপিক সিলেক্ট করুন</div>
-    <div class="chips" id="chips"></div>
-    <div class="f-label">বা নতুন টপিকের নাম</div>
-    <input class="f-inp" id="addTopic" placeholder="যেমন: বাগধারা">
-    <div class="f-label">প্রশ্ন *</div>
-    <textarea class="f-inp" id="addQ" rows="2" placeholder="যেমন: বক ধার্মিক"></textarea>
-    <div class="f-label">উত্তর *</div>
-    <textarea class="f-inp" id="addA" rows="2" placeholder="যেমন: ভণ্ড সাধু"></textarea>
-    <div class="f-label">Example (ঐচ্ছিক)</div>
-    <input class="f-inp" id="addEx" placeholder="যেমন: He is a yellow dog.">
-    <button class="primary-btn" onclick="saveItem()">💾 সেভ করুন</button>
-    <button class="cancel-btn" onclick="closeAdd()">বাতিল</button>
-  </div>
-</div>
+
 
 <script>
 /* ══════════════════════════════════════
@@ -418,12 +405,8 @@ window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); 
 let wakeLock = null;
 
 async function requestWakeLock(){
-  if(!('wakeLock' in navigator)) return; // পুরোনো ব্রাউজার সাপোর্ট না করলে বাদ
-  try{
-    wakeLock = await navigator.wakeLock.request('screen');
-  } catch(e){
-    console.log('Wake lock failed:', e);
-  }
+  if(!('wakeLock' in navigator)) return;
+  try{ wakeLock = await navigator.wakeLock.request('screen'); } catch(e){ /* silently ignore — permissions policy or unsupported env */ }
 }
 
 
@@ -842,27 +825,22 @@ function handleSearch(q){
   if(!res.length){sr.innerHTML=`<div class="no-result">😔<br><br>"${q}" পাওয়া যায়নি</div>`;return;}
   sr.innerHTML=res.map(r=>{const ex=r.item.ex||r.item.example||'';return`<div class="search-result-card"><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hl(r.item.q,q)}</div><div class="sr-a">→ ${hl(r.item.a,q)}</div>${ex?`<div class="sr-ex">${hl(ex,q)}</div>`:''}</div>`}).join('');
 }
+function toggleClear(val){
+  const btn=document.getElementById('searchClear');
+  if(btn) btn.classList.toggle('visible', val.length>0);
+}
+function clearSearch(){
+  const inp=document.getElementById('searchInput');
+  if(inp){inp.value='';inp.focus();}
+  handleSearch('');
+  toggleClear('');
+}
 function hl(t,q){const i=t.toLowerCase().indexOf(q.toLowerCase());if(i===-1)return t;return t.slice(0,i)+`<span class="highlight">${t.slice(i,i+q.length)}</span>`+t.slice(i+q.length);}
 
-/* ══════════════════════════════════════
-   ADD ITEM
-══════════════════════════════════════ */
-function openAdd(){
-  const day=allDays[currentDay],ch=document.getElementById('chips');ch.innerHTML='';
-  if(day)day.topics.forEach((t,i)=>{const c=document.createElement('button');c.className='chip'+(i===0?' active':'');c.textContent=t.title;c.onclick=()=>{document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));c.classList.add('active');document.getElementById('addTopic').value=t.title;};ch.appendChild(c);if(i===0)document.getElementById('addTopic').value=t.title;});
-  ['addQ','addA','addEx'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('addOv').classList.add('show');
-}
-function closeAdd(){document.getElementById('addOv').classList.remove('show');}
-function saveItem(){
-  const topic=document.getElementById('addTopic').value.trim(),q=document.getElementById('addQ').value.trim(),a=document.getElementById('addA').value.trim(),ex=document.getElementById('addEx').value.trim();
-  if(!q||!a){toast('❌ প্রশ্ন এবং উত্তর লিখুন!',1);return;}
-  if(!allDays[currentDay])allDays[currentDay]={day:currentDay,title:`দিন ${currentDay}`,topics:[]};
-  const day=allDays[currentDay];let t=day.topics.find(x=>x.title===topic);
-  if(!t){t={title:topic||'নতুন টপিক',icon:'📝',columns:ex?3:2,headers:ex?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর'],items:[]};day.topics.push(t);}
-  const item={q,a};if(ex)item.ex=ex;t.items.push(item);
-  save();renderDays();renderContent();closeAdd();toast('✅ সেভ হয়েছে!');
-}
+/* ADD ITEM feature removed */
+function openAdd(){}
+function closeAdd(){}
+function saveItem(){}
 
 /* ══════════════════════════════════════
    OVERLAYS / TABS / TOAST
@@ -876,8 +854,8 @@ function openDrive(){
 function closeDrive(){document.getElementById('driveOv').classList.remove('show');}
 function switchTab(tab){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  if(tab==='study'){document.getElementById('navStudy').classList.add('active');document.getElementById('searchInput').value='';handleSearch('');document.getElementById('fabBtn').style.display='flex';}
-  else if(tab==='search'){document.getElementById('navSearch').classList.add('active');document.getElementById('searchInput').focus();document.getElementById('fabBtn').style.display='none';}
+  if(tab==='study'){document.getElementById('navStudy').classList.add('active');const si=document.getElementById('searchInput');si.value='';handleSearch('');toggleClear('');}
+  else if(tab==='search'){document.getElementById('navSearch').classList.add('active');document.getElementById('searchInput').focus();}
 }
 function toast(msg,err){
   const t=document.createElement('div');t.textContent=msg;
