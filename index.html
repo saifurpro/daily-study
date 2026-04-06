@@ -42,7 +42,8 @@ body{font-family:SolaimanLipi,sans-serif;background:var(--bg);color:var(--text);
 
 /* TOP BAR */
 .topbar{background:var(--surface);padding:8px 12px;display:flex;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;gap:8px}
-.topbar-title{font-size:.88rem;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0}
+.topbar-title{font-size:.88rem;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+.topbar a {text-decoration: none;}
 .topbar-search{flex:1;position:relative;display:flex;align-items:center}
 .topbar-search .search-input{background:var(--card);border-color:var(--border);font-size:.82rem;padding:7px 30px 7px 11px}
 .topbar-search .search-clear{right:8px}
@@ -388,7 +389,7 @@ body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
 <body>
 
 <div class="topbar">
-  <span class="topbar-title">📚 দৈনিক পড়া</span>
+  <a href="index.html"><span class="topbar-title">📚 দৈনিক পড়া</span></a> 
   <div class="topbar-search">
     <input class="search-input" id="searchInput" placeholder="🔍 সার্চ করুন..." oninput="handleSearch(this.value);toggleClear(this.value)">
     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
