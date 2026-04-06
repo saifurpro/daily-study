@@ -157,11 +157,11 @@ body:not(.landscape) .t-row:last-child{border-bottom:none}
 
 /* ── PORTRAIT: বানান শুদ্ধি ও বিপরীত শব্দ — ২ কলাম টেবিল ── */
 body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-header,
-body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-header{display:grid}
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-header{display:grid;grid-template-columns:50% 50%}
 body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-row.col2,
-body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-row.col2{display:grid;grid-template-columns:55% 45%;flex-direction:unset;padding:0}
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-row.col2{display:grid;grid-template-columns:50% 50%;flex-direction:unset;padding:0}
 body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-cell,
-body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-cell{border-right:1px solid var(--border);padding:9px 8px;font-size:.9rem}
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-cell{border-right:1px solid var(--border);padding:9px 8px;font-size:1.05rem}
 body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-cell:last-child,
 body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-cell:last-child{border-right:none}
 body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-cell.q-cell,
