@@ -149,10 +149,25 @@ body:not(.landscape) .t-row.col2,
 body:not(.landscape) .t-row.col3{display:flex;flex-direction:column;padding:0}
 body:not(.landscape) .t-cell{border-right:none;padding:7px 10px;font-size:1.05rem}
 body:not(.landscape) .t-cell:last-child{border-bottom:none}
-body:not(.landscape) .t-cell.q-cell{font-size:1.05rem;font-weight:600;color:var(--accent);border-bottom:none;padding-bottom:4px}
+body:not(.landscape) .t-cell.q-cell{font-size:1.05rem;font-weight:600;color:#FFF;border-bottom:none;padding-bottom:4px}
+body:not(.landscape) .topic-block .topic-title{color: var(--accent);}
 body:not(.landscape) .t-row:nth-child(even){background:rgba(255,255,255,.03)}
 body:not(.landscape) .t-row{border-bottom:1px solid var(--border);padding:8px 0}
 body:not(.landscape) .t-row:last-child{border-bottom:none}
+
+/* ── PORTRAIT: বানান শুদ্ধি ও বিপরীত শব্দ — ২ কলাম টেবিল ── */
+body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-header,
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-header{display:grid}
+body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-row.col2,
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-row.col2{display:grid;grid-template-columns:55% 45%;flex-direction:unset;padding:0}
+body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-cell,
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-cell{border-right:1px solid var(--border);padding:9px 8px;font-size:.9rem}
+body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-cell:last-child,
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-cell:last-child{border-right:none}
+body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-cell.q-cell,
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-cell.q-cell{font-size:.9rem;padding-bottom:9px;border-bottom:none}
+body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি"] .t-row,
+body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-row{padding:0}
 
 /* Landscape: one line per cell + big font + horizontal scroll */
 body.landscape .topbar{gap:8px}
@@ -1789,7 +1804,7 @@ function startExam(){
   let q=[];
   day.topics.forEach(t=>{
     if(t.title&&(t.title.includes('বাড়ির কাজ')||t.title.includes('বাড়িরকাজ')||t.title.toLowerCase().includes('homework'))) return;
-    t.items.forEach(item=>q.push({q:item.q,a:item.a,topic:t.title}));
+    t.items.forEach(item=>q.push({q:item.q,a:item.a,ex:item.ex||item.example||'',topic:t.title,cols:t.columns||(t.items.some(i=>i.ex||i.example)?3:2),headers:t.columnHeaders||t.headers||null}));
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
@@ -1806,7 +1821,7 @@ function startTopicExam(){
     const day=allDays[d]; if(!day) return;
     day.topics.forEach(t=>{
       if(t.title!==key) return;
-      t.items.forEach(item=>q.push({q:item.q,a:item.a,topic:`দিন ${bn(d)} · ${t.title}`}));
+      t.items.forEach(item=>q.push({q:item.q,a:item.a,ex:item.ex||item.example||'',topic:`দিন ${bn(d)} · ${t.title}`,cols:t.columns||(t.items.some(i=>i.ex||i.example)?3:2),headers:t.columnHeaders||t.headers||null}));
     });
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
@@ -1840,14 +1855,19 @@ function renderExamCard(){
         <div class="score-lbl" style="font-size:.78rem;color:var(--muted);margin-top:2px;">মোট দেওয়া</div>
       </div>
     </div>`:'';
+  const hasEx=item.cols===3&&item.ex;
+  const hdrs=item.headers||(hasEx?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর']);
+  const exHtml=hasEx?`<div class="exam-ans-wrap" id="examExWrap" onclick="toggleExamAns()" style="margin-top:8px;"><span style="font-size:.65rem;color:var(--muted);display:block;margin-bottom:3px;">${hdrs[2]||'Example'}</span><span class="exam-ans-text" id="examExText" style="color:var(--muted);">${item.ex}</span></div>`:'';
+  const ansLabel=hasEx?`<span style="font-size:.65rem;color:var(--muted);display:block;margin-bottom:3px;">${hdrs[1]||'উত্তর'}</span>`:'';
   const h=`
     <div class="exam-counter">${bn(examIdx+1)} / ${bn(total)}</div>
     <div class="exam-topic-badge">${item.topic}</div>
     <div class="exam-q-card">${item.q}</div>
     <div class="exam-ans-wrap" id="examAnsWrap" onclick="toggleExamAns()">
-      <span class="exam-ans-text" id="examAnsText">${item.a}</span>
+      ${ansLabel}<span class="exam-ans-text" id="examAnsText">${item.a}</span>
       <button class="exam-eye" id="examEyeBtn">👁</button>
     </div>
+    ${exHtml}
     <div class="exam-actions">
       <button class="exam-dontknow" onclick="examAnswer(false)">❌ জানি না</button>
       <button class="exam-know" onclick="examAnswer(true)">✅ জানি</button>
@@ -1861,8 +1881,14 @@ function toggleExamAns(){
   examAnsRevealed=!examAnsRevealed;
   const wrap=document.getElementById('examAnsWrap');
   const eye=document.getElementById('examEyeBtn');
-  if(examAnsRevealed){wrap.classList.add('revealed-ans');eye.textContent='✓';}
-  else{wrap.classList.remove('revealed-ans');eye.textContent='👁';}
+  const exWrap=document.getElementById('examExWrap');
+  if(examAnsRevealed){
+    wrap.classList.add('revealed-ans');eye.textContent='✓';
+    if(exWrap) exWrap.classList.add('revealed-ans');
+  } else {
+    wrap.classList.remove('revealed-ans');eye.textContent='👁';
+    if(exWrap) exWrap.classList.remove('revealed-ans');
+  }
 }
 
 function examAnswer(know){
