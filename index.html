@@ -334,19 +334,19 @@ body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
 .tracker-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .tracker-cal-title{font-size:.9rem;font-weight:700;color:var(--text)}
 .tracker-reset-btn{background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:4px 11px;border-radius:7px;font-size:.7rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
-.tracker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.tracker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
 .tracker-grid-head{text-align:center;font-size:.6rem;color:var(--muted);padding:3px 0;font-weight:600}
-.tracker-day-cell{border-radius:11px;border:1.5px solid var(--border);background:var(--card);display:flex;flex-direction:column;padding:9px 10px;cursor:default;transition:all .15s;position:relative;gap:3px;min-height:64px}
+.tracker-day-cell{border-radius:11px;border:1.5px solid var(--border);background:var(--card);display:flex;flex-direction:column;padding:11px 13px;cursor:default;transition:all .15s;position:relative;gap:4px;min-height:70px}
 .tracker-day-cell.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,142,247,.25)}
 .tracker-day-cell.done{background:rgba(62,207,142,.08);border-color:var(--green)}
 .tracker-day-cell.done .tc-num{color:var(--green)}
-.tracker-day-cell.done::after{content:'✓';position:absolute;top:5px;right:7px;font-size:.6rem;color:var(--green)}
+.tracker-day-cell.done::after{content:'✓';position:absolute;top:6px;right:9px;font-size:.7rem;color:var(--green)}
 .tracker-day-cell.future{opacity:.4;cursor:default}
-.tc-num{font-size:.75rem;font-weight:700;color:var(--text);line-height:1}
+.tc-num{font-size:.88rem;font-weight:700;color:var(--text);line-height:1}
 .tc-lbl{font-size:.42rem;color:var(--muted);line-height:1}
-.tc-tasks{margin-top:4px;display:flex;flex-direction:column;gap:3px}
-.tc-task{font-size:.62rem;color:var(--muted);line-height:1.3;display:flex;align-items:flex-start;gap:3px}
-.tc-task-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tc-tasks{margin-top:5px;display:flex;flex-direction:column;gap:4px}
+.tc-task{font-size:.75rem;color:var(--muted);line-height:1.35;display:flex;align-items:flex-start;gap:4px}
+.tc-task-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
 .tracker-day-cell.done .tc-task{text-decoration:line-through;opacity:.5}
 .tracker-day-cell.today .tc-task{color:var(--text)}
 .tracker-stats{display:flex;gap:9px;margin-bottom:14px}
@@ -457,7 +457,13 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); requestWakeLock(); updateCalIcon(); };
+window.onload=()=>{ loadState(); loadTrackerData(); renderDays(); renderContent(); updateStreak(); updateTrackerStreakTopbar(); requestWakeLock(); updateCalIcon(); };
+
+function updateTrackerStreakTopbar(){
+  const total = Object.entries(trackerData).filter(([k,v])=> k !== '_currentDay' && v && v.done).length;
+  const el = document.getElementById('streakEl');
+  if(el) el.textContent = `🔥 ${bn(total)} দিন`;
+}
 
 function updateCalIcon(){
   const now = new Date();
@@ -1972,6 +1978,7 @@ function closeTracker(){
 function renderTracker(){
   const body = document.getElementById('trackerBody');
   body.innerHTML = renderProgressTab();
+  updateTrackerStreakTopbar();
 }
 
 /* ── TODAY'S ROUTINE DAY ── */
@@ -2033,7 +2040,7 @@ function renderProgressTab(){
 
   // Streak box
   const streakBox = streak > 0
-    ? `<div class="tracker-streak-box"><span style="font-size:1.4rem">🔥</span><span class="tracker-streak-text">পরপর ${bn(streak)} দিন পড়া হয়েছে!</span></div>`
+    ? `<div class="tracker-streak-box"><span style="font-size:1.4rem">🔥</span><span class="tracker-streak-text">মোট ${bn(streak)} দিন পড়া সম্পন্ন হয়েছে!</span></div>`
     : '';
 
   // Stats row
@@ -2120,20 +2127,15 @@ function renderCalendarGrid(todayRDay){
     </div>`;
   }
 
-  const rem = TOTAL_ROUTINE_DAYS % 3;
-  if(rem > 0){ for(let i=0;i<3-rem;i++) h+=`<div></div>`; }
+  const rem = TOTAL_ROUTINE_DAYS % 2;
+  if(rem > 0){ for(let i=0;i<2-rem;i++) h+=`<div></div>`; }
   h += `</div>`;
   return h;
 }
 
 function calcTrackerStreak(){
-  const todayRDay = getTodayRoutineDay();
-  let streak = 0;
-  for(let i=todayRDay; i>=1; i--){
-    if(trackerData[i] && trackerData[i].done) streak++;
-    else break;
-  }
-  return streak;
+  // মোট কতটি দিন সম্পন্ন হয়েছে
+  return Object.entries(trackerData).filter(([k,v])=> k !== '_currentDay' && v && v.done).length;
 }
 
 function toggleTodayDone(){
