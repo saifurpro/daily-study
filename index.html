@@ -457,12 +457,13 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); };
+window.onload=()=>{ loadState(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); };
 
 function initTrackerTopbar(){
-  // tracker script block লোড হওয়ার পরে call হবে
   if(typeof loadTrackerData === 'function') loadTrackerData();
-  if(typeof updateTrackerStreakTopbar === 'function') updateTrackerStreakTopbar();
+  // streak সবসময় study completedDays থেকে — tracker overwrite করবে না
+  recalcStreak();
+  updateStreak();
 }
 
 function updateCalIcon(){
@@ -953,13 +954,13 @@ function checkDone(){
     updateStreak();renderDays();toast('🎉 দিন '+bn(currentDay)+' সম্পন্ন!');save();
   }
 }
-/* streak = মোট কতটি দিন কমপ্লিট আছে (যেকোনো দিন, গ্যাপ থাকলেও) */
+/* streak = মোট কতটি দিন কমপ্লিট আছে */
 function recalcStreak(){
   streak = Object.keys(completedDays).filter(d => completedDays[d]).length;
 }
 function updateStreak(){
   const el = document.getElementById('streakEl');
-  if(el) el.textContent=`🔥 ${bn(streak)} দিন`;
+  if(el) el.textContent = `🔥 ${bn(streak)} দিন`;
 }
 
 /* ══════════════════════════════════════
@@ -1956,9 +1957,10 @@ function loadTrackerData(){
 }
 
 function updateTrackerStreakTopbar(){
-  const total = Object.entries(trackerData).filter(([k,v])=> k !== '_currentDay' && v && v.done).length;
-  const el = document.getElementById('streakEl');
-  if(el) el.textContent = `🔥 ${bn(total)} দিন`;
+  // streakEl এ study completedDays দেখানো হয় — tracker overwrite করবে না
+  // শুধু study streak আপডেট করো
+  recalcStreak();
+  updateStreak();
 }
 function saveTrackerData(){
   localStorage.setItem('ds_tracker', JSON.stringify({data:trackerData, startDate:trackerStartDate}));
