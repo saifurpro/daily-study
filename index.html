@@ -142,6 +142,21 @@ body.landscape .content{padding:10px 12px 20px}
 .a-cell.revealed .eye-btn{background:var(--green);border-color:var(--green);color:#fff}
 
 /* Landscape: one line per cell + big font + horizontal scroll */
+body.landscape .topbar{gap:8px}
+/* LANDSCAPE NAV (topbar-এ) — bottom-nav স্টাইলে */
+.ls-nav{display:none;align-items:center;gap:2px;flex-shrink:0}
+.ls-nav-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;background:transparent;border:none;color:var(--muted);
+  border-radius:10px;padding:4px 10px;
+  cursor:pointer;font-family:SolaimanLipi,sans-serif;
+  white-space:nowrap;transition:all .18s;min-width:44px;
+}
+.ls-nav-btn:active{opacity:.65}
+.ls-nav-btn.active{color:var(--accent)}
+.ls-nav-btn .ls-ni{font-size:1.05rem;line-height:1;display:flex;align-items:center;justify-content:center}
+.ls-nl{font-size:.55rem;letter-spacing:.2px;margin-top:1px}
+body.landscape .ls-nav{display:flex}
 body.landscape .bottom-nav{display:none}
 body.landscape .fab{display:none}
 body.landscape .table-wrap{overflow-x:visible}
@@ -180,10 +195,14 @@ body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
 .nav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:none;color:var(--muted);cursor:pointer;padding:3px 12px;font-family:SolaimanLipi,sans-serif}
 .nav-btn.active{color:var(--accent)}.nav-btn .ni{font-size:1.15rem}.nav-btn .nl{font-size:.58rem}
 
-/* Calendar date icon */
-#calIcon{font-size:.7rem!important;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:32px;height:32px;border-radius:7px;background:var(--accent);color:#fff;border:none;padding:0}
-#calIcon .cal-month{font-size:.48rem;background:rgba(0,0,0,.25);width:100%;text-align:center;border-radius:5px 5px 0 0;padding:1px 0;letter-spacing:.3px}
-#calIcon .cal-day{font-size:.85rem;font-weight:900;line-height:1.1}
+/* Calendar date icon — bottom nav */
+#calIcon{font-size:.7rem!important;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;background:var(--accent);color:#fff;border:none;padding:0}
+#calIcon .cal-month{font-size:.44rem;background:rgba(0,0,0,.25);width:100%;text-align:center;border-radius:5px 5px 0 0;padding:1px 0;letter-spacing:.3px}
+#calIcon .cal-day{font-size:.82rem;font-weight:900;line-height:1.1}
+/* Calendar date icon — landscape topbar: একটাই রঙ, সিম্পল */
+#lsCalIcon{font-size:.7rem!important;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;border:none;padding:0;cursor:pointer}
+#lsCalIcon .cal-month{font-size:.44rem;width:100%;text-align:center;border-radius:6px 6px 0 0;padding:2px 0;letter-spacing:.3px;background:rgba(0,0,0,.2)}
+#lsCalIcon .cal-day{font-size:.9rem;font-weight:900;line-height:1.15}
 
 /* FAB removed */
 
@@ -374,6 +393,14 @@ body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
     <input class="search-input" id="searchInput" placeholder="🔍 সার্চ করুন..." oninput="handleSearch(this.value);toggleClear(this.value)">
     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
   </div>
+  <!-- landscape mode-এ header-এ nav বোতাম -->
+  <div class="ls-nav" id="lsNav">
+    <button class="ls-nav-btn" id="lsNavStudy" onclick="switchTab('study');window.scrollTo({top:0,behavior:'smooth'})" title="উপরে যান"><span class="ls-ni" id="lsCalIcon">📅</span></button>
+    <button class="ls-nav-btn" id="lsNavListen" onclick="openListen()"><span class="ls-ni">🤖</span><span class="ls-nl">AI</span></button>
+    <button class="ls-nav-btn" id="lsNavExam" onclick="openExam()"><span class="ls-ni">📝</span><span class="ls-nl">পরীক্ষা</span></button>
+    <button class="ls-nav-btn" id="lsNavTracker" onclick="openTracker()"><span class="ls-ni">📊</span><span class="ls-nl">ট্র্যাক</span></button>
+    <button class="ls-nav-btn" id="lsNavDrive" onclick="openDrive()"><span class="ls-ni">☁️</span><span class="ls-nl">Drive</span></button>
+  </div>
   <div class="topbar-right">
     <span class="streak" id="streakEl">🔥 ০ দিন</span>
     <button class="rotate-btn" id="rotateBtn" onclick="toggleLandscape()">⟳ আড়াআড়ি</button>
@@ -457,7 +484,7 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); };
+window.onload=()=>{ loadState(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); syncNavActive('navStudy'); };
 
 function initTrackerTopbar(){
   if(typeof loadTrackerData === 'function') loadTrackerData();
@@ -469,9 +496,11 @@ function initTrackerTopbar(){
 function updateCalIcon(){
   const now = new Date();
   const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const html = `<span class="cal-month">${months[now.getMonth()]}</span><span class="cal-day">${now.getDate()}</span>`;
   const el = document.getElementById('calIcon');
-  if(!el) return;
-  el.innerHTML = `<span class="cal-month">${months[now.getMonth()]}</span><span class="cal-day">${now.getDate()}</span>`;
+  if(el) el.innerHTML = html;
+  const lsEl = document.getElementById('lsCalIcon');
+  if(lsEl) lsEl.innerHTML = html;
 }
 
 /* ══════════════════════════════════════
@@ -674,58 +703,110 @@ async function toggleLandscape(){
    প্রতিটি টেবিলে সবচেয়ে বড় content দেখে
    fr ratio হিসাব করে grid-template-columns সেট করে
 ══════════════════════════════════════ */
-function measureTextWidth(text, font){
-  const c = measureTextWidth._canvas || (measureTextWidth._canvas = document.createElement('canvas'));
-  const ctx = c.getContext('2d');
-  ctx.font = font;
-  return ctx.measureText(text).width;
+/* DOM-based text measurement — correctly handles Bengali (SolaimanLipi) font */
+let _measureEl = null;
+function getMeasureEl(){
+  if(_measureEl) return _measureEl;
+  _measureEl = document.createElement('span');
+  _measureEl.style.cssText = 'position:absolute;top:-9999px;left:-9999px;visibility:hidden;white-space:nowrap;pointer-events:none;font-family:SolaimanLipi,sans-serif;';
+  document.body.appendChild(_measureEl);
+  return _measureEl;
+}
+
+function measureTextWidth(text, fontSizeRem){
+  const el = getMeasureEl();
+  el.style.fontSize = fontSizeRem;
+  el.textContent = text;
+  return el.getBoundingClientRect().width;
 }
 
 function applyLandscapeColWidths(){
-  // landscape cell font
-  const CELL_FONT = '1.15rem SolaimanLipi, sans-serif';
-  const HDR_FONT  = '0.9rem SolaimanLipi, sans-serif';
-  // eye-btn এর জন্য extra space (px)
   const EYE_EXTRA = 38;
+  const CELL_PAD  = 28;
+
+  // topic title দেখে column ratio নির্ধারণ
+  // BIG_FIRST: প্রশ্ন লম্বা, উত্তর ছোট → q-col 60%
+  // SMALL_FIRST: প্রশ্ন ছোট, উত্তর লম্বা → q-col 35%
+  // বাকি সব → 50/50
+  const BIG_FIRST_TOPICS = [
+    'সাধারণ জ্ঞান', 'বিজ্ঞান', 'কম্পিউটার',
+    'বাংলা সাহিত্য', 'সমাস', 'Voice Changes',
+    'Translation', 'Corrections', 'Confusion'
+  ];
+  const SMALL_FIRST_TOPICS = [
+    'পূর্ণরূপ', 'জ্যামিতিক সংজ্ঞা', 'বাড়ীর কাজ',
+    'বিপরীত শব্দ', 'বানান শুদ্ধি', 'সন্ধি বিচ্ছেদ',
+    'পারিভাষিক শব্দ', 'Word Meaning', 'Synonyms',
+    'Antonyms', 'Correct Spelling', 'সমার্থক শব্দ',
+    'বর্গ ও ঘন', 'সূত্র'
+  ];
+
+  function getTopicRatio(title, cols){
+    const t = title || '';
+    if(cols === 2){
+      if(BIG_FIRST_TOPICS.some(k => t.includes(k)))    return [0.60, 0.40];
+      if(SMALL_FIRST_TOPICS.some(k => t.includes(k)))  return [0.35, 0.65];
+      return [0.50, 0.50]; // বাগধারা, এক কথায় প্রকাশ ইত্যাদি
+    }
+    if(cols === 3){
+      // 3-col: প্রথম কলাম (keyword) ছোট-মাঝারি, দ্বিতীয় (অর্থ/উত্তর) বড়, তৃতীয় (example) মাঝারি
+      // Phrase & Idioms, Preposition: Q ছোট, A মাঝারি, Ex মাঝারি → 25/40/35
+      // Synonyms, Antonyms: Q ছোট, A মাঝারি, Ex মাঝারি → 28/38/34
+      // সমাস (3-col): Q মাঝারি, A মাঝারি, Ex মাঝারি → 35/32/33
+      // বাগধারা (3-col): Q মাঝারি, A মাঝারি, Ex বড় → 30/30/40
+      if(t.includes('Phrase') || t.includes('Preposition')) return [0.25, 0.40, 0.35];
+      if(t.includes('Synonyms') || t.includes('Antonyms'))  return [0.28, 0.38, 0.34];
+      if(t.includes('সমাস'))                                return [0.35, 0.32, 0.33];
+      if(t.includes('বাগধারা'))                             return [0.28, 0.30, 0.42];
+      return [0.33, 0.34, 0.33]; // default 3-col
+    }
+    return null;
+  }
 
   document.querySelectorAll('.table-wrap').forEach(wrap => {
     const headerEl = wrap.querySelector('.t-header');
     if(!headerEl) return;
-    const cols = headerEl.classList.contains('col3') ? 3 : 2;
+    const cols = parseInt(wrap.dataset.cols) || (headerEl.classList.contains('col3') ? 3 : 2);
+    const topicTitle = wrap.dataset.topic || '';
 
-    // প্রতি column-এর max width জমা করব
+    // ১. topic-based fixed ratio চেষ্টা
+    const fixedRatio = getTopicRatio(topicTitle, cols);
+
+    // ২. content measure করে max width নাও (সব ক্ষেত্রেই)
     const maxW = new Array(cols).fill(0);
-
-    // header cells মাপো
     wrap.querySelectorAll('.th-cell').forEach((th, i) => {
       if(i >= cols) return;
-      const w = measureTextWidth(th.textContent.trim(), HDR_FONT);
+      const w = measureTextWidth(th.textContent.trim(), '0.9rem') + CELL_PAD;
       if(w > maxW[i]) maxW[i] = w;
     });
-
-    // data rows মাপো
     wrap.querySelectorAll('.t-row').forEach(row => {
       const cells = row.querySelectorAll('.t-cell');
       cells.forEach((cell, i) => {
         if(i >= cols) return;
-        // a-text এর ভেতরের text নাও
         const txt = (cell.querySelector('.a-text') || cell).textContent.trim();
-        let w = measureTextWidth(txt, CELL_FONT);
-        // answer cell-এ eye button আছে
-        if(cell.classList.contains('a-cell') && i < cols - 1) w += EYE_EXTRA;
+        let w = measureTextWidth(txt, '1.15rem') + CELL_PAD;
+        if(i === cols - 1) w += EYE_EXTRA;
         if(w > maxW[i]) maxW[i] = w;
       });
     });
+    const MIN_W = 80;
+    for(let i = 0; i < cols; i++) if(maxW[i] < MIN_W) maxW[i] = MIN_W;
 
-    // min width দিই যাতে একদম ছোট না হয়
-    const MIN_W = 60;
-    for(let i=0;i<cols;i++) if(maxW[i] < MIN_W) maxW[i] = MIN_W;
+    let frCols;
+    if(fixedRatio){
+      // fixed ratio ব্যবহার করো, কিন্তু content-এর minimum চেক করো
+      // যদি কোনো কলামের content তার assigned ratio-র চেয়ে বেশি হয়, সেটা বাড়াও
+      const totalMeasured = maxW.reduce((a,b)=>a+b,0);
+      const assigned = fixedRatio.map(r => totalMeasured * r);
+      // minimum = content width বা assigned width, যেটা বড়
+      const final = assigned.map((a,i) => Math.max(a, maxW[i]));
+      const finalTotal = final.reduce((a,b)=>a+b,0);
+      frCols = final.map(w => (w/finalTotal * cols).toFixed(2) + 'fr').join(' ');
+    } else {
+      const total = maxW.reduce((a,b)=>a+b,0);
+      frCols = maxW.map(w => (w/total * cols).toFixed(2) + 'fr').join(' ');
+    }
 
-    // fr ratio তৈরি করো (round to 2 decimal)
-    const total = maxW.reduce((a,b)=>a+b, 0);
-    const frCols = maxW.map(w => (w/total * cols).toFixed(2) + 'fr').join(' ');
-
-    // header এবং সব row-এ CSS var সেট করো
     [headerEl, ...wrap.querySelectorAll('.t-row')].forEach(el => {
       el.style.setProperty('--ls-cols', frCols);
       el.classList.add('ls-sized');
@@ -912,7 +993,7 @@ function renderContent(){
           <button class="reveal-all-btn ${done?'done':''}" onclick="revAll(${ti})" id="rab${ti}">${done?'✅':'সব দেখাও'}</button>
         </div>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" data-topic="${t.title}" data-cols="${cols}">
         <div class="t-header col${cols}">${hdrs.map(hh=>`<div class="th-cell">${hh}</div>`).join('')}</div>`;
     t.items.forEach((item,ii)=>{
       const k=`${currentDay}_${ti}_${ii}`, rv=!!revealed[k];
@@ -1000,12 +1081,26 @@ function openDrive(){
   renderSavedFolder();
   switchDriveTab('folder');
   document.getElementById('driveOv').classList.add('show');
+  syncNavActive('navDrive');
 }
-function closeDrive(){document.getElementById('driveOv').classList.remove('show');}
-function switchTab(tab){
+function closeDrive(){document.getElementById('driveOv').classList.remove('show');syncNavActive('navStudy');}
+/* nav active state — bottom-nav ও ls-nav উভয় sync */
+function syncNavActive(id){
+  // bottom nav
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  if(tab==='study'){document.getElementById('navStudy').classList.add('active');const si=document.getElementById('searchInput');si.value='';handleSearch('');toggleClear('');}
-  else if(tab==='search'){document.getElementById('navSearch').classList.add('active');document.getElementById('searchInput').focus();}
+  // ls-nav
+  document.querySelectorAll('.ls-nav-btn').forEach(b=>b.classList.remove('active'));
+  // id mapping: navStudy→lsNavStudy, navListen→lsNavListen, etc.
+  if(id){
+    const bot=document.getElementById(id);
+    if(bot) bot.classList.add('active');
+    const ls=document.getElementById('ls'+id.charAt(0).toUpperCase()+id.slice(1));
+    if(ls) ls.classList.add('active');
+  }
+}
+function switchTab(tab){
+  if(tab==='study'){syncNavActive('navStudy');const si=document.getElementById('searchInput');si.value='';handleSearch('');toggleClear('');}
+  else if(tab==='search'){syncNavActive('navSearch');document.getElementById('searchInput').focus();}
 }
 function toast(msg,err){
   const t=document.createElement('div');t.textContent=msg;
@@ -1025,15 +1120,13 @@ function openListen(){
   renderAgentTopicPicker();
   document.getElementById('listenOv').classList.add('show');
   document.getElementById('listenTopTitle').textContent='🤖 AI প্রশ্ন';
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('navListen').classList.add('active');
+  syncNavActive('navListen');
 }
 
 function closeListen(){
   agentStop();
   document.getElementById('listenOv').classList.remove('show');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('navStudy').classList.add('active');
+  syncNavActive('navStudy');
 }
 
 function agentStop(){
@@ -1342,16 +1435,14 @@ function openListen(){
   renderListenTopicPicker();
   document.getElementById('listenOv').classList.add('show');
   document.getElementById('listenTopTitle').textContent='🎧 শুনুন';
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('navListen').classList.add('active');
+  syncNavActive('navListen');
 }
 
 function closeListen(){
   listenStopped=true;
   window.speechSynthesis&&speechSynthesis.cancel();
   document.getElementById('listenOv').classList.remove('show');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('navStudy').classList.add('active');
+  syncNavActive('navStudy');
 }
 
 function renderListenTopicPicker(){
@@ -1558,12 +1649,12 @@ function openExam(){
   renderExamPicker();
   document.getElementById('examOv').classList.add('show');
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
+  syncNavActive('navExam');
 }
 function closeExam(){
   if(document.getElementById('examOv').classList.contains('exam-landscape')) toggleExamLandscape();
   document.getElementById('examOv').classList.remove('show');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('navStudy').classList.add('active');
+  syncNavActive('navStudy');
 }
 
 let examIsLandscape=false;
@@ -1970,14 +2061,12 @@ function saveTrackerData(){
 function openTracker(){
   loadTrackerData();
   document.getElementById('trackerOv').classList.add('show');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('navTracker').classList.add('active');
+  syncNavActive('navTracker');
   renderTracker();
 }
 function closeTracker(){
   document.getElementById('trackerOv').classList.remove('show');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('navStudy').classList.add('active');
+  syncNavActive('navStudy');
 }
 
 /* ── MAIN RENDER ── */
