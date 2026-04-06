@@ -543,6 +543,7 @@ function loadState(){
     const f=localStorage.getItem('ds_folder'); if(f) savedFolderUrl=f;
     const m=localStorage.getItem('ds_modtime'); if(m) fileModTimeCache=JSON.parse(m);
     recalcStreak();
+    updateStreak();
   }catch(e){}
 }
 
@@ -952,17 +953,14 @@ function checkDone(){
     updateStreak();renderDays();toast('🎉 দিন '+bn(currentDay)+' সম্পন্ন!');save();
   }
 }
-/* streak = ডে-১ থেকে শুরু করে ক্রমাগত কতটি দিন কমপ্লিট আছে */
+/* streak = মোট কতটি দিন কমপ্লিট আছে (যেকোনো দিন, গ্যাপ থাকলেও) */
 function recalcStreak(){
-  const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
-  let count=0;
-  for(const d of days){
-    if(completedDays[d]) count++;
-    else break; // ধারাবাহিকতা ভাঙলে থামো
-  }
-  streak=count;
+  streak = Object.keys(completedDays).filter(d => completedDays[d]).length;
 }
-function updateStreak(){document.getElementById('streakEl').textContent=`🔥 ${bn(streak)} দিন`;}
+function updateStreak(){
+  const el = document.getElementById('streakEl');
+  if(el) el.textContent=`🔥 ${bn(streak)} দিন`;
+}
 
 /* ══════════════════════════════════════
    SEARCH
