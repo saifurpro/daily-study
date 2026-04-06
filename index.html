@@ -457,12 +457,12 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); loadTrackerData(); renderDays(); renderContent(); updateStreak(); updateTrackerStreakTopbar(); requestWakeLock(); updateCalIcon(); };
+window.onload=()=>{ loadState(); renderDays(); renderContent(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); };
 
-function updateTrackerStreakTopbar(){
-  const total = Object.entries(trackerData).filter(([k,v])=> k !== '_currentDay' && v && v.done).length;
-  const el = document.getElementById('streakEl');
-  if(el) el.textContent = `🔥 ${bn(total)} দিন`;
+function initTrackerTopbar(){
+  // tracker script block লোড হওয়ার পরে call হবে
+  if(typeof loadTrackerData === 'function') loadTrackerData();
+  if(typeof updateTrackerStreakTopbar === 'function') updateTrackerStreakTopbar();
 }
 
 function updateCalIcon(){
@@ -1955,6 +1955,12 @@ function loadTrackerData(){
     const t = localStorage.getItem('ds_tracker');
     if(t){ const p = JSON.parse(t); trackerData=p.data||{}; trackerStartDate=p.startDate||null; }
   }catch(e){}
+}
+
+function updateTrackerStreakTopbar(){
+  const total = Object.entries(trackerData).filter(([k,v])=> k !== '_currentDay' && v && v.done).length;
+  const el = document.getElementById('streakEl');
+  if(el) el.textContent = `🔥 ${bn(total)} দিন`;
 }
 function saveTrackerData(){
   localStorage.setItem('ds_tracker', JSON.stringify({data:trackerData, startDate:trackerStartDate}));
