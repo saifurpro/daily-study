@@ -334,17 +334,21 @@ body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
 .tracker-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .tracker-cal-title{font-size:.9rem;font-weight:700;color:var(--text)}
 .tracker-reset-btn{background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:4px 11px;border-radius:7px;font-size:.7rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
-.tracker-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:16px}
+.tracker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
 .tracker-grid-head{text-align:center;font-size:.6rem;color:var(--muted);padding:3px 0;font-weight:600}
-.tracker-day-cell{aspect-ratio:1;border-radius:9px;border:1.5px solid var(--border);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;gap:1px}
-.tracker-day-cell:hover{border-color:var(--accent)}
+.tracker-day-cell{border-radius:11px;border:1.5px solid var(--border);background:var(--card);display:flex;flex-direction:column;padding:9px 10px;cursor:default;transition:all .15s;position:relative;gap:3px;min-height:64px}
 .tracker-day-cell.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,142,247,.25)}
-.tracker-day-cell.done{background:rgba(62,207,142,.15);border-color:var(--green)}
+.tracker-day-cell.done{background:rgba(62,207,142,.08);border-color:var(--green)}
 .tracker-day-cell.done .tc-num{color:var(--green)}
-.tracker-day-cell.done::after{content:'✓';position:absolute;top:2px;right:3px;font-size:.5rem;color:var(--green)}
-.tracker-day-cell.future{opacity:.45;cursor:default}
-.tc-num{font-size:.82rem;font-weight:700;color:var(--text);line-height:1}
-.tc-lbl{font-size:.45rem;color:var(--muted);line-height:1}
+.tracker-day-cell.done::after{content:'✓';position:absolute;top:5px;right:7px;font-size:.6rem;color:var(--green)}
+.tracker-day-cell.future{opacity:.4;cursor:default}
+.tc-num{font-size:.75rem;font-weight:700;color:var(--text);line-height:1}
+.tc-lbl{font-size:.42rem;color:var(--muted);line-height:1}
+.tc-tasks{margin-top:4px;display:flex;flex-direction:column;gap:3px}
+.tc-task{font-size:.62rem;color:var(--muted);line-height:1.3;display:flex;align-items:flex-start;gap:3px}
+.tc-task-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.tracker-day-cell.done .tc-task{text-decoration:line-through;opacity:.5}
+.tracker-day-cell.today .tc-task{color:var(--text)}
 .tracker-stats{display:flex;gap:9px;margin-bottom:14px}
 .tstat{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
 .tstat-num{font-size:1.3rem;font-weight:700;color:var(--accent)}
@@ -1967,31 +1971,35 @@ function closeTracker(){
 /* ── MAIN RENDER ── */
 function renderTracker(){
   const body = document.getElementById('trackerBody');
-  const tabs = `<div class="tracker-tabs">
-    <button class="tracker-tab${trackerTab==='progress'?' active':''}" onclick="switchTrackerTab('progress')">📅 আজকের পড়া</button>
-    <button class="tracker-tab${trackerTab==='routine'?' active':''}" onclick="switchTrackerTab('routine')">📋 রুটিন</button>
-  </div>`;
-
-  if(trackerTab === 'progress'){
-    body.innerHTML = tabs + renderProgressTab();
-  } else {
-    body.innerHTML = tabs + renderRoutineTab();
-  }
-}
-
-function switchTrackerTab(tab){
-  trackerTab = tab;
-  renderTracker();
+  body.innerHTML = renderProgressTab();
 }
 
 /* ── TODAY'S ROUTINE DAY ── */
+// currentRoutineDay = সর্বশেষ যে দিনটি চলছে (manual completion ভিত্তিক)
+// "সম্পন্ন করেছি" চাপলেই পরের দিনে যাবে — তারিখ বদলালে অটো যাবে না
 function getTodayRoutineDay(){
   if(!trackerStartDate) return 1;
-  const start = new Date(trackerStartDate);
-  const now = new Date();
-  start.setHours(0,0,0,0); now.setHours(0,0,0,0);
-  const diff = Math.floor((now - start)/(1000*60*60*24));
-  return Math.min(diff + 1, TOTAL_ROUTINE_DAYS);
+  // trackerCurrentDay সেভ থাকলে সেটাই ব্যবহার করি
+  if(trackerData._currentDay) return Math.min(trackerData._currentDay, TOTAL_ROUTINE_DAYS);
+  return 1;
+}
+
+// আজকের পড়া সম্পন্ন হয়েছে কিনা — তারিখ যাই হোক, শুধু flag দেখি
+function isTodayDone(){
+  const rDay = getTodayRoutineDay();
+  return !!(trackerData[rDay] && trackerData[rDay].done);
+}
+
+// পরের দিনের রুটিন দেখানোর সময় হয়েছে কিনা (রাত ১২টার পর)
+function isNextDayVisible(){
+  const rDay = getTodayRoutineDay();
+  if(!(trackerData[rDay] && trackerData[rDay].done)) return false;
+  const doneDate = trackerData[rDay].date; // "YYYY-MM-DD"
+  const todayDate = todayStr();
+  // সম্পন্ন হয়েছিল আজকে? তাহলে রাত ১২টা পর্যন্ত অপেক্ষা
+  if(doneDate === todayDate) return false;
+  // সম্পন্ন হয়েছিল আগের দিন? তাহলে পরের দিন দেখানো যাবে
+  return true;
 }
 
 function todayStr(){
@@ -2001,9 +2009,17 @@ function todayStr(){
 
 /* ── PROGRESS TAB ── */
 function renderProgressTab(){
-  // প্রথমবার খুললে startDate সেট করি
-  if(!trackerStartDate){
-    trackerStartDate = todayStr();
+  // প্রথমবার খুললে currentDay=1 সেট করি
+  if(!trackerData._currentDay){
+    trackerData._currentDay = 1;
+    trackerStartDate = trackerStartDate || todayStr();
+    saveTrackerData();
+  }
+
+  // পরের দিনে যাওয়ার সময় হলে (রাত ১২টা পার হলে) অটো অ্যাডভান্স করো
+  const curDay = getTodayRoutineDay();
+  if(isNextDayVisible() && curDay < TOTAL_ROUTINE_DAYS){
+    trackerData._currentDay = curDay + 1;
     saveTrackerData();
   }
 
@@ -2011,8 +2027,8 @@ function renderProgressTab(){
   const todayRoutine = ROUTINE[todayRDay - 1];
   const isDone = trackerData[todayRDay] && trackerData[todayRDay].done;
 
-  // Stats
-  const totalDone = Object.values(trackerData).filter(v=>v.done).length;
+  // Stats — _currentDay কে count থেকে বাদ
+  const totalDone = Object.entries(trackerData).filter(([k,v])=> k !== '_currentDay' && v && v.done).length;
   const streak = calcTrackerStreak();
 
   // Streak box
@@ -2027,7 +2043,28 @@ function renderProgressTab(){
     <div class="tstat yellow"><div class="tstat-num">${bn(Math.round(totalDone/TOTAL_ROUTINE_DAYS*100))}%</div><div class="tstat-lbl">অগ্রগতি</div></div>
   </div>`;
 
-  // Today's task box
+  // আজকের পড়া সম্পন্ন হয়েছে এবং রাত ১২টা হয়নি — completion state দেখাও
+  if(isDone && !isNextDayVisible()){
+    const doneTaskItems = todayRoutine ? todayRoutine.tasks.map(t=>{
+      const dotClass = t.type==='new'?'dot-new':t.type==='bigrev'?'dot-bigrev':'dot-rev';
+      return `<div class="today-task-item"><div class="today-task-dot ${dotClass}"></div><span style="text-decoration:line-through;opacity:.6">${t.label}</span></div>`;
+    }).join('') : '';
+    const completedBox = `<div class="today-task-box" style="border-color:var(--green);background:rgba(62,207,142,.06)">
+      <div class="today-task-title" style="color:var(--green)">✅ রুটিন দিন ${bn(todayRDay)} — সম্পন্ন হয়েছে!</div>
+      ${doneTaskItems}
+      <div style="margin-top:10px;font-size:.75rem;color:var(--muted);line-height:1.55;">🌙 পরের দিনের রুটিন রাত ১২টার পর দেখা যাবে<br>সম্ভব হলে আবার রিভিশন দাও বা পরীক্ষা দাও 📝</div>
+    </div>`;
+    const undoBtn = `<button class="tracker-done-btn undone" onclick="toggleTodayDone()" style="margin-bottom:7px;">↩ সম্পন্ন চিহ্ন তুলে দাও</button>`;
+    const calHtml = renderCalendarGrid(todayRDay);
+    return `${streakBox}${statsRow}${completedBox}${undoBtn}
+    <div class="tracker-cal-header" style="margin-top:14px">
+      <span class="tracker-cal-title">📆 সব দিনের অবস্থা</span>
+      <button class="tracker-reset-btn" onclick="confirmTrackerReset()">🔄 রিসেট</button>
+    </div>
+    ${calHtml}`;
+  }
+
+  // Today's task box (normal / incomplete state)
   const taskItems = todayRoutine ? todayRoutine.tasks.map(t=>{
     const dotClass = t.type==='new'?'dot-new':t.type==='bigrev'?'dot-bigrev':'dot-rev';
     return `<div class="today-task-item"><div class="today-task-dot ${dotClass}"></div>${t.label}</div>`;
@@ -2038,11 +2075,11 @@ function renderProgressTab(){
     ${taskItems}
   </div>`;
 
-  const doneBtn = `<button class="tracker-done-btn${isDone?' undone':''}" onclick="toggleTodayDone()">
-    ${isDone ? '✅ সম্পন্ন হয়েছে — আবার চিহ্ন তুলুন' : '✔ আজকের পড়া সম্পন্ন করেছি'}
+  const doneBtn = `<button class="tracker-done-btn" onclick="toggleTodayDone()">
+    ✔ আজকের পড়া সম্পন্ন করেছি
   </button>`;
 
-  // Calendar — ৭ দিন/সপ্তাহ করে দেখাব
+  // Calendar
   const calHtml = renderCalendarGrid(todayRDay);
 
   return `${streakBox}${statsRow}${todayBox}${doneBtn}
@@ -2054,12 +2091,8 @@ function renderProgressTab(){
 }
 
 function renderCalendarGrid(todayRDay){
-  const days = ['র১','র২','র৩','র৪','র৫','র৬','র৭'];
   let h = `<div class="tracker-grid">`;
-  // Header
-  h += days.map(d=>`<div class="tracker-grid-head">${d}</div>`).join('');
 
-  // Cells — ৭ কলামে সাজাই, শুরু থেকে
   for(let i=1; i<=TOTAL_ROUTINE_DAYS; i++){
     const isDone = trackerData[i] && trackerData[i].done;
     const isToday = i === todayRDay;
@@ -2068,17 +2101,27 @@ function renderCalendarGrid(todayRDay){
     if(isDone) cls += ' done';
     if(isToday) cls += ' today';
     if(isFuture) cls += ' future';
-    const onclick = isFuture ? '' : `onclick="toggleDayDone(${i})"`;
-    h += `<div class="${cls}" ${onclick} title="রুটিন দিন ${i}">
-      <span class="tc-num">${bn(i)}</span>
-      <span class="tc-lbl">দিন</span>
+
+    const r = ROUTINE[i - 1];
+    const taskHtml = r ? r.tasks.map(t=>{
+      const dotColor = t.type==='new' ? 'var(--accent)' : t.type==='bigrev' ? 'var(--green)' : 'var(--accent2)';
+      return `<div class="tc-task"><div class="tc-task-dot" style="background:${dotColor}"></div><span>${t.label}</span></div>`;
+    }).join('') : '';
+
+    const todayBadge = isToday
+      ? `<span style="font-size:.48rem;background:var(--accent);color:#fff;border-radius:4px;padding:0 4px;margin-left:4px;font-weight:700;vertical-align:middle">আজ</span>`
+      : '';
+
+    h += `<div class="${cls}">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;">
+        <span class="tc-num">${bn(i)} দিন</span>${todayBadge}
+      </div>
+      <div class="tc-tasks">${taskHtml}</div>
     </div>`;
   }
 
-  // বাকি ঘর ফাঁকা রাখি (৭-এর গুণিতক করতে)
-  const rem = TOTAL_ROUTINE_DAYS % 7;
-  if(rem > 0){ for(let i=0;i<7-rem;i++) h+=`<div></div>`; }
-
+  const rem = TOTAL_ROUTINE_DAYS % 3;
+  if(rem > 0){ for(let i=0;i<3-rem;i++) h+=`<div></div>`; }
   h += `</div>`;
   return h;
 }
@@ -2095,13 +2138,26 @@ function calcTrackerStreak(){
 
 function toggleTodayDone(){
   const todayRDay = getTodayRoutineDay();
-  toggleDayDone(todayRDay);
+  const isDone = trackerData[todayRDay] && trackerData[todayRDay].done;
+  if(isDone){
+    trackerData[todayRDay].done = false;
+    delete trackerData[todayRDay].date;
+    saveTrackerData();
+    renderTracker();
+  } else {
+    trackerData[todayRDay] = {done: true, date: todayStr()};
+    saveTrackerData();
+    renderTracker();
+    showCompletionMessage();
+  }
 }
 
 function toggleDayDone(routineDay){
-  if(routineDay > getTodayRoutineDay()) return; // future দিন toggle করা যাবে না
+  const curDay = getTodayRoutineDay();
+  if(routineDay > curDay) return; // future দিন toggle করা যাবে না
   if(trackerData[routineDay] && trackerData[routineDay].done){
     trackerData[routineDay].done = false;
+    delete trackerData[routineDay].date;
   } else {
     trackerData[routineDay] = {done:true, date:todayStr()};
   }
@@ -2111,41 +2167,41 @@ function toggleDayDone(routineDay){
 
 function confirmTrackerReset(){
   if(!confirm('সব অগ্রগতি মুছে নতুন করে শুরু করবেন?')) return;
-  trackerData = {};
+  trackerData = {_currentDay: 1};
   trackerStartDate = todayStr();
   saveTrackerData();
   renderTracker();
   toast('🔄 ট্র্যাকার রিসেট হয়েছে!');
 }
 
-/* ── ROUTINE TAB ── */
-function renderRoutineTab(){
-  const todayRDay = getTodayRoutineDay();
-  let h = '';
-  ROUTINE.forEach(r=>{
-    const isToday = r.routineDay === todayRDay;
-    const isDone = trackerData[r.routineDay] && trackerData[r.routineDay].done;
-    const borderStyle = isToday ? 'border-color:var(--accent)' : isDone ? 'border-color:var(--green)' : '';
-    const badge = isToday ? `<span style="background:var(--accent);color:#fff;border-radius:5px;padding:1px 7px;font-size:.65rem;font-weight:700;margin-left:6px;">আজ</span>` : isDone ? `<span style="color:var(--green);font-size:.75rem;margin-left:6px;">✅</span>` : '';
-    const tasks = r.tasks.map(t=>{
-      const dotClass = t.type==='new'?'dot-new':t.type==='bigrev'?'dot-bigrev':'dot-rev';
-      return `<div class="routine-task"><div class="routine-task-dot ${dotClass}"></div>${t.label}</div>`;
-    }).join('');
-    h += `<div class="routine-day-card" style="${borderStyle}">
-      <div class="routine-day-header">
-        <span class="routine-day-num">${bn(r.routineDay)}ম দিন</span>${badge}
-      </div>
-      <div class="routine-day-tasks">${tasks}</div>
-    </div>`;
-  });
+function showCompletionMessage(){
+  // বিশেষ completion overlay দেখাই
+  const existing = document.getElementById('completionMsg');
+  if(existing) existing.remove();
 
-  const legend = `<div style="display:flex;gap:12px;margin-bottom:12px;font-size:.72rem;color:var(--muted);flex-wrap:wrap;">
-    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:4px;"></span>নতুন পড়া</span>
-    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent2);margin-right:4px;"></span>রিভিশন</span>
-    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:4px;"></span>বড় রিভিশন</span>
-  </div>`;
+  const div = document.createElement('div');
+  div.id = 'completionMsg';
+  div.style.cssText = `
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(135deg,rgba(62,207,142,.95),rgba(79,142,247,.95));
+    color:#fff;border-radius:16px;padding:16px 20px;max-width:340px;width:calc(100% - 32px);
+    text-align:center;z-index:500;box-shadow:0 8px 32px rgba(0,0,0,.4);
+    font-family:SolaimanLipi,sans-serif;animation:slideUp .35s ease;
+  `;
+  div.innerHTML = `
+    <div style="font-size:1.8rem;margin-bottom:6px;">🎉</div>
+    <div style="font-size:.95rem;font-weight:700;margin-bottom:6px;">আজকের পড়া শেষ হয়েছে!</div>
+    <div style="font-size:.78rem;opacity:.9;line-height:1.55;">সম্ভব হলে আবার রিভিশন দাও বা পরীক্ষা দাও 📝</div>
+    <div style="font-size:.68rem;opacity:.7;margin-top:8px;">পরের দিনের রুটিন রাত ১২টার পর দেখা যাবে</div>
+  `;
 
-  return legend + h;
+  // slideUp animation
+  const style = document.createElement('style');
+  style.textContent = `@keyframes slideUp{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`;
+  document.head.appendChild(style);
+
+  document.body.appendChild(div);
+  setTimeout(()=>{ div.style.opacity='0'; div.style.transition='opacity .5s'; setTimeout(()=>div.remove(), 500); }, 5000);
 }
 </script>
 
