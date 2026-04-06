@@ -744,7 +744,7 @@ function applyLandscapeColWidths(){
   function getTopicRatio(title, cols){
     const t = title || '';
     if(cols === 2){
-      if(BIG_FIRST_TOPICS.some(k => t.includes(k)))    return [0.60, 0.40];
+      if(BIG_FIRST_TOPICS.some(k => t.includes(k)))    return [0.65, 0.35];
       if(SMALL_FIRST_TOPICS.some(k => t.includes(k)))  return [0.35, 0.65];
       return [0.50, 0.50]; // বাগধারা, এক কথায় প্রকাশ ইত্যাদি
     }
