@@ -564,6 +564,7 @@ function save(){
   localStorage.setItem('ds_l',JSON.stringify(savedLinks));
   localStorage.setItem('ds_folder',savedFolderUrl);
   localStorage.setItem('ds_modtime',JSON.stringify(fileModTimeCache));
+  localStorage.setItem('ds_ls', isLandscape ? '1' : '0');
 }
 function loadState(){
   try{
@@ -573,6 +574,7 @@ function loadState(){
     const l=localStorage.getItem('ds_l'); if(l) savedLinks=JSON.parse(l);
     const f=localStorage.getItem('ds_folder'); if(f) savedFolderUrl=f;
     const m=localStorage.getItem('ds_modtime'); if(m) fileModTimeCache=JSON.parse(m);
+    const ls=localStorage.getItem('ds_ls'); if(ls==='1'){ isLandscape=true; document.body.classList.add('landscape'); const btn=document.getElementById('rotateBtn'); if(btn){btn.classList.add('active');btn.textContent='↩ সোজা';} const metaVP=document.querySelector('meta[name=viewport]'); if(metaVP) metaVP.content='width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes'; setTimeout(applyLandscapeColWidths,120); }
     recalcStreak();
     updateStreak();
   }catch(e){}
@@ -697,6 +699,9 @@ async function toggleLandscape(){
   // Content-based column width
   if(isLandscape) setTimeout(applyLandscapeColWidths, 80);
   else resetLandscapeColWidths();
+
+  // Landscape state সেভ করো যাতে রিলোডেও মনে থাকে
+  save();
 }
 
 /* ══════════════════════════════════════
