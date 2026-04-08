@@ -2,7 +2,7 @@
   "name": "দৈনিক পড়া",
   "short_name": "দৈনিক পড়া",
   "description": "দৈনিক পড়ার অ্যাপ",
-  "start_url": "/daily-study-v22.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0f1117",
   "theme_color": "#0f1117",
