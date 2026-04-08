@@ -76,12 +76,16 @@ body.landscape .content{padding:10px 12px 20px}
 .day-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
 .day-btn.done{border-color:var(--green);color:var(--green)}
 .day-btn.done::after{content:'✓';position:absolute;top:2px;right:3px;font-size:.55rem;color:var(--green)}
+.day-btn.done.active{color:#fff}
+.day-btn.done.active::after{color:#90ee90}
 
 /* PROGRESS */
 .progress-wrap{padding:10px 14px 0;background:var(--bg)}
 .progress-info{display:flex;justify-content:space-between;align-items:center;font-size:.73rem;color:var(--muted);margin-bottom:5px}
 .reset-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:2px 8px;border-radius:6px;font-size:.65rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
 .reset-btn:active{background:var(--card)}
+.reveal-day-btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:2px 8px;border-radius:6px;font-size:.65rem;cursor:pointer;font-family:SolaimanLipi,sans-serif;margin-right:5px}
+.reveal-day-btn:active{background:var(--card)}
 .progress-bar{height:4px;background:var(--border);border-radius:3px;overflow:hidden}
 .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:3px;transition:width .35s ease}
 
@@ -453,7 +457,10 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
   <div class="progress-info">
     <span>অগ্রগতি</span>
     <span id="progressText">০/০</span>
-    <button class="reset-btn" onclick="resetCurrentDay()">↺ রিসেট</button>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button class="reveal-day-btn" onclick="revealCurrentDay()">👁 সব দেখাও</button>
+      <button class="reset-btn" onclick="resetCurrentDay()">↺ রিসেট</button>
+    </div>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
 </div>
@@ -669,6 +676,18 @@ function resetCurrentDay(){
   toast('↺ দিন '+bn(currentDay)+' রিসেট হয়েছে');
 }
 
+// Reveal all answers for current day
+function revealCurrentDay(){
+  const day=allDays[currentDay]; if(!day) return;
+  day.topics.forEach((t,ti)=>{
+    t.items.forEach((_,ii)=>{
+      revealed[`${currentDay}_${ti}_${ii}`]=true;
+    });
+  });
+  save(); renderContent(); renderDays(); checkDone();
+  toast('👁 দিন '+bn(currentDay)+' এর সব উত্তর দেখানো হয়েছে');
+}
+
 // Toggle single answer (show → hide)
 function toggleAnswer(ti,ii){
   const k=`${currentDay}_${ti}_${ii}`;
@@ -677,6 +696,7 @@ function toggleAnswer(ti,ii){
   if(revealed[k]){
     // HIDE again
     delete revealed[k];
+    if(completedDays[currentDay]){ delete completedDays[currentDay]; recalcStreak(); updateStreak(); renderDays(); }
     if(ac){ac.classList.replace('revealed','hidden'); ac.querySelector('.eye-btn').textContent='👁';}
     if(ec) ec.classList.replace('revealed','hidden');
     // img hide
@@ -701,13 +721,14 @@ function toggleAnswer(ti,ii){
       }
     }
   }
-  updateProg(); save();
+  updateProg(); checkDone(); save();
 }
 
 // Reset single topic
 function resetTopic(ti){
   const day=allDays[currentDay]; if(!day) return;
   day.topics[ti].items.forEach((_,ii)=>delete revealed[`${currentDay}_${ti}_${ii}`]);
+  if(completedDays[currentDay]){ delete completedDays[currentDay]; recalcStreak(); updateStreak(); renderDays(); }
   renderContent();
   save();
 }
