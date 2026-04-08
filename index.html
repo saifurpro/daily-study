@@ -551,17 +551,53 @@ async function requestWakeLock(){
 ══════════════════════════════════════ */
 document.addEventListener('visibilitychange', async ()=>{
   if(document.visibilityState === 'visible'){
-    // Wake lock রি-অ্যাকোয়ার (লক হলে release হয়ে যায়)
     if(wakeLock === null) await requestWakeLock();
 
-    // Landscape state রি-অ্যাপ্লাই — viewport settle হতে একটু সময় দিই
-    setTimeout(()=>{
-      document.body.classList.toggle('landscape', isLandscape);
-      const btn = document.getElementById('rotateBtn');
-      if(btn){
-        btn.classList.toggle('active', isLandscape);
-        btn.textContent = isLandscape ? '↩ সোজা' : '⟳ আড়াআড়ি';
+    setTimeout(async ()=>{
+      if(isLandscape){
+        // মোবাইল আনলকে orientation portrait হয়ে গেছে কিনা চেক
+        const isPortraitNow = window.innerHeight > window.innerWidth;
+        if(isPortraitNow){
+          // fullscreen + orientation lock পুনরায় লাগানোর চেষ্টা
+          let relocked = false;
+          try{
+            const el = document.documentElement;
+            if(el.requestFullscreen) await el.requestFullscreen();
+            else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+            if(screen.orientation && screen.orientation.lock){
+              await screen.orientation.lock('landscape');
+              relocked = true;
+            }
+          } catch(e){ relocked = false; }
+
+          if(!relocked){
+            // lock ব্যর্থ — portrait+landscape CSS মিলে ভাঙা layout হবে
+            // তাই landscape mode বন্ধ করে দাও
+            isLandscape = false;
+            document.body.classList.remove('landscape');
+            const btn = document.getElementById('rotateBtn');
+            if(btn){ btn.classList.remove('active'); btn.textContent = '⟳ আড়াআড়ি'; }
+            const metaVP = document.querySelector('meta[name=viewport]');
+            if(metaVP) metaVP.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+            save();
+            return;
+          }
+        }
+        // landscape ঠিকঠাক আছে — CSS ও viewport নিশ্চিত করো
+        document.body.classList.add('landscape');
+        const btn = document.getElementById('rotateBtn');
+        if(btn){ btn.classList.add('active'); btn.textContent = '↩ সোজা'; }
+        const metaVP = document.querySelector('meta[name=viewport]');
+        if(metaVP) metaVP.content = 'width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes';
+        setTimeout(applyLandscapeColWidths, 80);
+      } else {
+        document.body.classList.remove('landscape');
+        const btn = document.getElementById('rotateBtn');
+        if(btn){ btn.classList.remove('active'); btn.textContent = '⟳ আড়াআড়ি'; }
+        const metaVP = document.querySelector('meta[name=viewport]');
+        if(metaVP) metaVP.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
       }
+      // Exam overlay sync
       const examOv = document.getElementById('examOv');
       const _examLS = typeof examIsLandscape !== 'undefined' && examIsLandscape;
       if(examOv) examOv.classList.toggle('exam-landscape', _examLS);
@@ -570,13 +606,9 @@ document.addEventListener('visibilitychange', async ()=>{
         examRotBtn.classList.toggle('active', _examLS);
         examRotBtn.textContent = _examLS ? '↩ সোজা' : '⟳ আড়াআড়ি';
       }
-      const metaVP = document.querySelector('meta[name=viewport]');
-      if(metaVP) metaVP.content = isLandscape
-        ? 'width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes'
-        : 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-    }, 150);
+    }, 300);
+
   } else {
-    // স্ক্রিন অফ/ট্যাব ছাড়লে wake lock release হয় — null করে রাখি
     if(wakeLock){ wakeLock = null; }
   }
 });
