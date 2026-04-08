@@ -431,6 +431,7 @@ body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
   </div>
   <div class="topbar-right">
     <span class="streak" id="streakEl">🔥 ০ দিন</span>
+    <button class="rotate-btn" id="softRefreshBtn" onclick="softRefresh()" title="কনটেন্ট রিলোড">↻</button>
     <button class="rotate-btn" id="rotateBtn" onclick="toggleLandscape()">⟳ আড়াআড়ি</button>
   </div>
 </div>
@@ -946,6 +947,72 @@ function reSyncFolder(){
   const inp=document.getElementById('folderInp');
   if(inp) inp.value=savedFolderUrl;
   syncFolder();
+}
+
+/* ══════════════════════════════════════
+   SOFT REFRESH — ব্রাউজার রিলোড ছাড়া শুধু কনটেন্ট রিফ্রেশ
+══════════════════════════════════════ */
+async function softRefresh(){
+  const btn=document.getElementById('softRefreshBtn');
+  if(btn){btn.style.opacity='.4';btn.style.pointerEvents='none';}
+  toast('🔄 রিলোড হচ্ছে...');
+
+  // ১. localStorage থেকে state পুনরায় লোড করো (currentDay সংরক্ষণ)
+  const prevDay = currentDay;
+  loadState();
+  loadTrackerData();
+  // আগের দিনটা থাকলে সেটাই রাখো
+  if(prevDay && allDays[prevDay]) currentDay = prevDay;
+
+  // ২. যদি ফোল্ডার URL সেভ থাকে তাহলে background-এ sync করো
+  if(savedFolderUrl){
+    try{
+      const folderId=extractFolderId(savedFolderUrl);
+      if(folderId){
+        const listResp=await fetch(`${APPS_SCRIPT_URL}?folderId=${folderId}`);
+        if(listResp.ok){
+          const files=await listResp.json();
+          if(Array.isArray(files)&&files.length){
+            const toFetch=files.filter(f=>!f.modifiedTime||fileModTimeCache[f.id]!==f.modifiedTime);
+            let loaded=0;
+            for(const file of toFetch){
+              try{
+                const resp=await fetch(`${APPS_SCRIPT_URL}?fileId=${file.id}`);
+                if(!resp.ok) continue;
+                const data=await resp.json();
+                if(data.day&&data.topics){
+                  allDays[data.day]=data;
+                  if(file.modifiedTime) fileModTimeCache[file.id]=file.modifiedTime;
+                  loaded++;
+                }
+              }catch(e){}
+            }
+            if(loaded>0){
+              save();
+              toast(`✅ ${bn(loaded)}টি আপডেট পাওয়া গেছে!`);
+            } else {
+              toast('✅ সব কনটেন্ট আপ-টু-ডেট!');
+            }
+          }
+        }
+      }
+    }catch(e){
+      // নেটওয়ার্ক সমস্যা — শুধু local state দিয়ে রেন্ডার করো
+    }
+  }
+
+  // ৩. UI পুনরায় রেন্ডার করো (ব্রাউজার রিলোড ছাড়া)
+  recalcStreak();
+  updateStreak();
+  updateCalIcon();
+  renderDays();
+  renderContent();
+  updateTrackerStreakTopbar();
+
+  // ৪. বাটন ফিরিয়ে দাও
+  setTimeout(()=>{
+    if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+  }, 800);
 }
 
 function clearFolder(){
@@ -1674,11 +1741,12 @@ function setListenSpeed(s){
    EXAM MODE
 ══════════════════════════════════════ */
 let examQueue=[], examIdx=0, examKnow=0, examDontKnow=0, examAnsRevealed=false;
-let examSelectedDay=null, examPickerTab='day'; // 'day' বা 'topic'
+let examSelectedDay=null, examPickerTab='day'; // 'day' বা 'topic' বা 'model'
 let examSelectedTopicKey=null; // "dayNum|topicTitle"
+let modelExamSelected=null; // মডেল নম্বর (0-based index)
 
 function openExam(){
-  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day';
+  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day'; modelExamSelected=null;
   renderExamPicker();
   document.getElementById('examOv').classList.add('show');
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
@@ -1717,16 +1785,16 @@ async function toggleExamLandscape(){
 /* ── UNIFIED PICKER RENDERER ── */
 function renderExamPicker(){
   document.getElementById('examProgFill').style.width='0%';
-  const isDay=examPickerTab==='day';
   let h=`<div class="exam-day-picker">
     <div class="exam-pick-title">পরীক্ষার ধরন বেছে নিন</div>
     <!-- TAB TOGGLE -->
-    <div style="display:flex;gap:6px;margin-bottom:16px;background:var(--card);border-radius:10px;padding:4px;">
-      <button onclick="examSwitchTab('day')" style="flex:1;padding:8px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.8rem;cursor:pointer;font-weight:600;transition:all .15s;${isDay?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📅 দিন-ভিত্তিক</button>
-      <button onclick="examSwitchTab('topic')" style="flex:1;padding:8px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.8rem;cursor:pointer;font-weight:600;transition:all .15s;${!isDay?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📚 টপিক-ভিত্তিক</button>
+    <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--card);border-radius:10px;padding:4px;">
+      <button onclick="examSwitchTab('day')" style="flex:1;padding:7px 4px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.72rem;cursor:pointer;font-weight:600;transition:all .15s;${examPickerTab==='day'?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📅 দিন-ভিত্তিক</button>
+      <button onclick="examSwitchTab('topic')" style="flex:1;padding:7px 4px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.72rem;cursor:pointer;font-weight:600;transition:all .15s;${examPickerTab==='topic'?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📚 টপিক-ভিত্তিক</button>
+      <button onclick="examSwitchTab('model')" style="flex:1;padding:7px 4px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.72rem;cursor:pointer;font-weight:600;transition:all .15s;${examPickerTab==='model'?'background:var(--accent2);color:#1a1d27;':'background:transparent;color:var(--muted);'}">🏆 মডেল পরীক্ষা</button>
     </div>`;
 
-  if(isDay){
+  if(examPickerTab==='day'){
     /* ─── DAY TAB ─── */
     const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
     h+=`<div class="exam-pick-sub">একটি দিন বেছে নিন — সেই দিনের সব প্রশ্ন এলোমেলোভাবে আসবে।</div>
@@ -1738,7 +1806,7 @@ function renderExamPicker(){
     });
     h+=`</div>
     <button class="exam-start-btn" onclick="startExam()" ${examSelectedDay===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>`;
-  } else {
+  } else if(examPickerTab==='topic'){
     /* ─── TOPIC TAB ─── */
     // সব দিনের সব টপিক সংগ্রহ করো (বাড়ির কাজ বাদ)
     const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
@@ -1777,6 +1845,44 @@ function renderExamPicker(){
       h+=`</div>
       <button class="exam-start-btn" onclick="startTopicExam()" ${examSelectedTopicKey===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>`;
     }
+  } else {
+    /* ─── MODEL TAB ─── */
+    const days = Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+    const totalDays = days.length;
+    if(!totalDays){
+      h+=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:.85rem;">কোনো দিনের তথ্য পাওয়া যায়নি</div>`;
+    } else {
+      const MODEL_SIZE = 5; // প্রতি মডেলে ৫টি JSON
+      const totalModels = Math.ceil(totalDays / MODEL_SIZE);
+      h+=`<div class="exam-pick-sub">প্রতি ${bn(MODEL_SIZE)}টি দিনের সব প্রশ্ন মিলিয়ে একটি মডেল পরীক্ষা। মোট ${bn(totalModels)}টি মডেল পরীক্ষায় পুরো সিলেবাস শেষ হবে।</div>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px;">`;
+      for(let m=0; m<totalModels; m++){
+        const startIdx = m * MODEL_SIZE;
+        const endIdx = Math.min(startIdx + MODEL_SIZE - 1, totalDays - 1);
+        const modelDays = days.slice(startIdx, endIdx + 1);
+        const dayFrom = modelDays[0];
+        const dayTo = modelDays[modelDays.length-1];
+        let totalQ = 0;
+        modelDays.forEach(d=>{
+          const day=allDays[d]; if(!day) return;
+          day.topics.forEach(t=>{
+            if(t.title&&(t.title.includes('বাড়ির কাজ')||t.title.includes('বাড়িরকাজ')||t.title.toLowerCase().includes('homework'))) return;
+            totalQ += t.items.length;
+          });
+        });
+        const isSel = modelExamSelected === m;
+        h+=`<div onclick="selectModelExam(${m})" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;border:1.5px solid ${isSel?'var(--accent2)':'var(--border)'};background:${isSel?'rgba(247,201,79,.1)':'var(--card)'};cursor:pointer;transition:all .15s;">
+          <div style="width:36px;height:36px;border-radius:10px;background:${isSel?'var(--accent2)':'rgba(247,201,79,.15)'};display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:${isSel?'#1a1d27':'var(--accent2)'};flex-shrink:0;">${bn(m+1)}</div>
+          <div style="flex:1;">
+            <div style="font-size:.86rem;font-weight:700;color:${isSel?'var(--accent2)':'var(--text)'};">মডেল ${bn(m+1)} — দিন ${bn(dayFrom)}-${bn(dayTo)}</div>
+            <div style="font-size:.65rem;color:var(--muted);margin-top:3px;">${bn(modelDays.length)}টি দিন · মোট ${bn(totalQ)}টি প্রশ্ন</div>
+          </div>
+          ${isSel?'<span style="color:var(--accent2);font-size:1rem;">✓</span>':'<span style="color:var(--muted);font-size:.8rem;">▶</span>'}
+        </div>`;
+      }
+      h+=`</div>
+      <button class="exam-start-btn" onclick="startModelExam()" ${modelExamSelected===null?'disabled':''} style="background:linear-gradient(135deg,var(--accent2),#e8a020);color:#1a1d27;">▶ মডেল পরীক্ষা শুরু করুন</button>`;
+    }
   }
   h+=`</div>`;
   document.getElementById('examBody').innerHTML=h;
@@ -1784,7 +1890,7 @@ function renderExamPicker(){
 
 function examSwitchTab(tab){
   examPickerTab=tab;
-  examSelectedDay=null; examSelectedTopicKey=null;
+  examSelectedDay=null; examSelectedTopicKey=null; modelExamSelected=null;
   renderExamPicker();
 }
 
@@ -1897,6 +2003,34 @@ function examAnswer(know){
   renderExamCard();
 }
 
+function selectModelExam(idx){
+  modelExamSelected=idx;
+  startModelExam();
+}
+
+function startModelExam(){
+  if(modelExamSelected===null) return;
+  const MODEL_SIZE=5;
+  const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+  const startIdx=modelExamSelected*MODEL_SIZE;
+  const endIdx=Math.min(startIdx+MODEL_SIZE-1,days.length-1);
+  const modelDays=days.slice(startIdx,endIdx+1);
+  const dayFrom=modelDays[0];
+  const dayTo=modelDays[modelDays.length-1];
+  let q=[];
+  modelDays.forEach(d=>{
+    const day=allDays[d]; if(!day) return;
+    day.topics.forEach(t=>{
+      if(t.title&&(t.title.includes('বাড়ির কাজ')||t.title.includes('বাড়িরকাজ')||t.title.toLowerCase().includes('homework'))) return;
+      t.items.forEach(item=>q.push({q:item.q,a:item.a,ex:item.ex||item.example||'',topic:`দিন ${bn(d)} · ${t.title}`,cols:t.columns||(t.items.some(i=>i.ex||i.example)?3:2),headers:t.columnHeaders||t.headers||null}));
+    });
+  });
+  for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
+  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  document.getElementById('examTopTitle').textContent=`🏆 মডেল ${bn(modelExamSelected+1)} — দিন ${bn(dayFrom)}-${bn(dayTo)}`;
+  renderExamCard();
+}
+
 function renderExamResult(){
   document.getElementById('examProgFill').style.width='100%';
   const total=examQueue.length;
@@ -1911,7 +2045,7 @@ function renderExamResult(){
       <div class="rstat red"><div class="rstat-num">${bn(examDontKnow)}</div><div class="rstat-lbl">❌ জানি না</div></div>
       <div class="rstat"><div class="rstat-num">${bn(total)}</div><div class="rstat-lbl">মোট প্রশ্ন</div></div>
     </div>
-    <button class="result-retry" onclick="${examPickerTab==='topic'?'startTopicExam':'startExam'}()">🔄 আবার পরীক্ষা দিন</button>
+    <button class="result-retry" onclick="${examPickerTab==='topic'?'startTopicExam':examPickerTab==='model'?'startModelExam':'startExam'}()">🔄 আবার পরীক্ষা দিন</button>
     <button class="result-back" onclick="renderExamPicker()">← অন্য পরীক্ষা বেছে নিন</button>
   </div>`;
   document.getElementById('examBody').innerHTML=h;
