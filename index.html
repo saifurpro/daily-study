@@ -201,6 +201,14 @@ body.landscape .eye-btn{width:28px;height:28px;font-size:.8rem;min-width:28px}
 body.landscape .t-header.ls-sized,
 body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
 
+/* ── LANDSCAPE: শতকরা পাশ-ফেল ম্যাথ → ১-কলাম সবসময় ── */
+body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম্যাথ"] .t-header{display:none}
+body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম্যাথ"] .t-row.col2,
+body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম্যাথ"] .t-row.col3{display:flex;flex-direction:column;padding:0}
+body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম্যাথ"] .t-cell{border-right:none;padding:7px 10px;font-size:1.05rem}
+body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম্যাথ"] .t-cell:last-child{border-bottom:none}
+body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম্যাথ"] .t-cell.q-cell{font-size:1.05rem;font-weight:600;color:#FFF;border-bottom:none;padding-bottom:4px}
+
 /* SEARCH RESULTS */
 .search-results{padding:0 14px 90px}
 .search-result-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:9px;animation:fadeUp .2s ease forwards}
@@ -382,6 +390,8 @@ body.landscape .t-row.ls-sized{grid-template-columns:var(--ls-cols)}
 .tracker-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .tracker-cal-title{font-size:.9rem;font-weight:700;color:var(--text)}
 .tracker-reset-btn{background:transparent;border:1px solid #e74c3c;color:#e74c3c;padding:4px 11px;border-radius:7px;font-size:.7rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
+.study-reset-btn{background:transparent;border:1px solid #e67e22;color:#e67e22;padding:4px 11px;border-radius:7px;font-size:.7rem;cursor:pointer;font-family:SolaimanLipi,sans-serif;margin-left:6px}
+.tracker-cal-btns{display:flex;gap:0;align-items:center;flex-wrap:wrap;gap:5px}
 .tracker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
 .tracker-grid-head{text-align:center;font-size:.6rem;color:var(--muted);padding:3px 0;font-weight:600}
 .tracker-day-cell{border-radius:11px;border:1.5px solid var(--border);background:var(--card);display:flex;flex-direction:column;padding:11px 13px;cursor:default;transition:all .15s;position:relative;gap:4px;min-height:70px}
@@ -2372,7 +2382,10 @@ function renderProgressTab(){
     return `${streakBox}${statsRow}${completedBox}${undoBtn}
     <div class="tracker-cal-header" style="margin-top:14px">
       <span class="tracker-cal-title">📆 সব দিনের অবস্থা</span>
-      <button class="tracker-reset-btn" onclick="confirmTrackerReset()">🔄 রিসেট</button>
+      <div class="tracker-cal-btns">
+        <button class="tracker-reset-btn" onclick="confirmTrackerReset()">🔄 রুটিন রিসেট</button>
+        <button class="study-reset-btn" onclick="confirmStudyProgressReset()">📖 পড়ার অগ্রগতি রিসেট</button>
+      </div>
     </div>
     ${calHtml}`;
   }
@@ -2398,7 +2411,10 @@ function renderProgressTab(){
   return `${streakBox}${statsRow}${todayBox}${doneBtn}
   <div class="tracker-cal-header" style="margin-top:14px">
     <span class="tracker-cal-title">📆 সব দিনের অবস্থা</span>
-    <button class="tracker-reset-btn" onclick="confirmTrackerReset()">🔄 রিসেট</button>
+    <div class="tracker-cal-btns">
+      <button class="tracker-reset-btn" onclick="confirmTrackerReset()">🔄 রুটিন রিসেট</button>
+      <button class="study-reset-btn" onclick="confirmStudyProgressReset()">📖 পড়ার অগ্রগতি রিসেট</button>
+    </div>
   </div>
   ${calHtml}`;
 }
@@ -2480,6 +2496,15 @@ function confirmTrackerReset(){
   saveTrackerData();
   renderTracker();
   toast('🔄 ট্র্যাকার রিসেট হয়েছে!');
+}
+
+function confirmStudyProgressReset(){
+  if(!confirm('সব দিনের পড়ার অগ্রগতি (revealed উত্তর ও completed দিন) মুছে দেবেন?\nএটি পূর্বাবস্থায় ফেরানো যাবে না।')) return;
+  revealed = {};
+  completedDays = {};
+  recalcStreak(); updateStreak();
+  save(); renderContent(); renderDays();
+  toast('📖 সব দিনের পড়ার অগ্রগতি রিসেট হয়েছে!');
 }
 
 function showCompletionMessage(){
