@@ -1134,7 +1134,7 @@ function renderContent(){
       h+=`<div class="t-row col${cols}">
         <div class="t-cell q-cell" title="${item.q}">${item.q}</div>
         <div class="t-cell a-cell ${rv?'revealed':'hidden'}" id="ac${ti}_${ii}" title="${item.a}">
-          <span class="a-text">${item.a}</span>
+          <span class="a-text">${item.a.replace(/\n/g,'<br>')}</span>
           <button class="eye-btn" onclick="toggleAnswer(${ti},${ii})">${rv?'✓':'👁'}</button>
         </div>`;
       if(cols===3){const ex=item.ex||item.example||''; h+=`<div class="t-cell a-cell example-cell ${rv?'revealed':'hidden'}" id="ec${ti}_${ii}" title="${ex}"><span class="a-text">${ex||'—'}</span></div>`; }
@@ -1187,7 +1187,7 @@ function handleSearch(q){
   const lo=q.toLowerCase(); let res=[];
   Object.entries(allDays).forEach(([dn,day])=>day.topics.forEach(t=>t.items.forEach(item=>{const ex=item.ex||item.example||'';if(item.q.toLowerCase().includes(lo)||item.a.toLowerCase().includes(lo)||(ex&&ex.toLowerCase().includes(lo)))res.push({dn,tt:t.title,item});})));
   if(!res.length){sr.innerHTML=`<div class="no-result">😔<br><br>"${q}" পাওয়া যায়নি</div>`;return;}
-  sr.innerHTML=res.map(r=>{const ex=r.item.ex||r.item.example||'';return`<div class="search-result-card"><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hl(r.item.q,q)}</div><div class="sr-a">→ ${hl(r.item.a,q)}</div>${ex?`<div class="sr-ex">${hl(ex,q)}</div>`:''}</div>`}).join('');
+  sr.innerHTML=res.map(r=>{const ex=r.item.ex||r.item.example||'';return`<div class="search-result-card"><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hl(r.item.q,q)}</div><div class="sr-a">→ ${hl(r.item.a.replace(/\n/g,'<br>'),q)}</div>${ex?`<div class="sr-ex">${hl(ex,q)}</div>`:''}</div>`}).join('');
 }
 function toggleClear(val){
   const btn=document.getElementById('searchClear');
@@ -1357,7 +1357,7 @@ function renderAgentQuestion(state='asking', userAns='', feedback='', correct=nu
       <div style="background:${correct?'rgba(62,207,142,.1)':'rgba(231,76,60,.08)'};border:1.5px solid ${col};border-radius:12px;padding:12px 14px;margin-bottom:10px;">
         <div style="font-size:.88rem;font-weight:700;color:${col};margin-bottom:4px;">${ico} ${correct?'সঠিক!':'ভুল!'}</div>
         ${userAns?`<div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">আপনি বললেন: <span style="color:var(--text);">"${userAns}"</span></div>`:''}
-        <div style="font-size:.8rem;color:var(--text);">সঠিক উত্তর: <b style="color:var(--green);">${item.a}</b></div>
+        <div style="font-size:.8rem;color:var(--text);">সঠিক উত্তর: <b style="color:var(--green);">${item.a.replace(/\n/g,'<br>')}</b></div>
         ${feedback?`<div style="font-size:.72rem;color:var(--muted);margin-top:5px;">${feedback}</div>`:''}
       </div>`;
   }
@@ -1644,7 +1644,7 @@ function renderListenPlayer(){
       <div class="listen-type-badge">প্রশ্ন</div>
       <div class="listen-speaking" id="listenSpeaking">🔊 পড়া হচ্ছে...</div>
       <div class="listen-q">${item.q}</div>
-      <div class="listen-a hidden-ans" id="listenAns">${item.a}</div>
+      <div class="listen-a hidden-ans" id="listenAns">${item.a.replace(/\n/g,'<br>')}</div>
     </div>
     <div class="listen-speed">
       <span style="font-size:.72rem;color:var(--muted);">গতি:</span>
@@ -2003,7 +2003,7 @@ function renderExamCard(){
     <div class="exam-topic-badge">${item.topic}</div>
     <div class="exam-q-card">${item.q}</div>
     <div class="exam-ans-wrap" id="examAnsWrap" onclick="toggleExamAns()">
-      ${ansLabel}<span class="exam-ans-text" id="examAnsText">${item.a}</span>
+      ${ansLabel}<span class="exam-ans-text" id="examAnsText">${item.a.replace(/\n/g,'<br>')}</span>
       <button class="exam-eye" id="examEyeBtn">👁</button>
     </div>
     ${exHtml}
