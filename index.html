@@ -1172,7 +1172,7 @@ function renderContent(){
       h+=`</div>`;
       if(item.img) h+=`<div class="item-img-wrap">${rv?`<img src="${item.img}" class="item-img">`:''}<span class="item-img-placeholder ${rv?'hide':''}" onclick="toggleAnswer(${ti},${ii})">👁 দেখতে ক্লিক করুন</span></div>`;
     });
-    h+=`</div></div>${t.note?`<div class="topic-note">${t.note}</div>`:''}</div>`;
+    h+=`</div></div>${t.note?`<div class="topic-note">${t.note.replace(/\n/g,'<br>')}</div>`:''}</div>`;
   });
   mc.innerHTML=h; updateProg();
   if(isLandscape) setTimeout(applyLandscapeColWidths, 50);
