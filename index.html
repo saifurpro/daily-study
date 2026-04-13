@@ -1809,15 +1809,95 @@ let examSelectedDay=null, examPickerTab='day'; // 'day' বা 'topic' বা 'm
 let examSelectedTopicKey=null; // "dayNum|topicTitle"
 let modelExamSelected=null; // মডেল নম্বর (0-based index)
 
+/* ── EXAM RESUME: প্রতিটি পরীক্ষার ধরন আলাদা key-তে সেভ হয় ── */
+// key format: ds_exam_day_{dayNum} | ds_exam_topic_{topicKey} | ds_exam_model_{modelIdx}
+
+function _examResumeKey(){
+  if(examPickerTab==='day' && examSelectedDay!==null) return `ds_exam_day_${examSelectedDay}`;
+  if(examPickerTab==='topic' && examSelectedTopicKey) return `ds_exam_topic_${examSelectedTopicKey}`;
+  if(examPickerTab==='model' && modelExamSelected!==null) return `ds_exam_model_${modelExamSelected}`;
+  return null;
+}
+
+function saveExamState(){
+  if(!examQueue.length) return;
+  const key = _examResumeKey();
+  if(!key) return;
+  const state = {
+    queue: examQueue,
+    idx: examIdx,
+    know: examKnow,
+    dontKnow: examDontKnow,
+    tab: examPickerTab,
+    selectedDay: examSelectedDay,
+    selectedTopicKey: examSelectedTopicKey,
+    modelSelected: modelExamSelected,
+    title: document.getElementById('examTopTitle')?.textContent || ''
+  };
+  try{ localStorage.setItem(key, JSON.stringify(state)); } catch(e){}
+}
+
+function clearExamState(){
+  const key = _examResumeKey();
+  if(key) try{ localStorage.removeItem(key); } catch(e){}
+}
+
+function loadExamStateFor(tab, selectedDay, selectedTopicKey, modelSelected){
+  let key = null;
+  if(tab==='day' && selectedDay!==null) key = `ds_exam_day_${selectedDay}`;
+  else if(tab==='topic' && selectedTopicKey) key = `ds_exam_topic_${selectedTopicKey}`;
+  else if(tab==='model' && modelSelected!==null) key = `ds_exam_model_${modelSelected}`;
+  if(!key) return null;
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  } catch(e){ return null; }
+}
+
+// পুরনো একক key-র পিছনের সামঞ্জস্য (একবার migrate করে মুছে দাও)
+(function migrateLegacyExamState(){
+  try{
+    const old = localStorage.getItem('ds_exam_resume');
+    if(!old) return;
+    const s = JSON.parse(old);
+    if(!s || !s.queue || !s.queue.length) { localStorage.removeItem('ds_exam_resume'); return; }
+    let newKey = null;
+    if(s.tab==='day' && s.selectedDay!==null) newKey = `ds_exam_day_${s.selectedDay}`;
+    else if(s.tab==='topic' && s.selectedTopicKey) newKey = `ds_exam_topic_${s.selectedTopicKey}`;
+    else if(s.tab==='model' && s.modelSelected!==null) newKey = `ds_exam_model_${s.modelSelected}`;
+    if(newKey) localStorage.setItem(newKey, old);
+    localStorage.removeItem('ds_exam_resume');
+  } catch(e){}
+})();
+
+function resumeExam(state){
+  examQueue = state.queue;
+  examIdx = state.idx;
+  examKnow = state.know;
+  examDontKnow = state.dontKnow;
+  examPickerTab = state.tab || 'day';
+  examSelectedDay = state.selectedDay ?? null;
+  examSelectedTopicKey = state.selectedTopicKey ?? null;
+  modelExamSelected = state.modelSelected ?? null;
+  if(state.title) document.getElementById('examTopTitle').textContent = state.title;
+  renderExamCard();
+}
+
 function openExam(){
-  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day'; modelExamSelected=null;
-  renderExamPicker();
   document.getElementById('examOv').classList.add('show');
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
   syncNavActive('navExam');
+  // সরাসরি picker দেখাও — resume prompt শুধু নির্দিষ্ট দিন/টপিক/মডেল সিলেক্ট করার পর আসবে
+  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day'; modelExamSelected=null;
+  renderExamPicker();
 }
 function closeExam(){
   if(document.getElementById('examOv').classList.contains('exam-landscape')) toggleExamLandscape();
+  // পরীক্ষা চলাকালে বন্ধ করলে state সেভ করো
+  if(examQueue.length && examIdx < examQueue.length){
+    saveExamState();
+  }
   document.getElementById('examOv').classList.remove('show');
   syncNavActive('navStudy');
 }
@@ -1849,6 +1929,8 @@ async function toggleExamLandscape(){
 /* ── UNIFIED PICKER RENDERER ── */
 function renderExamPicker(){
   document.getElementById('examProgFill').style.width='0%';
+  const resetBtn=document.getElementById('examResetBtn');
+  if(resetBtn) resetBtn.style.display='none';
   let h=`<div class="exam-day-picker">
     <div class="exam-pick-title">পরীক্ষার ধরন বেছে নিন</div>
     <!-- TAB TOGGLE -->
@@ -1952,6 +2034,50 @@ function renderExamPicker(){
   document.getElementById('examBody').innerHTML=h;
 }
 
+function renderExamResumePrompt(saved){
+  const remaining = saved.queue.length - saved.idx;
+  const total = saved.queue.length;
+  const answered = saved.know + saved.dontKnow;
+  const tabLabel = saved.tab==='topic' ? '📚 টপিক-ভিত্তিক' : saved.tab==='model' ? '🏆 মডেল পরীক্ষা' : '📅 দিন-ভিত্তিক';
+  const h = `<div style="padding:24px 16px;display:flex;flex-direction:column;gap:14px;">
+    <div style="text-align:center;font-size:2rem;">⏸️</div>
+    <div style="text-align:center;font-size:1rem;font-weight:700;color:var(--text);">অসম্পূর্ণ পরীক্ষা পাওয়া গেছে!</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:.78rem;color:var(--muted);">পরীক্ষার ধরন</div>
+      <div style="font-size:.88rem;font-weight:600;color:var(--accent);">${saved.title || tabLabel}</div>
+      <div style="display:flex;gap:16px;margin-top:4px;">
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:1.3rem;font-weight:700;color:var(--text);">${bn(answered)}</div>
+          <div style="font-size:.68rem;color:var(--muted);">উত্তর দেওয়া হয়েছে</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:1.3rem;font-weight:700;color:var(--accent2);">${bn(remaining)}</div>
+          <div style="font-size:.68rem;color:var(--muted);">বাকি আছে</div>
+        </div>
+        <div style="width:1px;background:var(--border);"></div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:1.3rem;font-weight:700;color:var(--muted);">${bn(total)}</div>
+          <div style="font-size:.68rem;color:var(--muted);">মোট প্রশ্ন</div>
+        </div>
+      </div>
+    </div>
+    <button onclick="resumeExam(window._examSavedState)" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:11px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:SolaimanLipi,sans-serif;">▶ যেখানে ছিলাম সেখান থেকে শুরু করি</button>
+    <button onclick="discardAndPickNew()" style="width:100%;padding:11px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:11px;font-size:.84rem;cursor:pointer;font-family:SolaimanLipi,sans-serif;">🔄 নতুন পরীক্ষা শুরু করি</button>
+  </div>`;
+  window._examSavedState = saved;
+  document.getElementById('examBody').innerHTML = h;
+  document.getElementById('examProgFill').style.width = Math.round(saved.idx/saved.queue.length*100)+'%';
+  if(saved.title) document.getElementById('examTopTitle').textContent = saved.title;
+}
+
+function discardAndPickNew(){
+  clearExamState();
+  window._examSavedState = null;
+  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day'; modelExamSelected=null;
+  renderExamPicker();
+}
+
 function examSwitchTab(tab){
   examPickerTab=tab;
   examSelectedDay=null; examSelectedTopicKey=null; modelExamSelected=null;
@@ -1960,12 +2086,22 @@ function examSwitchTab(tab){
 
 function selectExamDay(d){
   examSelectedDay=d;
-  startExam();
+  const saved = loadExamStateFor('day', d, null, null);
+  if(saved && saved.queue && saved.queue.length && saved.idx < saved.queue.length){
+    renderExamResumePrompt(saved);
+  } else {
+    startExam();
+  }
 }
 
 function selectExamTopic(idx){
   examSelectedTopicKey=(window._examTopicKeys&&window._examTopicKeys[idx])||null;
-  startTopicExam();
+  const saved = loadExamStateFor('topic', null, examSelectedTopicKey, null);
+  if(saved && saved.queue && saved.queue.length && saved.idx < saved.queue.length){
+    renderExamResumePrompt(saved);
+  } else {
+    startTopicExam();
+  }
 }
 
 function startExam(){
@@ -1978,6 +2114,7 @@ function startExam(){
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  clearExamState();
   document.getElementById('examTopTitle').textContent=`📝 দিন ${bn(examSelectedDay)} পরীক্ষা`;
   renderExamCard();
 }
@@ -1996,13 +2133,29 @@ function startTopicExam(){
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  clearExamState();
   document.getElementById('examTopTitle').textContent=`📝 ${key} পরীক্ষা`;
   renderExamCard();
 }
 
+function resetCurrentExam(){
+  if(!confirm('এই পরীক্ষা রিসেট করবেন? প্রথম থেকে শুরু হবে।')) return;
+  clearExamState();
+  examIdx=0; examKnow=0; examDontKnow=0;
+  // Queue নতুনভাবে shuffle করো
+  for(let i=examQueue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[examQueue[i],examQueue[j]]=[examQueue[j],examQueue[i]];}
+  renderExamCard();
+  toast('🔄 পরীক্ষা রিসেট হয়েছে! প্রথম থেকে শুরু হচ্ছে।');
+}
+
 function renderExamCard(){
   const total=examQueue.length;
-  if(examIdx>=total){renderExamResult();return;}
+  if(examIdx>=total){clearExamState();renderExamResult();return;}
+  // প্রতিটি প্রশ্নে state সেভ করো
+  saveExamState();
+  // রিসেট বাটন দেখাও
+  const resetBtn=document.getElementById('examResetBtn');
+  if(resetBtn) resetBtn.style.display='';
   const pct=Math.round(examIdx/total*100);
   document.getElementById('examProgFill').style.width=pct+'%';
   const item=examQueue[examIdx];
@@ -2069,7 +2222,12 @@ function examAnswer(know){
 
 function selectModelExam(idx){
   modelExamSelected=idx;
-  startModelExam();
+  const saved = loadExamStateFor('model', null, null, idx);
+  if(saved && saved.queue && saved.queue.length && saved.idx < saved.queue.length){
+    renderExamResumePrompt(saved);
+  } else {
+    startModelExam();
+  }
 }
 
 function startModelExam(){
@@ -2091,12 +2249,15 @@ function startModelExam(){
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
   examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  clearExamState();
   document.getElementById('examTopTitle').textContent=`🏆 মডেল ${bn(modelExamSelected+1)} — দিন ${bn(dayFrom)}-${bn(dayTo)}`;
   renderExamCard();
 }
 
 function renderExamResult(){
   document.getElementById('examProgFill').style.width='100%';
+  const resetBtn=document.getElementById('examResetBtn');
+  if(resetBtn) resetBtn.style.display='none';
   const total=examQueue.length;
   const pct=total>0?Math.round(examKnow/total*100):0;
   const h=`<div class="exam-result">
@@ -2583,6 +2744,7 @@ function showCompletionMessage(){
   <div class="exam-topbar">
     <span class="exam-title" id="examTopTitle">📝 পরীক্ষা</span>
     <div style="display:flex;gap:6px;align-items:center;">
+      <button class="rotate-btn" id="examResetBtn" onclick="resetCurrentExam()" style="display:none;background:rgba(231,76,60,.15);border-color:rgba(231,76,60,.4);color:#e74c3c;">🔄 রিসেট</button>
       <button class="rotate-btn" id="examRotateBtn" onclick="toggleExamLandscape()">⟳ আড়াআড়ি</button>
       <button class="exam-close-btn" onclick="closeExam()">✕ বন্ধ</button>
     </div>
