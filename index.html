@@ -1200,12 +1200,12 @@ function renderContent(){
       const k=`${currentDay}_${ti}_${ii}`, rv=!!revealed[k];
       // q cell: title attribute shows full text on long press
       h+=`<div class="t-row col${cols}">
-        <div class="t-cell q-cell" title="${item.q}">${item.q}</div>
+        <div class="t-cell q-cell" title="${item.q}">${item.q.replace(/\n/g,'<br>')}</div>
         <div class="t-cell a-cell ${rv?'revealed':'hidden'}" id="ac${ti}_${ii}" title="${item.a}">
           <span class="a-text">${item.a.replace(/\n/g,'<br>')}</span>
           <button class="eye-btn" onclick="toggleAnswer(${ti},${ii})">${rv?'✓':'👁'}</button>
         </div>`;
-      if(cols===3){const ex=item.ex||item.example||''; h+=`<div class="t-cell a-cell example-cell ${rv?'revealed':'hidden'}" id="ec${ti}_${ii}" title="${ex}"><span class="a-text">${ex||'—'}</span></div>`; }
+      if(cols===3){const ex=item.ex||item.example||''; h+=`<div class="t-cell a-cell example-cell ${rv?'revealed':'hidden'}" id="ec${ti}_${ii}" title="${ex}"><span class="a-text">${ex.replace(/\n/g,'<br>')||'—'}</span></div>`; }
       h+=`</div>`;
       if(item.img) h+=`<div class="item-img-wrap">${rv?`<img src="${item.img}" class="item-img">`:''}<span class="item-img-placeholder ${rv?'hide':''}" onclick="toggleAnswer(${ti},${ii})">👁 দেখতে ক্লিক করুন</span></div>`;
     });
