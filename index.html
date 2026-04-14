@@ -8,7 +8,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="দৈনিক পড়া">
 <meta name="theme-color" content="#0f1117">
-<link rel="manifest" href="/daily-study/manifest.json">
 <title>দৈনিক পড়া</title>
 <script>
 /* SELF-SAVE: content:// বা file:// থেকে খুললে localStorage-এ সেভ করে
@@ -2425,19 +2424,31 @@ window.addEventListener('load', () => {
 <script>
 (function(){
   const manifest = {
-    name: "দৈনিক পড়া",
-    short_name: "দৈনিক পড়া",
-    description: "প্রতিদিনের পড়ার অ্যাপ",
-    start_url: ".",
-    display: "standalone",
-    background_color: "#0f1117",
-    theme_color: "#0f1117",
-    icons: [{
-      src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f1117'/><text y='.9em' font-size='80' x='10'>📚</text></svg>",
-      sizes: "any",
-      type: "image/svg+xml"
-    }]
-  };
+  name: "দৈনিক পড়া",
+  short_name: "দৈনিক পড়া",
+  description: "প্রতিদিনের পড়ার অ্যাপ",
+  start_url: "/daily-study/",
+  scope: "/daily-study/",
+  display: "standalone",
+  background_color: "#0f1117",
+  theme_color: "#0f1117",
+  orientation: "portrait",
+  lang: "bn",
+  icons: [
+    {
+      src: "/daily-study/icon-192.png",
+      sizes: "192x192",
+      type: "image/png",
+      purpose: "any maskable"
+    },
+    {
+      src: "/daily-study/icon-512.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "any maskable"
+    }
+  ]
+};
   const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
   const link = document.createElement('link');
