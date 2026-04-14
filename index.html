@@ -228,6 +228,8 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 
 /* NOTE */
 .topic-note{margin-top:8px;margin-bottom:8px;padding:8px 12px;background:rgba(247,201,79,.08);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;font-size:.76rem;color:var(--accent2);line-height:1.55}
+.topic-note-svg{padding:8px;background:rgba(255,255,255,.03);border-left:3px solid var(--accent2);color:unset;font-size:unset;display:flex;justify-content:center;align-items:center}
+.topic-note-svg svg{max-width:100%;height:auto;display:block}
 /* IMG */
 .item-img-wrap{padding:8px 14px;background:rgba(255,255,255,.02);border-bottom:.5px solid var(--border);min-height:40px}
 .item-img{max-width:100%;border-radius:8px;display:block}
@@ -1209,7 +1211,7 @@ function renderContent(){
       h+=`</div>`;
       if(item.img) h+=`<div class="item-img-wrap">${rv?`<img src="${item.img}" class="item-img">`:''}<span class="item-img-placeholder ${rv?'hide':''}" onclick="toggleAnswer(${ti},${ii})">👁 দেখতে ক্লিক করুন</span></div>`;
     });
-    h+=`</div></div>${t.note?`<div class="topic-note">${t.note.replace(/\n/g,'<br>')}</div>`:''}</div>`;
+    h+=`</div></div>${t.note?(t.note.trim().startsWith('<svg')?`<div class="topic-note topic-note-svg">${t.note}</div>`:`<div class="topic-note">${t.note.replace(/\n/g,'<br>')}</div>`):''}</div>`;
   });
   mc.innerHTML=h; updateProg();
   if(isLandscape) setTimeout(applyLandscapeColWidths, 50);
