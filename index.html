@@ -2503,7 +2503,7 @@ function generateRoutine(){
       const revDays = [];
       const labels = [];
       for(let d=cycleStart; d<=cycleEnd; d++){ revDays.push(d); }
-      labels.push(`ডে-${cycleStart} থেকে ডে-${cycleEnd} রিভিশন`);
+      labels.push(`ডে-${cycleStart} থেকে ডে-${cycleEnd} রিভিশন বা মডেল পরীক্ষা দাও`);
       routine.push({routineDay, tasks:[{type:'bigrev', days:revDays, label:labels[0]}]});
       routineDay++;
     }
