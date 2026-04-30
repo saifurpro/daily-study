@@ -9,30 +9,11 @@
 <meta name="apple-mobile-web-app-title" content="দৈনিক পড়া">
 <meta name="theme-color" content="#0f1117">
 <title>দৈনিক পড়া</title>
+<link rel="preload" as="style" onload="this.rel='stylesheet'" href="about:blank">
+<meta name="color-scheme" content="dark">
 <script>
-/* SELF-SAVE: content:// বা file:// থেকে খুললে localStorage-এ সেভ করে
-   পরের বার সরাসরি localStorage থেকে লোড হবে */
-(function(){
-  const proto = location.protocol;
-  const SAVE_KEY = 'ds_app_html';
-
-  // blob:/http:/https: — সরাসরি চলছে, কিছু করার নেই
-  if(proto === 'blob:' || proto === 'http:' || proto === 'https:') return;
-
-  // file:// বা content:// — XHR দিয়ে নিজেকে পড়ে localStorage-এ সেভ করো
-  const currentUrl = location.href;
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', currentUrl, false); // synchronous
-  try {
-    xhr.send();
-    if(xhr.status === 0 || xhr.status === 200) {
-      localStorage.setItem(SAVE_KEY, xhr.responseText);
-    }
-  } catch(e) {
-    // XHR ব্যর্থ — outerHTML দিয়ে চেষ্টা
-    try { localStorage.setItem(SAVE_KEY, document.documentElement.outerHTML); } catch(e2){}
-  }
-})();
+/* file:// থেকে খুললে কোনো redirect দরকার নেই —
+   অ্যাপ সরাসরি চলে, data localStorage-এ থাকে */
 </script>
 <style>
 @font-face {
@@ -55,7 +36,7 @@
 <style>
 :root{--bg:#0f1117;--surface:#1a1d27;--card:#22263a;--accent:#4f8ef7;--accent2:#f7c94f;--text:#e8eaf0;--muted:#7a8099;--green:#3ecf8e;--border:#2e3350;--radius:14px}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:SolaimanLipi,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:520px;margin:0 auto;overflow-x:hidden}
+body{font-family:SolaimanLipi,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:520px;margin:0 auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
 
 /* TOP BAR */
 .topbar{background:var(--surface);padding:8px 12px;display:flex;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;gap:8px}
@@ -121,7 +102,7 @@ body.landscape .content{padding:10px 12px 20px}
 .day-subtitle{font-size:.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* TOPIC */
-.topic-block{margin-bottom:18px;opacity:1}
+.topic-block{margin-bottom:18px;opacity:1;content-visibility:auto;contain-intrinsic-size:0 200px}
 /* শুধু প্রথম ৫টায় animation — বাকিগুলো সাথে সাথে দেখাও */
 .topic-block.animate-in{animation:fadeUp .22s ease forwards;opacity:0}
 .topic-block.animate-in:nth-child(1){animation-delay:.02s}
@@ -129,6 +110,7 @@ body.landscape .content{padding:10px 12px 20px}
 .topic-block.animate-in:nth-child(3){animation-delay:.08s}
 .topic-block.animate-in:nth-child(4){animation-delay:.11s}
 .topic-block.animate-in:nth-child(5){animation-delay:.14s}
+.topic-block.animate-in{will-change:transform,opacity}
 @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .topic-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .topic-icon{width:32px;height:32px;border-radius:9px;background:rgba(79,142,247,.15);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
@@ -141,7 +123,7 @@ body.landscape .content{padding:10px 12px 20px}
 
 /* ── TABLE ──
    FIX: nowrap + scroll inside cell so text stays on one line */
-.table-wrap{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.table-wrap{border-radius:var(--radius);border:1px solid var(--border);overflow:hidden;contain:layout style}
 .t-header{display:grid;background:rgba(79,142,247,.1);border-bottom:1px solid var(--border)}
 .t-header.col2{grid-template-columns:55% 45%}
 .t-header.col3{grid-template-columns:45% 28% 27%}
@@ -161,7 +143,7 @@ body.landscape .content{padding:10px 12px 20px}
 .a-cell{display:flex;align-items:flex-start;gap:4px;color:var(--muted)}
 .a-text{flex:1;word-break:break-word;white-space:normal;line-height:1.55;transition:filter .25s,color .25s}
 .a-cell.hidden .a-text{filter:blur(5px);user-select:none;color:var(--muted)}
-.a-cell.revealed .a-text{filter:none;color:var(--green)}
+.a-cell.revealed .a-text{filter:none;color:var(--text)}
 .a-cell.example-cell.revealed .a-text{color:var(--muted)}
 /* Toggle button */
 .eye-btn{width:22px;height:22px;min-width:22px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-top:1px}
@@ -259,8 +241,8 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .nav-btn.active{color:var(--accent)}.nav-btn .ni{font-size:1.15rem}.nav-btn .nl{font-size:.58rem}
 
 /* Calendar date icon — bottom nav */
-#calIcon{font-size:.7rem!important;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;background:var(--accent);color:#fff;border:none;padding:0}
-#calIcon .cal-month{font-size:.44rem;background:rgba(0,0,0,.25);width:100%;text-align:center;border-radius:5px 5px 0 0;padding:1px 0;letter-spacing:.3px}
+#calIcon{font-size:.7rem!important;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:#fff;border:none;padding:0}
+#calIcon .cal-month{font-size:.44rem;width:100%;text-align:center;border-radius:5px 5px 0 0;padding:1px 0;letter-spacing:.3px}
 #calIcon .cal-day{font-size:.82rem;font-weight:900;line-height:1.1}
 /* Calendar date icon — landscape topbar: একটাই রঙ, সিম্পল */
 #lsCalIcon{font-size:.7rem!important;font-weight:700;line-height:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;border:none;padding:0;cursor:pointer}
@@ -329,7 +311,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .exam-ans-wrap{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 15px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:all .2s}
 .exam-ans-wrap.revealed-ans{border-color:var(--green)}
 .exam-ans-text{flex:1;font-size:.88rem;line-height:1.6;color:var(--muted);filter:blur(5px);user-select:none;transition:filter .25s,color .25s}
-.exam-ans-wrap.revealed-ans .exam-ans-text{filter:none;color:var(--green)}
+.exam-ans-wrap.revealed-ans .exam-ans-text{filter:none;color:var(--accent)}
 .exam-eye{width:26px;height:26px;min-width:26px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .exam-ans-wrap.revealed-ans .exam-eye{background:var(--green);border-color:var(--green);color:#fff}
 .exam-actions{display:flex;gap:10px;width:100%;margin-top:4px}
@@ -426,11 +408,11 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .tracker-day-cell.done .tc-num{color:var(--green)}
 .tracker-day-cell.done::after{content:'✓';position:absolute;top:6px;right:9px;font-size:.7rem;color:var(--green)}
 .tracker-day-cell.future{opacity:.4;cursor:default}
-.tc-num{font-size:.88rem;font-weight:700;color:var(--text);line-height:1}
+.tc-num{font-size:1rem;font-weight:700;color:var(--text);line-height:1}
 .tc-lbl{font-size:.42rem;color:var(--muted);line-height:1}
 .tc-tasks{margin-top:5px;display:flex;flex-direction:column;gap:4px}
-.tc-task{font-size:.75rem;color:var(--muted);line-height:1.35;display:flex;align-items:flex-start;gap:4px}
-.tc-task-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tc-task{font-size:1rem;color:var(--muted);line-height:1.35;display:flex;align-items:flex-start;gap:4px}
+.tc-task-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:8px}
 .tracker-day-cell.done .tc-task{text-decoration:line-through;opacity:.5}
 .tracker-day-cell.today .tc-task{color:var(--text)}
 .tracker-stats{display:flex;gap:9px;margin-bottom:14px}
@@ -455,89 +437,422 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
    SERVICE WORKER — Offline support
    অ্যাপটি নিজেই cache হবে, offline-এও চলবে
 ══════════════════════════════════════ */
-if('serviceWorker' in navigator){
-  // SW inline হিসেবে blob URL দিয়ে register করি
-  // কারণ এটা single HTML file — আলাদা sw.js নেই
-  const swCode = `
-const CACHE = 'ds-app-v1';
-const SELF_URL = self.location.href;
-
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache => cache.add(SELF_URL))
-  );
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(self.clients.claim());
-});
-
-self.addEventListener('fetch', e => {
-  const url = e.request.url;
-  // শুধু এই HTML file টা cache থেকে দাও
-  // Anthropic API, Google Drive, Apps Script — network-first (নেট না থাকলে fail করুক)
-  const isExternal = url.includes('api.anthropic.com') ||
-                     url.includes('script.google.com') ||
-                     url.includes('googleapis.com') ||
-                     url.includes('drivemcp');
-  if(isExternal){
-    e.respondWith(fetch(e.request).catch(()=> new Response('offline', {status: 503})));
-    return;
-  }
-  // এই HTML app — cache-first, তারপর network
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if(cached) return cached;
-      return fetch(e.request).then(resp => {
-        // সফলভাবে লোড হলে cache আপডেট করো
-        if(resp && resp.status === 200 && resp.type !== 'opaque'){
-          const toCache = resp.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, toCache));
-        }
-        return resp;
-      });
-    }).catch(()=> caches.match(SELF_URL))
-  );
-});
-`;
-  const blob = new Blob([swCode], {type: 'application/javascript'});
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl, {scope: '/'})
-    .then(reg => {
-      console.log('SW registered');
-      // নতুন version আসলে cache আপডেট হবে
-      reg.addEventListener('updatefound', () => {
-        const newSW = reg.installing;
-        newSW.addEventListener('statechange', () => {
-          if(newSW.state === 'installed' && navigator.serviceWorker.controller){
-            showOfflineToast('🔄 অ্যাপ আপডেট হয়েছে — পরের বার রিলোডে নতুন ভার্সন চলবে');
-          }
-        });
-      });
-    })
-    .catch(e => console.log('SW failed:', e));
-
-  // Offline/online status দেখাও
+/* ══════════════════════════════════════
+   ONLINE/OFFLINE TOAST
+   NOTE: Single HTML file-এ Service Worker রেজিস্ট্রেশন সম্ভব নয়
+   (Chrome blob:/data: URL block করে)।
+   অফলাইন কাজ করে localStorage caching দিয়ে — SW ছাড়াই।
+══════════════════════════════════════ */
+(function(){
   function showOfflineToast(msg, isErr){
     const t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = `position:fixed;top:56px;left:50%;transform:translateX(-50%);background:${isErr?'#e67e22':'#3ecf8e'};color:#fff;padding:7px 16px;border-radius:9px;font-size:.75rem;font-family:SolaimanLipi,sans-serif;z-index:9999;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.3);pointer-events:none`;
+    t.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);background:'+(isErr?'#e67e22':'#3ecf8e')+';color:#fff;padding:7px 16px;border-radius:9px;font-size:.75rem;font-family:SolaimanLipi,sans-serif;z-index:9999;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.3);pointer-events:none';
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3500);
   }
-
   window.addEventListener('online',  () => showOfflineToast('✅ ইন্টারনেট সংযোগ ফিরে এসেছে'));
-  window.addEventListener('offline', () => showOfflineToast('📴 অফলাইন মোড — আগের ডেটা দিয়ে চলছে', true));
-
-  // প্রথম লোডে offline হলে জানাও
+  window.addEventListener('offline', () => showOfflineToast('📴 অফলাইন মোড — ডেটা localStorage-এ আছে', true));
   if(!navigator.onLine){
     window.addEventListener('DOMContentLoaded', () =>
       showOfflineToast('📴 অফলাইন মোড — আগের ডেটা দিয়ে চলছে', true)
     );
   }
-}
+})()
 </script>
+
+<!-- ════════════════════════════════════════════════════════════
+     MODERN THEME OVERLAY — 2026 refresh
+     Redefines design tokens + adds depth, glow, glassmorphism
+     without touching any markup or JS selectors.
+════════════════════════════════════════════════════════════ -->
+<style>
+:root{
+  /* Refined dark palette — deeper navy, warmer surfaces */
+  --bg:#0a0d18;
+  --surface:#141826;
+  --card:#1c2236;
+  --accent:#4f8ef7;       /* modern indigo */
+  --accent2:#fbbf24;      /* warm amber */
+  --text:#f1f5f9;
+  --muted:#8b93b0;
+  --green:#10d9a0;
+  --border:#2a3151;
+  --radius:16px;
+  /* New tokens */
+  --accent-glow: 0 0 24px rgba(99,102,241,.35);
+  --gradient-accent: linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+  --gradient-amber: linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%);
+  --gradient-success: linear-gradient(135deg,#10d9a0 0%,#06b6d4 100%);
+  --shadow-soft: 0 4px 16px -2px rgba(0,0,0,.4), 0 2px 6px -1px rgba(0,0,0,.3);
+  --shadow-elevated: 0 10px 40px -8px rgba(0,0,0,.6), 0 4px 12px -2px rgba(0,0,0,.4);
+  --shadow-glow: 0 8px 32px -8px rgba(99,102,241,.4);
+  --blur-bg: saturate(180%) blur(20px);
+}
+
+/* Smooth background with subtle gradient */
+body{
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,102,241,.08) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(251,191,36,.04) 0%, transparent 50%),
+    var(--bg) !important;
+  background-attachment: fixed;
+}
+
+/* Topbar — glassmorphism */
+.topbar{
+  background: rgba(20,24,38,.75) !important;
+  backdrop-filter: var(--blur-bg);
+  -webkit-backdrop-filter: var(--blur-bg);
+  border-bottom: 1px solid rgba(99,102,241,.15) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, var(--shadow-soft);
+}
+.topbar-title{
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em;
+}
+.streak{
+  background: var(--gradient-amber);
+  -webkit-background-clip: text;
+  background-clip: text;
+  font-weight: 700 !important;
+}
+
+/* Buttons — modern feel */
+.rotate-btn{
+  background: rgba(28,34,54,.6) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(99,102,241,.2) !important;
+  transition: all .2s cubic-bezier(.4,0,.2,1) !important;
+  border-radius: 10px !important;
+}
+.rotate-btn:hover{
+  background: rgba(99,102,241,.15) !important;
+  border-color: rgba(99,102,241,.4) !important;
+  transform: translateY(-1px);
+}
+.rotate-btn.active{
+  background: var(--gradient-accent) !important;
+  border-color: transparent !important;
+  box-shadow: var(--shadow-glow);
+}
+
+/* Day scroll — elevated cards */
+.day-scroll{
+  background: rgba(20,24,38,.4) !important;
+  border-bottom: 1px solid rgba(99,102,241,.1) !important;
+  padding: 12px 14px !important;
+}
+.day-btn{
+  background: linear-gradient(180deg, rgba(28,34,54,.9) 0%, rgba(20,24,38,.9) 100%) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+  border-radius: 14px !important;
+  transition: all .25s cubic-bezier(.4,0,.2,1) !important;
+  box-shadow: var(--shadow-soft);
+  font-weight: 600;
+}
+.day-btn:hover{
+  transform: translateY(-2px);
+  border-color: rgba(99,102,241,.4) !important;
+  box-shadow: var(--shadow-elevated);
+}
+.day-btn.active{
+  background: var(--gradient-accent) !important;
+  border-color: transparent !important;
+  box-shadow: var(--shadow-glow), 0 0 0 2px rgba(99,102,241,.3);
+  transform: translateY(-1px);
+}
+
+/* Search input — refined */
+.search-input{
+  background: rgba(28,34,54,.6) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(99,102,241,.2) !important;
+  border-radius: 12px !important;
+  transition: all .2s !important;
+}
+.search-input:focus{
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15), var(--shadow-soft);
+  background: rgba(28,34,54,.85) !important;
+}
+
+/* Progress — gradient + glow */
+.progress-bar{
+  background: rgba(42,49,81,.5) !important;
+  height: 6px !important;
+  border-radius: 4px !important;
+}
+.progress-fill{
+  background: var(--gradient-success) !important;
+  box-shadow: 0 0 12px rgba(16,217,160,.4);
+  border-radius: 4px !important;
+}
+.reveal-day-btn{
+  background: rgba(99,102,241,.1) !important;
+  border: 1px solid rgba(99,102,241,.3) !important;
+  border-radius: 8px !important;
+  transition: all .2s !important;
+  font-weight: 600;
+}
+.reveal-day-btn:hover{
+  background: rgba(99,102,241,.2) !important;
+  transform: translateY(-1px);
+}
+.reset-btn{
+  background: rgba(28,34,54,.5) !important;
+  border-radius: 8px !important;
+  transition: all .2s !important;
+}
+.reset-btn:hover{
+  background: rgba(231,76,60,.15) !important;
+  border-color: rgba(231,76,60,.4) !important;
+  color: #f87171 !important;
+}
+
+/* Day badges + topic blocks — premium cards */
+.day-badge{
+  background: var(--gradient-accent) !important;
+  box-shadow: var(--shadow-glow);
+  font-weight: 700 !important;
+  letter-spacing: .02em;
+}
+.topic-block{
+  background: linear-gradient(180deg, rgba(28,34,54,.6) 0%, rgba(20,24,38,.4) 100%) !important;
+  border: 1px solid rgba(99,102,241,.12) !important;
+  border-radius: 18px !important;
+  padding: 14px !important;
+  margin-bottom: 14px !important;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(10px);
+  transition: border-color .25s;
+}
+.topic-block:hover{
+  border-color: rgba(99,102,241,.25) !important;
+}
+
+/* Tables — modern grid */
+.table-wrap{
+  border-radius: 14px !important;
+  border: 1px solid rgba(99,102,241,.12) !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+.t-header{
+  background: linear-gradient(180deg, rgba(99,102,241,.15) 0%, rgba(99,102,241,.08) 100%) !important;
+  border-bottom: 1px solid rgba(99,102,241,.2) !important;
+}
+.th-cell{
+  font-weight: 700 !important;
+  letter-spacing: .02em;
+}
+.t-row{
+  transition: background .15s;
+}
+.t-row:hover{
+  background: rgba(99,102,241,.04);
+}
+.t-cell.a-cell.hidden{
+  background: rgba(28,34,54,.4);
+}
+.t-cell.a-cell.revealed span{
+  color: #FFF;
+  background: rgba(30, 58, 95, 0.6);
+  padding-left: 8px;
+  border-radius: 5px;
+  border-left: 3px solid #3b82f6;
+}
+.t-cell.a-cell.example-cell.revealed span {
+	background: transparent;
+	border-radius: 0;
+	border-left: 0;
+	padding-left: 0;
+}
+/* Synonyms ও Antonyms টেবিলে 3য় কলাম (example-cell) তেও color দাও */
+.table-wrap[data-topic*="Synonyms"] .t-cell.a-cell.example-cell.revealed span,
+.table-wrap[data-topic*="Antonyms"] .t-cell.a-cell.example-cell.revealed span {
+  color: #FFF;
+  background: rgba(30, 58, 95, 0.6);
+  padding-left: 8px;
+  border-radius: 5px;
+  border-left: 3px solid #3b82f6;
+}
+.eye-btn{
+  transition: all .2s !important;
+  border-radius: 6px !important;
+}
+.eye-btn:hover{
+  background: rgba(99,102,241,.15) !important;
+  transform: scale(1.1);
+}
+
+/* Reveal-all + reset-topic — refined pills */
+.reveal-all-btn,.reset-topic-btn{
+  border-radius: 18px !important;
+  transition: all .2s !important;
+  font-weight: 600 !important;
+  background: rgba(28,34,54,.5) !important;
+  backdrop-filter: blur(8px);
+}
+.reveal-all-btn:hover{
+  background: rgba(99,102,241,.15) !important;
+  border-color: var(--accent) !important;
+}
+.reveal-all-btn.done{
+  background: rgba(16,217,160,.12) !important;
+  border-color: var(--green) !important;
+}
+
+/* Bottom nav — floating glass bar */
+.bottom-nav{
+  background: rgba(20,24,38,.85) !important;
+  backdrop-filter: var(--blur-bg);
+  -webkit-backdrop-filter: var(--blur-bg);
+  border-top: 1px solid rgba(99,102,241,.15) !important;
+  box-shadow: 0 -8px 32px -8px rgba(0,0,0,.5);
+}
+.nav-btn{
+  transition: all .25s cubic-bezier(.4,0,.2,1) !important;
+  border-radius: 10px !important;
+}
+.nav-btn.active{
+  color: var(--accent) !important;
+}
+.nav-btn.active .ni{
+  filter: drop-shadow(0 0 8px rgba(99,102,241,.6));
+  transform: scale(1.1);
+}
+.nav-btn:not(.active):hover{
+  background: rgba(99,102,241,.08);
+}
+
+/* Overlays — modern modal */
+.overlay,.exam-overlay,.tracker-overlay{
+  background: rgba(10,13,24,.7) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.overlay-box{
+  background: linear-gradient(180deg, rgba(28,34,54,.95) 0%, rgba(20,24,38,.95) 100%) !important;
+  border: 1px solid rgba(99,102,241,.2) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--shadow-elevated), 0 0 0 1px rgba(255,255,255,.03) inset !important;
+  backdrop-filter: blur(20px);
+}
+
+/* Primary buttons */
+.primary-btn{
+  background: var(--gradient-accent) !important;
+  border: none !important;
+  box-shadow: var(--shadow-glow);
+  transition: all .2s !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em;
+}
+.primary-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px -8px rgba(99,102,241,.5);
+}
+.primary-btn:active{
+  transform: translateY(0);
+}
+
+/* Cancel buttons */
+.cancel-btn{
+  background: rgba(28,34,54,.6) !important;
+  border: 1px solid rgba(139,147,176,.2) !important;
+  border-radius: 12px !important;
+  transition: all .2s !important;
+}
+.cancel-btn:hover{
+  background: rgba(139,147,176,.12) !important;
+}
+
+/* Link input + file input */
+.link-inp{
+  background: rgba(10,13,24,.6) !important;
+  border: 1px solid rgba(99,102,241,.2) !important;
+  border-radius: 10px !important;
+  transition: border-color .2s !important;
+}
+.link-inp:focus{
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+}
+
+/* Guide box */
+.guide-box{
+  background: linear-gradient(135deg, rgba(99,102,241,.06) 0%, rgba(251,191,36,.04) 100%) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+  border-radius: 14px !important;
+}
+.g-num{
+  background: var(--gradient-accent) !important;
+  box-shadow: var(--shadow-glow);
+}
+
+/* Exam mode polish */
+.exam-ans-wrap{
+  background: linear-gradient(180deg, rgba(28,34,54,.8) 0%, rgba(20,24,38,.8) 100%) !important;
+  border: 1px solid rgba(99,102,241,.15) !important;
+  border-radius: 14px !important;
+  transition: all .2s !important;
+}
+.exam-ans-wrap:hover{
+  border-color: rgba(99,102,241,.3) !important;
+}
+.exam-eye{
+  transition: all .2s !important;
+}
+.exam-eye:hover{
+  transform: scale(1.15);
+}
+
+/* Tracker streak box */
+.tracker-streak-box{
+  background: linear-gradient(135deg, rgba(251,191,36,.08) 0%, rgba(245,158,11,.04) 100%) !important;
+  border: 1px solid rgba(251,191,36,.25) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Highlight in search */
+.highlight{
+  background: linear-gradient(135deg, rgba(251,191,36,.35), rgba(245,158,11,.35)) !important;
+  color: #fef3c7 !important;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Smooth scroll + selection */
+html{ scroll-behavior: smooth; }
+::selection{ background: rgba(99,102,241,.35); color: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar{ width: 8px; height: 8px; }
+::-webkit-scrollbar-track{ background: transparent; }
+::-webkit-scrollbar-thumb{
+  background: rgba(99,102,241,.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover{ background: rgba(99,102,241,.4); }
+
+/* Entrance animation — only for first 5 items, defined once in main CSS */
+/* (duplicate removed for performance) */
+
+/* Calendar icon polish */
+.cal-month{
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  font-weight: 800 !important;
+}
+</style>
 </head>
 <body>
 
@@ -642,7 +957,7 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); syncNavActive('navStudy'); };
+window.onload=()=>{ loadState(); initRoutine(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); syncNavActive('navStudy'); };
 
 function initTrackerTopbar(){
   if(typeof loadTrackerData === 'function') loadTrackerData();
@@ -753,21 +1068,39 @@ function save(immediate){
   _saveTimer = setTimeout(_doSave, 400);
 }
 function _doSave(){
-  try{
-    localStorage.setItem('ds_r',JSON.stringify(revealed));
-    localStorage.setItem('ds_c',JSON.stringify(completedDays));
-    localStorage.setItem('ds_s',streak);
-    localStorage.setItem('ds_d',JSON.stringify(allDays));
-    localStorage.setItem('ds_l',JSON.stringify(savedLinks));
-    localStorage.setItem('ds_folder',savedFolderUrl);
-    localStorage.setItem('ds_modtime',JSON.stringify(fileModTimeCache));
-    localStorage.setItem('ds_ls', isLandscape ? '1' : '0');
-  }catch(e){}
+  // একটাই requestIdleCallback — browser idle time-এ save করো
+  if(_doSave._pending) return;
+  _doSave._pending = true;
+  const doWrite = ()=>{
+    _doSave._pending = false;
+    try{
+      // progress data একটাই key-তে — কম I/O
+      localStorage.setItem('ds_progress', JSON.stringify({r:revealed, c:completedDays, s:streak}));
+      localStorage.setItem('ds_d', JSON.stringify(allDays));
+      localStorage.setItem('ds_l', JSON.stringify(savedLinks));
+      localStorage.setItem('ds_folder', savedFolderUrl);
+      localStorage.setItem('ds_modtime', JSON.stringify(fileModTimeCache));
+      localStorage.setItem('ds_ls', isLandscape ? '1' : '0');
+      // legacy keys সরিয়ে ফেলো (একবার)
+      if(localStorage.getItem('ds_r') !== null){ localStorage.removeItem('ds_r'); localStorage.removeItem('ds_c'); localStorage.removeItem('ds_s'); }
+    }catch(e){}
+  };
+  if(typeof requestIdleCallback !== 'undefined'){
+    requestIdleCallback(doWrite, {timeout: 800});
+  } else {
+    setTimeout(doWrite, 0);
+  }
 }
+_doSave._pending = false;
 function loadState(){
   try{
-    const r=localStorage.getItem('ds_r'); if(r) revealed=JSON.parse(r);
-    const c=localStorage.getItem('ds_c'); if(c) completedDays=JSON.parse(c);
+    // নতুন packed key (পুরনো আলাদা key থেকে migrate)
+    const prog=localStorage.getItem('ds_progress');
+    if(prog){ const p=JSON.parse(prog); revealed=p.r||{}; completedDays=p.c||{}; streak=p.s||0; }
+    else {
+      const r=localStorage.getItem('ds_r'); if(r) revealed=JSON.parse(r);
+      const c=localStorage.getItem('ds_c'); if(c) completedDays=JSON.parse(c);
+    }
     const d=localStorage.getItem('ds_d'); if(d){ allDays=JSON.parse(d); const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b); if(k.length) currentDay=k[0]; }
     const l=localStorage.getItem('ds_l'); if(l) savedLinks=JSON.parse(l);
     const f=localStorage.getItem('ds_folder'); if(f) savedFolderUrl=f;
@@ -1189,6 +1522,8 @@ async function syncFolder(){
     savedFolderUrl=url;
     const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
     if(k.length) currentDay=k[0];
+    // routine.json ও sync করো
+    await syncRoutineFromDrive(folderId);
     save(true);renderDays();renderContent();renderSavedFolder();
     const skipMsg=skipped>0?`, ${bn(skipped)}টি অপরিবর্তিত`:'';
     if(status) status.textContent=`✅ ${bn(loaded)}টি আপডেট হয়েছে${skipMsg}${failed?` (${bn(failed)}টি ব্যর্থ)`:''}`;
@@ -1245,6 +1580,8 @@ async function softRefresh(){
                 }
               }catch(e){}
             }
+            // routine.json ও sync করো
+            await syncRoutineFromDrive(fid);
             if(loaded>0){
               save(true);
               toast(`✅ ${bn(loaded)}টি আপডেট পাওয়া গেছে!`);
@@ -2131,6 +2468,17 @@ function openExam(){
   document.getElementById('examOv').classList.add('show');
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
   syncNavActive('navExam');
+
+  // মেইন পেজের landscape state অনুযায়ী exam-এর বাটন ও class সিঙ্ক করো
+  examIsLandscape = isLandscape;
+  const examRotBtn = document.getElementById('examRotateBtn');
+  const examOvEl = document.getElementById('examOv');
+  if(examRotBtn){
+    examRotBtn.classList.toggle('active', examIsLandscape);
+    examRotBtn.textContent = examIsLandscape ? '↩ সোজা' : '⟳ আড়াআড়ি';
+  }
+  examOvEl.classList.toggle('exam-landscape', examIsLandscape);
+
   // সরাসরি picker দেখাও — resume prompt শুধু নির্দিষ্ট দিন/টপিক/মডেল সিলেক্ট করার পর আসবে
   examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day'; modelExamSelected=null;
   renderExamPicker();
@@ -2573,30 +2921,7 @@ function dismissInstall(){
   if(banner) banner.remove();
 }
 
-/* ══════════════════════════════════════
-   SELF-UPDATE: নতুন ফাইল খুললে localStorage আপডেট
-══════════════════════════════════════ */
-window.addEventListener('load', () => {
-  const proto = location.protocol;
-  const SAVE_KEY = 'ds_app_html';
-
-  if(proto === 'file:' || proto === 'content:') {
-    // সেভ হয়েছে কিনা চেক করো, তারপর blob redirect
-    const saved = localStorage.getItem(SAVE_KEY);
-    if(saved) {
-      try {
-        const blob = new Blob([saved], {type: 'text/html; charset=utf-8'});
-        const blobUrl = URL.createObjectURL(blob);
-        if(blobUrl && !blobUrl.includes('null')) {
-          location.replace(blobUrl);
-          return;
-        }
-      } catch(e) {}
-    }
-    // blob কাজ না করলে — toast দিয়ে জানাও
-    setTimeout(()=>toast('⚠️ হিস্টোরি সেভ করতে হোম স্ক্রিনে ইনস্টল করুন', 1), 1500);
-  }
-});
+/* file:// থেকে সরাসরি চলে — blob redirect দরকার নেই */
 </script>
 
 <!-- PWA Manifest inline -->
@@ -2643,55 +2968,80 @@ window.addEventListener('load', () => {
    পড়ার ট্র্যাক — ROUTINE + PROGRESS TRACKER
 ══════════════════════════════════════ */
 
-/* ── রুটিন জেনারেটর (ডে-১ থেকে ডে-৪০) ──
-   Pattern:
-   - প্রতিটি "cycle" = ৫টি নতুন day + ১টি big revision দিন (৬ দিন)
-   - cycle দিনগুলো:
-     সাইকেল দিন ১: নতুন day পড়া (e.g. ডে-১)
-     সাইকেল দিন ২: আগেরটা revision + নতুন day পড়া
-     সাইকেল দিন ৩: আগেরটা revision + নতুন day পড়া
-     সাইকেল দিন ৪: আগেরটা revision + নতুন day পড়া
-     সাইকেল দিন ৫: আগেরটা revision + নতুন day পড়া
-     সাইকেল দিন ৬: সাইকেলের সব day revision (big revision)
+/* ── JSON-BASED ROUTINE ──
+   Google Drive-এ "routine.json" নামের ফাইল রাখুন।
+   ফরম্যাট:
+   [
+     { "routineDay": 1, "tasks": [{ "type": "new", "days": [1], "label": "ডে-১ পড়া" }] },
+     { "routineDay": 2, "tasks": [
+         { "type": "revision", "days": [1], "label": "ডে-১ রিভিশন" },
+         { "type": "new", "days": [2], "label": "ডে-২ পড়া" }
+     ]},
+     ...
+   ]
+   type: "new" | "revision" | "bigrev"
 */
-function generateRoutine(){
-  const routine = []; // [{routineDay, tasks:[{type,days:[]}]}]
-  let routineDay = 1;
-  let studyDay = 1;
-  const TOTAL_DAYS = 40;
 
-  while(studyDay <= TOTAL_DAYS){
-    // সাইকেল: ৫টি নতুন day
-    const cycleStart = studyDay;
-    const cycleEnd = Math.min(studyDay + 4, TOTAL_DAYS);
+let ROUTINE = [];
+let TOTAL_ROUTINE_DAYS = 0;
+let _routineFileId = null;
 
-    for(let d = cycleStart; d <= cycleEnd; d++){
-      const tasks = [];
-      if(d > cycleStart){
-        tasks.push({type:'revision', days:[d-1], label:`ডে-${d-1} রিভিশন`});
+function loadRoutineFromStorage(){
+  try{
+    const raw = localStorage.getItem('ds_routine_json');
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed) && parsed.length){
+        ROUTINE = parsed;
+        TOTAL_ROUTINE_DAYS = ROUTINE.length;
+        return true;
       }
-      tasks.push({type:'new', days:[d], label:`ডে-${d} পড়া`});
-      routine.push({routineDay, tasks});
-      routineDay++;
     }
-
-    // Big revision দিন
-    if(cycleEnd <= TOTAL_DAYS){
-      const revDays = [];
-      const labels = [];
-      for(let d=cycleStart; d<=cycleEnd; d++){ revDays.push(d); }
-      labels.push(`ডে-${cycleStart} থেকে ডে-${cycleEnd} রিভিশন বা মডেল পরীক্ষা দাও`);
-      routine.push({routineDay, tasks:[{type:'bigrev', days:revDays, label:labels[0]}]});
-      routineDay++;
-    }
-
-    studyDay = cycleEnd + 1;
-  }
-  return routine;
+  }catch(e){}
+  return false;
 }
 
-const ROUTINE = generateRoutine();
-const TOTAL_ROUTINE_DAYS = ROUTINE.length;
+async function syncRoutineFromDrive(folderId){
+  if(!folderId) return false;
+  try{
+    const listResp = await fetch(`${APPS_SCRIPT_URL}?folderId=${folderId}`);
+    if(!listResp.ok) return false;
+    const files = await listResp.json();
+    if(!Array.isArray(files)) return false;
+
+    const routineFile = files.find(f =>
+      f.name && f.name.toLowerCase().replace(/\.json$/, '') === 'routine'
+    );
+    if(!routineFile) return false;
+
+    const resp = await fetch(`${APPS_SCRIPT_URL}?fileId=${routineFile.id}`);
+    if(!resp.ok) return false;
+    const data = await resp.json();
+
+    const routineArr = Array.isArray(data) ? data : (data.routine || null);
+    if(!routineArr || !routineArr.length) return false;
+
+    ROUTINE = routineArr;
+    TOTAL_ROUTINE_DAYS = ROUTINE.length;
+    _routineFileId = routineFile.id;
+    localStorage.setItem('ds_routine_json', JSON.stringify(ROUTINE));
+    return true;
+  }catch(e){ return false; }
+}
+
+function initRoutine(){
+  loadRoutineFromStorage();
+  if(savedFolderUrl){
+    const fid = extractFolderId(savedFolderUrl);
+    if(fid){
+      syncRoutineFromDrive(fid).then(ok=>{
+        if(ok && document.getElementById('trackerOv').classList.contains('show')){
+          renderTracker();
+        }
+      });
+    }
+  }
+}
 
 /* ── STATE ── */
 let trackerData = {}; // {routineDay: {done:bool, date:string}}
@@ -2769,6 +3119,15 @@ function todayStr(){
 
 /* ── PROGRESS TAB ── */
 function renderProgressTab(){
+  // routine.json লোড না হলে বার্তা দেখাও
+  if(!ROUTINE.length){
+    return `<div style="padding:30px 20px;text-align:center;color:var(--muted)">
+      <div style="font-size:2rem;margin-bottom:10px">📋</div>
+      <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:8px">রুটিন লোড হয়নি</div>
+      <div style="font-size:.8rem;line-height:1.7">গুগল ড্রাইভ ফোল্ডারে <b>routine.json</b> ফাইল রাখুন<br>এবং সিংক বাটন চাপুন।</div>
+    </div>`;
+  }
+
   // প্রথমবার খুললে currentDay=1 সেট করি
   if(!trackerData._currentDay){
     trackerData._currentDay = 1;
@@ -2973,6 +3332,28 @@ function showCompletionMessage(){
   document.body.appendChild(div);
   setTimeout(()=>{ div.style.opacity='0'; div.style.transition='opacity .5s'; setTimeout(()=>div.remove(), 500); }, 5000);
 }
+
+
+/* PASSIVE SCROLL — স্ক্রলিং আরও স্মুথ করার জন্য */
+(function(){
+  // day-scroll এ passive touch listeners
+  const ds = document.getElementById('dayScroll');
+  if(ds){
+    ds.addEventListener('touchstart', ()=>{}, {passive:true});
+    ds.addEventListener('touchmove', ()=>{}, {passive:true});
+  }
+  // main content
+  document.addEventListener('touchstart', ()=>{}, {passive:true});
+  // examBody, trackerBody স্ক্রল
+  ['examBody','trackerBody','listenBody'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el){
+      el.addEventListener('touchstart', ()=>{}, {passive:true});
+      el.addEventListener('touchmove', ()=>{}, {passive:true});
+    }
+  });
+})();
+
 </script>
 
 <!-- LISTEN OVERLAY -->
