@@ -9,8 +9,6 @@
 <meta name="apple-mobile-web-app-title" content="দৈনিক পড়া">
 <meta name="theme-color" content="#0f1117">
 <title>দৈনিক পড়া</title>
-<link rel="preload" as="style" onload="this.rel='stylesheet'" href="about:blank">
-<meta name="color-scheme" content="dark">
 <script>
 /* file:// থেকে খুললে কোনো redirect দরকার নেই —
    অ্যাপ সরাসরি চলে, data localStorage-এ থাকে */
@@ -1068,30 +1066,16 @@ function save(immediate){
   _saveTimer = setTimeout(_doSave, 400);
 }
 function _doSave(){
-  // একটাই requestIdleCallback — browser idle time-এ save করো
-  if(_doSave._pending) return;
-  _doSave._pending = true;
-  const doWrite = ()=>{
-    _doSave._pending = false;
-    try{
-      // progress data একটাই key-তে — কম I/O
-      localStorage.setItem('ds_progress', JSON.stringify({r:revealed, c:completedDays, s:streak}));
-      localStorage.setItem('ds_d', JSON.stringify(allDays));
-      localStorage.setItem('ds_l', JSON.stringify(savedLinks));
-      localStorage.setItem('ds_folder', savedFolderUrl);
-      localStorage.setItem('ds_modtime', JSON.stringify(fileModTimeCache));
-      localStorage.setItem('ds_ls', isLandscape ? '1' : '0');
-      // legacy keys সরিয়ে ফেলো (একবার)
-      if(localStorage.getItem('ds_r') !== null){ localStorage.removeItem('ds_r'); localStorage.removeItem('ds_c'); localStorage.removeItem('ds_s'); }
-    }catch(e){}
-  };
-  if(typeof requestIdleCallback !== 'undefined'){
-    requestIdleCallback(doWrite, {timeout: 800});
-  } else {
-    setTimeout(doWrite, 0);
-  }
+  try{
+    localStorage.setItem('ds_progress', JSON.stringify({r:revealed, c:completedDays, s:streak}));
+    localStorage.setItem('ds_d', JSON.stringify(allDays));
+    localStorage.setItem('ds_l', JSON.stringify(savedLinks));
+    localStorage.setItem('ds_folder', savedFolderUrl);
+    localStorage.setItem('ds_modtime', JSON.stringify(fileModTimeCache));
+    localStorage.setItem('ds_ls', isLandscape ? '1' : '0');
+    if(localStorage.getItem('ds_r') !== null){ localStorage.removeItem('ds_r'); localStorage.removeItem('ds_c'); localStorage.removeItem('ds_s'); }
+  }catch(e){}
 }
-_doSave._pending = false;
 function loadState(){
   try{
     // নতুন packed key (পুরনো আলাদা key থেকে migrate)
@@ -1515,13 +1499,17 @@ async function syncFolder(){
           // সফল হলে modifiedTime ক্যাশ আপডেট করো
           if(file.modifiedTime) fileModTimeCache[file.id]=file.modifiedTime;
           loaded++;
+        } else {
+          // routine.json বা অন্য format — modifiedTime ক্যাশ করো যাতে পরেরবার skip হয়
+          if(file.modifiedTime) fileModTimeCache[file.id]=file.modifiedTime;
         }
         if(status) status.textContent=`লোড হচ্ছে: ${bn(loaded)}/${bn(toFetch.length)}${skipped>0?` (${bn(skipped)}টি skip)`:''}`;
       }catch(e){failed++;}
     }
     savedFolderUrl=url;
     const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
-    if(k.length) currentDay=k[0];
+    // currentDay শুধু তখনই বদলাও যদি আগের দিনটা এখন আর নেই
+    if(k.length && !allDays[currentDay]) currentDay=k[0];
     // routine.json ও sync করো
     await syncRoutineFromDrive(folderId);
     save(true);renderDays();renderContent();renderSavedFolder();
@@ -1577,11 +1565,14 @@ async function softRefresh(){
                   allDays[data.day]=data;
                   if(file.modifiedTime) fileModTimeCache[file.id]=file.modifiedTime;
                   loaded++;
+                } else {
+                  // routine.json বা অন্য format — cache করো
+                  if(file.modifiedTime) fileModTimeCache[file.id]=file.modifiedTime;
                 }
               }catch(e){}
             }
             // routine.json ও sync করো
-            await syncRoutineFromDrive(fid);
+            await syncRoutineFromDrive(folderId);
             if(loaded>0){
               save(true);
               toast(`✅ ${bn(loaded)}টি আপডেট পাওয়া গেছে!`);
@@ -1641,7 +1632,7 @@ function loadLocalFile(inp){
       if(!data.day||!data.topics){toast('❌ JSON ফরম্যাট সঠিক নয়!',1);return;}
       allDays[data.day]=data;
       const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
-      if(k.length) currentDay=k[0];
+      if(k.length && !allDays[currentDay]) currentDay=k[0];
       save(true);renderDays();renderContent();
       closeDrive();toast(`✅ দিন ${data.day} লোড হয়েছে!`);
     }catch(err){toast('❌ JSON সমস্যা: '+err.message,1);}
@@ -1796,8 +1787,9 @@ function toggleClear(val){
 function clearSearch(){
   const inp=document.getElementById('searchInput');
   if(inp){inp.value='';inp.focus();}
+  // আগে _doSearch('') কল করো যাতে scroll position ব্যবহার হয়,
+  // তারপর undefined করো (doSearch নিজেই করবে)
   _doSearch('');
-  window._searchScrollY = undefined;
   const btn=document.getElementById('searchClear');
   if(btn) btn.classList.remove('visible');
 }
@@ -3025,6 +3017,8 @@ async function syncRoutineFromDrive(folderId){
     TOTAL_ROUTINE_DAYS = ROUTINE.length;
     _routineFileId = routineFile.id;
     localStorage.setItem('ds_routine_json', JSON.stringify(ROUTINE));
+    // modifiedTime ক্যাশ করো — যাতে পরেরবার불필요하게fetch না হয়
+    if(routineFile.modifiedTime) fileModTimeCache[routineFile.id] = routineFile.modifiedTime;
     return true;
   }catch(e){ return false; }
 }
