@@ -305,10 +305,10 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .exam-body{flex:1;overflow-y:auto;padding:20px 16px 100px;display:flex;flex-direction:column;align-items:center}
 .exam-counter{font-size:.75rem;color:var(--muted);margin-bottom:14px;align-self:flex-start}
 .exam-topic-badge{font-size:.68rem;color:var(--accent);background:rgba(79,142,247,.12);border-radius:6px;padding:2px 8px;margin-bottom:10px;align-self:flex-start}
-.exam-q-card{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 16px;margin-bottom:16px;font-size:.95rem;font-weight:600;line-height:1.65;color:var(--text)}
+.exam-q-card{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 16px;margin-bottom:16px;font-size:1rem;font-weight:600;line-height:1.65;color:var(--text)}
 .exam-ans-wrap{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 15px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:all .2s}
 .exam-ans-wrap.revealed-ans{border-color:var(--green)}
-.exam-ans-text{flex:1;font-size:.88rem;line-height:1.6;color:var(--muted);filter:blur(5px);user-select:none;transition:filter .25s,color .25s}
+.exam-ans-text{flex:1;font-size:1rem;line-height:1.6;color:var(--muted);filter:blur(5px);user-select:none;transition:filter .25s,color .25s}
 .exam-ans-wrap.revealed-ans .exam-ans-text{filter:none;color:var(--accent)}
 .exam-eye{width:26px;height:26px;min-width:26px;border-radius:50%;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .exam-ans-wrap.revealed-ans .exam-eye{background:var(--green);border-color:var(--green);color:#fff}
@@ -363,7 +363,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .exam-overlay.exam-landscape .exam-topic-badge{font-size:.66rem}
 .exam-overlay.exam-landscape .exam-q-card{font-size:1.15rem;padding:13px 13px;margin-bottom:8px}
 .exam-overlay.exam-landscape .exam-ans-wrap{padding:9px 12px;margin-bottom:10px}
-.exam-overlay.exam-landscape .exam-ans-text{font-size:.9rem}
+.exam-overlay.exam-landscape .exam-ans-text{font-size:1.1rem}
 .exam-overlay.exam-landscape .exam-actions{gap:8px;margin-top:0}
 .exam-overlay.exam-landscape .exam-know,
 .exam-overlay.exam-landscape .exam-dontknow{font-size:.88rem;padding:9px 6px}
@@ -405,7 +405,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .tracker-day-cell.done{background:rgba(62,207,142,.08);border-color:var(--green)}
 .tracker-day-cell.done .tc-num{color:var(--green)}
 .tracker-day-cell.done::after{content:'✓';position:absolute;top:6px;right:9px;font-size:.7rem;color:var(--green)}
-.tracker-day-cell.future{opacity:.4;cursor:default}
+.tracker-day-cell.future{opacity:.5;cursor:default}
 .tc-num{font-size:1rem;font-weight:700;color:var(--text);line-height:1}
 .tc-lbl{font-size:.42rem;color:var(--muted);line-height:1}
 .tc-tasks{margin-top:5px;display:flex;flex-direction:column;gap:4px}
@@ -729,7 +729,7 @@ body{
 
 /* Overlays — modern modal */
 .overlay,.exam-overlay,.tracker-overlay{
-  background: rgba(10,13,24,.7) !important;
+  background: rgba(10,13,24,.95) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
