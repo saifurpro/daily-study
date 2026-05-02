@@ -1340,7 +1340,45 @@ function applyLandscapeColWidths(){
     'বর্গ ও ঘন', 'সূত্র'
   ];
 
-  function getTopicRatio(title, cols){
+  function getTopicRatio(title, cols, customWidths){
+    // যদি JSON-এ columnWidths থাকে, সেটা ব্যবহার করো (highest priority)
+    if(customWidths && Array.isArray(customWidths) && customWidths.length === cols){
+      // Parse width values - supports percentage (e.g., "50%") or pixel (e.g., "200px")
+      const ratios = [];
+      let hasPercentage = false;
+      let totalPercent = 0;
+      
+      for(let i = 0; i < customWidths.length; i++){
+        const w = String(customWidths[i]).trim();
+        if(w.endsWith('%')){
+          const val = parseFloat(w);
+          ratios.push(val / 100);
+          totalPercent += val;
+          hasPercentage = true;
+        } else if(w.endsWith('px')){
+          // pixel values will be handled separately
+          ratios.push(w);
+        } else {
+          // treat as percentage number without % sign
+          const val = parseFloat(w);
+          ratios.push(val / 100);
+          totalPercent += val;
+          hasPercentage = true;
+        }
+      }
+      
+      // If using percentages, normalize if total != 100%
+      if(hasPercentage && Math.abs(totalPercent - 100) > 0.1){
+        const normalized = ratios.map(r => 
+          typeof r === 'number' ? r * (100 / totalPercent) : r
+        );
+        return normalized;
+      }
+      
+      return ratios;
+    }
+    
+    // Default behavior
     const t = title || '';
     if(cols === 2){
       if(BIG_FIRST_TOPICS.some(k => t.includes(k)))    return [0.65, 0.35];
@@ -1371,11 +1409,22 @@ function applyLandscapeColWidths(){
       if(!headerEl) return;
       const cols = parseInt(wrap.dataset.cols) || (headerEl.classList.contains('col3') ? 3 : 2);
       const topicTitle = wrap.dataset.topic || '';
-      const cacheKey = topicTitle + '|' + cols;
+      
+      // Custom widths থেকে পড়ো (যদি থাকে)
+      let customWidths = null;
+      if(wrap.dataset.customWidths){
+        try {
+          customWidths = JSON.parse(wrap.dataset.customWidths);
+        } catch(e) {
+          console.warn('Invalid columnWidths JSON:', e);
+        }
+      }
+      
+      const cacheKey = topicTitle + '|' + cols + '|' + (customWidths ? JSON.stringify(customWidths) : '');
 
       let frCols = _lsColCache.get(cacheKey);
       if(!frCols){
-        const fixedRatio = getTopicRatio(topicTitle, cols);
+        const fixedRatio = getTopicRatio(topicTitle, cols, customWidths);
         const maxW = new Array(cols).fill(0);
         wrap.querySelectorAll('.th-cell').forEach((th, i) => {
           if(i >= cols) return;
@@ -1682,6 +1731,8 @@ function renderContent(){
     const hdrs=t.columnHeaders||t.headers||(cols===3?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর']);
     const rc=t.items.filter((_,ii)=>revealed[`${currentDay}_${ti}_${ii}`]).length, done=rc===t.items.length;
     const animCls=ti<5?' animate-in':'';
+    // Custom column widths থাকলে data attribute হিসেবে pass করো
+    const customWidthsAttr = t.columnWidths ? ` data-custom-widths="${JSON.stringify(t.columnWidths).replace(/"/g,'&quot;')}"` : '';
     h+=`<div class="topic-block${animCls}">
       <div class="topic-header">
         <div class="topic-icon">${t.icon||'📖'}</div>
@@ -1691,7 +1742,7 @@ function renderContent(){
           <button class="reveal-all-btn ${done?'done':''}" onclick="revAll(${ti})" id="rab${ti}">${done?'✅':'সব দেখাও'}</button>
         </div>
       </div>
-      <div class="table-wrap" data-topic="${t.title}" data-cols="${cols}">
+      <div class="table-wrap" data-topic="${t.title}" data-cols="${cols}"${customWidthsAttr}>
         <div class="t-header col${cols}">${hdrs.map(hh=>`<div class="th-cell">${hh}</div>`).join('')}</div>`;
     t.items.forEach((item,ii)=>{
       const k=`${currentDay}_${ti}_${ii}`, rv=!!revealed[k];
