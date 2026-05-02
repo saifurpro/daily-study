@@ -2747,7 +2747,7 @@ function startExam(){
     t.items.forEach(item=>q.push({q:item.q,a:item.a,ex:item.ex||item.example||'',topic:t.title,cols:t.columns||(t.items.some(i=>i.ex||i.example)?3:2),headers:t.columnHeaders||t.headers||null}));
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
-  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0; examDontKnowItems=[];
   clearExamState();
   document.getElementById('examTopTitle').textContent=`📝 দিন ${bn(examSelectedDay)} পরীক্ষা`;
   renderExamCard();
@@ -2766,7 +2766,7 @@ function startTopicExam(){
     });
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
-  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0; examDontKnowItems=[];
   clearExamState();
   document.getElementById('examTopTitle').textContent=`📝 ${key} পরীক্ষা`;
   renderExamCard();
@@ -2775,7 +2775,7 @@ function startTopicExam(){
 function resetCurrentExam(){
   if(!confirm('এই পরীক্ষা রিসেট করবেন? প্রথম থেকে শুরু হবে।')) return;
   clearExamState();
-  examIdx=0; examKnow=0; examDontKnow=0;
+  examIdx=0; examKnow=0; examDontKnow=0; examDontKnowItems=[];
   // Queue নতুনভাবে shuffle করো
   for(let i=examQueue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[examQueue[i],examQueue[j]]=[examQueue[j],examQueue[i]];}
   renderExamCard();
@@ -2848,8 +2848,16 @@ function toggleExamAns(){
   }
 }
 
+let examDontKnowItems = []; // 'জানি না' প্রশ্নগুলো সংরক্ষণ
+
 function examAnswer(know){
-  if(know) examKnow++; else examDontKnow++;
+  if(know) {
+    examKnow++;
+  } else {
+    examDontKnow++;
+    // 'জানি না' প্রশ্নটি সংরক্ষণ করো
+    examDontKnowItems.push(examQueue[examIdx]);
+  }
   examIdx++;
   renderExamCard();
 }
@@ -2882,7 +2890,7 @@ function startModelExam(){
     });
   });
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
-  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0;
+  examQueue=q; examIdx=0; examKnow=0; examDontKnow=0; examDontKnowItems=[];
   clearExamState();
   document.getElementById('examTopTitle').textContent=`🏆 মডেল ${bn(modelExamSelected+1)} — দিন ${bn(dayFrom)}-${bn(dayTo)}`;
   renderExamCard();
@@ -2894,6 +2902,70 @@ function renderExamResult(){
   if(resetBtn) resetBtn.style.display='none';
   const total=examQueue.length;
   const pct=total>0?Math.round(examKnow/total*100):0;
+  
+  // 'জানি না' প্রশ্নগুলোর HTML তৈরি করো - ঠিক নরমাল ডে এর টেবিলের মতো
+  let dontKnowHTML = '';
+  if(examDontKnowItems.length > 0){
+    dontKnowHTML = `
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      <div style="font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+        <span>📚 রিভিশন করুন</span>
+        <span style="font-size:.75rem;color:var(--muted);font-weight:400;">(${bn(examDontKnowItems.length)}টি প্রশ্ন যা জানতেন না)</span>
+      </div>`;
+    
+    // টপিক অনুযায়ী গ্রুপ করো
+    const byTopic = {};
+    examDontKnowItems.forEach(item => {
+      const topic = item.topic;
+      if(!byTopic[topic]) byTopic[topic] = {items: [], cols: item.cols, headers: item.headers};
+      byTopic[topic].items.push(item);
+    });
+    
+    // প্রতিটি টপিকের জন্য টেবিল তৈরি করো - নরমাল ডে এর মতো
+    Object.keys(byTopic).forEach(topic => {
+      const data = byTopic[topic];
+      const cols = data.cols || 2;
+      const hasEx = cols === 3;
+      const hdrs = data.headers || (hasEx ? ['প্রশ্ন','উত্তর','Example'] : ['প্রশ্ন','উত্তর']);
+      
+      dontKnowHTML += `
+      <div class="topic-block" style="margin-bottom:16px;">
+        <div class="topic-header" style="cursor:default;">
+          <div class="topic-icon">📖</div>
+          <div><div class="topic-title">${topic}</div><div class="topic-count">${bn(data.items.length)}টি</div></div>
+        </div>
+        <div class="table-wrap" data-topic="${topic}" data-cols="${cols}">
+          <div class="t-header col${cols}">`;
+      
+      // টেবিল হেডার - নরমাল ডে এর মতো
+      hdrs.forEach(hh => {
+        dontKnowHTML += `<div class="th-cell">${hh}</div>`;
+      });
+      
+      dontKnowHTML += `</div>`;
+      
+      // টেবিল বডি - নরমাল ডে এর মতো
+      data.items.forEach((item, idx) => {
+        dontKnowHTML += `<div class="t-row col${cols}">
+          <div class="t-cell q-cell" title="${item.q}">${item.q.replace(/\n/g,'<br>')}</div>
+          <div class="t-cell a-cell revealed" title="${item.a}">
+            <span class="a-text">${item.a.replace(/\n/g,'<br>')}</span>
+          </div>`;
+        
+        if(hasEx){
+          const ex = item.ex || '';
+          dontKnowHTML += `<div class="t-cell a-cell example-cell revealed" title="${ex}"><span class="a-text">${ex.replace(/\n/g,'<br>') || '—'}</span></div>`;
+        }
+        
+        dontKnowHTML += `</div>`;
+      });
+      
+      dontKnowHTML += `</div></div>`;
+    });
+    
+    dontKnowHTML += `</div>`;
+  }
+  
   const h=`<div class="exam-result">
     <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:18px;">পরীক্ষার ফলাফল 🎯</div>
     <div class="result-circle" style="--pct:${pct}%">
@@ -2906,6 +2978,7 @@ function renderExamResult(){
     </div>
     <button class="result-retry" onclick="${examPickerTab==='topic'?'startTopicExam':examPickerTab==='model'?'startModelExam':'startExam'}()">🔄 আবার পরীক্ষা দিন</button>
     <button class="result-back" onclick="renderExamPicker()">← অন্য পরীক্ষা বেছে নিন</button>
+    ${dontKnowHTML}
   </div>`;
   document.getElementById('examBody').innerHTML=h;
 }
