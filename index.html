@@ -216,9 +216,9 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 /* SEARCH RESULTS */
 .search-results{padding:0 14px 90px}
 .search-result-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:9px;animation:fadeUp .2s ease forwards}
-.sr-badge{display:inline-block;background:rgba(79,142,247,.15);color:var(--accent);border-radius:6px;padding:2px 7px;font-size:.65rem;font-weight:600;margin-bottom:7px}
-.sr-q{font-size:.83rem;font-weight:500;color:var(--text);margin-bottom:4px}
-.sr-a{font-size:.83rem;color:var(--green)}
+.sr-badge{display:inline-block;background:rgba(79,142,247,.15);color:var(--accent);border-radius:6px;padding:2px 7px;font-size:.85rem;font-weight:600;margin-bottom:7px}
+.sr-q{font-size:1rem;font-weight:500;color:var(--text);margin-bottom:4px}
+.sr-a{font-size:1rem;color:var(--green)}
 .sr-ex{font-size:.72rem;color:var(--muted);margin-top:3px}
 .highlight{background:rgba(79,142,247,.35);border-radius:3px;padding:0 2px}
 .no-result{text-align:center;padding:40px 20px;color:var(--muted);font-size:.88rem}
@@ -375,6 +375,14 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .exam-overlay.exam-landscape .score-lbl{font-size:.6rem!important}
 /* ── AI AGENT MODE ── */
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── BODY SCROLL LOCK ── */
+body.no-scroll {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
 
 /* ── TRACKER OVERLAY ── */
 .tracker-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:300;flex-direction:column;overflow:hidden}
@@ -2527,6 +2535,9 @@ function resumeExam(state){
 }
 
 function openExam(){
+  // Body scroll lock
+  document.body.classList.add('no-scroll');
+  
   document.getElementById('examOv').classList.add('show');
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
   syncNavActive('navExam');
@@ -2546,6 +2557,9 @@ function openExam(){
   renderExamPicker();
 }
 function closeExam(){
+  // Body scroll unlock
+  document.body.classList.remove('no-scroll');
+  
   if(document.getElementById('examOv').classList.contains('exam-landscape')) toggleExamLandscape();
   // পরীক্ষা চলাকালে বন্ধ করলে state সেভ করো
   if(examQueue.length && examIdx < examQueue.length){
@@ -3205,12 +3219,18 @@ function saveTrackerData(){
 
 /* ── OPEN / CLOSE ── */
 function openTracker(){
+  // Body scroll lock
+  document.body.classList.add('no-scroll');
+  
   loadTrackerData();
   document.getElementById('trackerOv').classList.add('show');
   syncNavActive('navTracker');
   renderTracker();
 }
 function closeTracker(){
+  // Body scroll unlock
+  document.body.classList.remove('no-scroll');
+  
   document.getElementById('trackerOv').classList.remove('show');
   syncNavActive('navStudy');
 }
