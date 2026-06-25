@@ -1872,7 +1872,7 @@ function recalcStreak(){
 }
 function updateStreak(){
   const el = document.getElementById('streakEl');
-  if(el) el.textContent = `🔥 ${bn(streak)} দিন`;
+  if(el) el.textContent = `${bn(streak)} দিন`;
 }
 
 /* ══════════════════════════════════════
@@ -3362,7 +3362,7 @@ function renderProgressTab(){
 
   // Streak box
   const streakBox = streak > 0
-    ? `<div class="tracker-streak-box"><span style="font-size:1.4rem">🔥</span><span class="tracker-streak-text">মোট ${bn(streak)} দিন পড়া সম্পন্ন হয়েছে!</span></div>`
+    ? `<div class="tracker-streak-box"><span class="tracker-streak-text">মোট ${bn(streak)} দিন পড়া সম্পন্ন হয়েছে!</span></div>`
     : '';
 
   // Stats row
