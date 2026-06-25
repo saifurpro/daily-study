@@ -474,7 +474,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 #calIcon{
   font-size:.7rem!important;font-weight:700;line-height:1;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  width:30px;height:30px;border-radius:7px;color:#fff;border:none;padding:0;
+  width:30px;height:30px;border-radius:7px;color:var(--accent);border:none;padding:0;
 }
 #calIcon .cal-month{font-size:.44rem;width:100%;text-align:center;border-radius:5px 5px 0 0;padding:1px 0;letter-spacing:.3px}
 #calIcon .cal-day{font-size:.82rem;font-weight:900;line-height:1.1}
@@ -947,10 +947,10 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
     <button class="ls-nav-btn" id="lsNavDrive" onclick="openDrive()"><span class="ls-ni">☁️</span><span class="ls-nl">Drive</span></button>
   </div>
   <div class="topbar-right">
-    <span class="streak" id="streakEl">🔥 ০ দিন</span>
+    <span class="streak" id="streakEl">০ দিন</span>
     <button class="rotate-btn" id="themeBtn" onclick="openThemePicker()" title="থিম বদলান">🎨</button>
     <button class="rotate-btn" id="softRefreshBtn" onclick="softRefresh()" title="কনটেন্ট রিলোড">↻</button>
-    <button class="rotate-btn" id="rotateBtn" onclick="toggleLandscape()">⟳ আড়াআড়ি</button>
+    <button class="rotate-btn" id="rotateBtn" onclick="toggleLandscape()">⟳</button>
   </div>
 </div>
 
@@ -1097,7 +1097,7 @@ document.addEventListener('visibilitychange', async ()=>{
             isLandscape = false;
             document.body.classList.remove('landscape');
             const btn = document.getElementById('rotateBtn');
-            if(btn){ btn.classList.remove('active'); btn.textContent = '⟳ আড়াআড়ি'; }
+            if(btn){ btn.classList.remove('active'); btn.textContent = '⟳'; }
             const metaVP = document.querySelector('meta[name=viewport]');
             if(metaVP) metaVP.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
             save(true);
@@ -1114,7 +1114,7 @@ document.addEventListener('visibilitychange', async ()=>{
       } else {
         document.body.classList.remove('landscape');
         const btn = document.getElementById('rotateBtn');
-        if(btn){ btn.classList.remove('active'); btn.textContent = '⟳ আড়াআড়ি'; }
+        if(btn){ btn.classList.remove('active'); btn.textContent = '⟳'; }
         const metaVP = document.querySelector('meta[name=viewport]');
         if(metaVP) metaVP.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
       }
@@ -1125,7 +1125,7 @@ document.addEventListener('visibilitychange', async ()=>{
       const examRotBtn = document.getElementById('examRotateBtn');
       if(examRotBtn){
         examRotBtn.classList.toggle('active', _examLS);
-        examRotBtn.textContent = _examLS ? '↩ সোজা' : '⟳ আড়াআড়ি';
+        examRotBtn.textContent = _examLS ? '↩ সোজা' : '⟳';
       }
     }, 300);
 
@@ -1331,7 +1331,7 @@ async function toggleLandscape(){
   isLandscape = !isLandscape;
   const btn = document.getElementById('rotateBtn');
   btn.classList.toggle('active', isLandscape);
-  btn.textContent = isLandscape ? '↩ সোজা' : '⟳ আড়াআড়ি';
+  btn.textContent = isLandscape ? '↩ সোজা' : '⟳';
   document.body.classList.toggle('landscape', isLandscape);
 
   if(isLandscape){
@@ -2600,7 +2600,7 @@ function openExam(){
   const examOvEl = document.getElementById('examOv');
   if(examRotBtn){
     examRotBtn.classList.toggle('active', examIsLandscape);
-    examRotBtn.textContent = examIsLandscape ? '↩ সোজা' : '⟳ আড়াআড়ি';
+    examRotBtn.textContent = examIsLandscape ? '↩ সোজা' : '⟳';
   }
   examOvEl.classList.toggle('exam-landscape', examIsLandscape);
 
@@ -2627,7 +2627,7 @@ async function toggleExamLandscape(){
   const btn=document.getElementById('examRotateBtn');
   const ov=document.getElementById('examOv');
   btn.classList.toggle('active',examIsLandscape);
-  btn.textContent=examIsLandscape?'↩ সোজা':'⟳ আড়াআড়ি';
+  btn.textContent=examIsLandscape?'↩ সোজা':'⟳';
   ov.classList.toggle('exam-landscape',examIsLandscape);
   if(examIsLandscape){
     try{
@@ -3591,7 +3591,7 @@ function showCompletionMessage(){
     <span class="exam-title" id="examTopTitle">📝 পরীক্ষা</span>
     <div style="display:flex;gap:6px;align-items:center;">
       <button class="rotate-btn" id="examResetBtn" onclick="resetCurrentExam()" style="display:none;background:rgba(231,76,60,.15);border-color:rgba(231,76,60,.4);color:#e74c3c;">🔄 রিসেট</button>
-      <button class="rotate-btn" id="examRotateBtn" onclick="toggleExamLandscape()">⟳ আড়াআড়ি</button>
+      <button class="rotate-btn" id="examRotateBtn" onclick="toggleExamLandscape()">⟳</button>
       <button class="exam-close-btn" onclick="closeExam()">✕ বন্ধ</button>
     </div>
   </div>
