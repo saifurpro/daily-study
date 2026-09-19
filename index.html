@@ -355,6 +355,60 @@ body:not(.landscape) .table-wrap[data-topic*="বানান শুদ্ধি
 body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] .t-row{padding:0}
 
 /* ── LANDSCAPE NAV ── */
+/* ── VIEW MODE BAR ── */
+.mode-bar{
+  display:flex;gap:5px;padding:8px 14px 0;background:var(--bg);
+}
+.mode-btn{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:4px;
+  padding:7px 4px;border-radius:9px;border:1px solid var(--border);
+  background:var(--card);color:var(--muted);
+  font-family:SolaimanLipi,sans-serif;font-size:.74rem;font-weight:600;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.fav-badge{
+  display:inline-block;min-width:17px;padding:0 4px;border-radius:9px;
+  background:var(--border);color:var(--text);font-size:.6rem;line-height:15px;
+  text-align:center;margin-left:2px;
+}
+.mode-btn.active .fav-badge{background:rgba(255,255,255,.25);color:#fff}
+
+/* ── TOPIC CHIPS (দিন-বাটনের বিকল্প) ── */
+.topic-chip{
+  flex-shrink:0;display:flex;align-items:center;gap:6px;
+  padding:8px 13px;border-radius:11px;border:1.5px solid var(--border);
+  background:var(--card);color:var(--text);
+  font-family:SolaimanLipi,sans-serif;font-size:.8rem;font-weight:600;
+  cursor:pointer;transition:all .15s;height:42px;
+}
+.topic-chip .tc-n{font-size:.62rem;color:var(--muted);font-weight:500}
+.topic-chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.topic-chip.active .tc-n{color:rgba(255,255,255,.8)}
+
+/* ── STAR / FEATURE বাটন ── */
+.star-btn{
+  float:right;margin-left:8px;
+  width:26px;height:26px;flex-shrink:0;
+  border:none;background:transparent;color:var(--muted);
+  font-size:1.05rem;line-height:1;cursor:pointer;opacity:.45;
+  transition:all .15s;border-radius:7px;
+}
+.star-btn:active{background:var(--border)}
+.star-btn.on{color:var(--accent2);opacity:1;text-shadow:0 0 8px rgba(200,150,90,.35)}
+
+/* ── টপিক ভিউ-এর দিন ব্যাজ ── */
+.src-badge{
+  display:inline-block;padding:2px 8px;border-radius:7px;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);
+  color:var(--muted);font-size:.6rem;font-weight:600;margin-left:6px;
+}
+.fav-empty{
+  text-align:center;padding:50px 24px;color:var(--muted);
+}
+.fav-empty .fe-emo{font-size:2.4rem;display:block;margin-bottom:12px}
+.fav-empty p{font-size:.88rem;line-height:1.9}
+
 .ls-nav{display:none;align-items:center;gap:2px;flex-shrink:0}
 .ls-nav-btn{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -954,15 +1008,21 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
   </div>
 </div>
 
+<div class="mode-bar" id="modeBar">
+  <button class="mode-btn active" id="mbDay" onclick="setViewMode('day')">📅 দিন</button>
+  <button class="mode-btn" id="mbTopic" onclick="setViewMode('topic')">📚 টপিক</button>
+  <button class="mode-btn" id="mbFav" onclick="setViewMode('fav')">⭐ রিভিশন<span class="fav-badge" id="favBadge">০</span></button>
+</div>
+
 <div class="day-scroll" id="dayScroll"></div>
 
 <div class="progress-wrap">
   <div class="progress-info">
-    <span>অগ্রগতি</span>
+    <span id="progressLabel">অগ্রগতি</span>
     <span id="progressText">০/০</span>
     <div style="display:flex;gap:4px;align-items:center;">
-      <button class="reveal-day-btn" onclick="revealCurrentDay()">👁 সব দেখাও</button>
-      <button class="reset-btn" onclick="resetCurrentDay()">↺ রিসেট</button>
+      <button class="reveal-day-btn" onclick="revealAllVisible()">👁 সব দেখাও</button>
+      <button class="reset-btn" onclick="resetAllVisible()">↺ রিসেট</button>
     </div>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -1029,12 +1089,18 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 let allDays={}, currentDay=1, revealed={}, completedDays={}, streak=0, savedLinks={};
 let savedFolderUrl='';
 let isLandscape=false;
+/* ── নতুন: ভিউ মোড ও ফিচার্ড (রিভিশন) আইটেম ── */
+let viewMode='day';        // 'day' | 'topic' | 'fav'
+let currentTopic=null;     // টপিক মোডে নির্বাচিত টপিকের নাম
+let favFilter=null;        // রিভিশন মোডে টপিক ফিল্টার (null = সব)
+let favs={};               // favKey -> {t,q,a,ex,icon,d,ts}
+let _rows=[], _blocks={};  // বর্তমানে রেন্ডার হওয়া সারি ও ব্লক
 let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট সিংকের জন্য
 
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); initRoutine(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); syncNavActive('navStudy'); };
+window.onload=()=>{ loadState(); initRoutine(); syncModeBar(); updateFavBadge(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); syncNavActive('navStudy'); };
 
 function initTrackerTopbar(){
   if(typeof loadTrackerData === 'function') loadTrackerData();
@@ -1152,6 +1218,8 @@ function _doSave(){
     localStorage.setItem('ds_folder', savedFolderUrl);
     localStorage.setItem('ds_modtime', JSON.stringify(fileModTimeCache));
     localStorage.setItem('ds_ls', isLandscape ? '1' : '0');
+    localStorage.setItem('ds_fav', JSON.stringify(favs));
+    localStorage.setItem('ds_view', JSON.stringify({m:viewMode,t:currentTopic,f:favFilter}));
     if(localStorage.getItem('ds_r') !== null){ localStorage.removeItem('ds_r'); localStorage.removeItem('ds_c'); localStorage.removeItem('ds_s'); }
   }catch(e){}
 }
@@ -1168,6 +1236,9 @@ function loadState(){
     const l=localStorage.getItem('ds_l'); if(l) savedLinks=JSON.parse(l);
     const f=localStorage.getItem('ds_folder'); if(f) savedFolderUrl=f;
     const m=localStorage.getItem('ds_modtime'); if(m) fileModTimeCache=JSON.parse(m);
+    const fv=localStorage.getItem('ds_fav'); if(fv) favs=JSON.parse(fv)||{};
+    const vw=localStorage.getItem('ds_view');
+    if(vw){ const v=JSON.parse(vw)||{}; viewMode=v.m||'day'; currentTopic=v.t||null; favFilter=v.f||null; }
     const ls=localStorage.getItem('ds_ls'); if(ls==='1'){ isLandscape=true; document.body.classList.add('landscape'); const btn=document.getElementById('rotateBtn'); if(btn){btn.classList.add('active');btn.textContent='↩ সোজা';} const metaVP=document.querySelector('meta[name=viewport]'); if(metaVP) metaVP.content='width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes'; setTimeout(applyLandscapeColWidths,120); }
     recalcStreak();
     updateStreak();
@@ -1177,6 +1248,138 @@ function loadState(){
 /* ══════════════════════════════════════
    RESET — FIX #3
 ══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   ইউনিফায়েড রো সিস্টেম
+   দিন-ভিউ, টপিক-ভিউ ও রিভিশন-ভিউ — তিনটিই
+   একই বিল্ডার ব্যবহার করে, তাই দেখা/লুকানোর
+   অবস্থা সব ভিউতে এক থাকে।
+══════════════════════════════════════ */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function br(s){ return String(s==null?'':s).replace(/\n/g,'<br>'); }
+
+function favKey(t,q){ return (t||'')+'⟂'+(q||''); }
+function favCount(){ return Object.keys(favs).length; }
+function updateFavBadge(){ const el=document.getElementById('favBadge'); if(el) el.textContent=bn(favCount()); }
+
+/* একটি সারি তৈরি করে HTML ফেরত দেয় এবং _rows-এ রেজিস্টার করে */
+function buildRow(ctx){
+  const uid=_rows.length;
+  ctx.uid=uid; ctx.favk=favKey(ctx.topic, ctx.q);
+  _rows.push(ctx);
+  const rv=!!revealed[ctx.key];
+  const fav=!!favs[ctx.favk];
+  const cols=ctx.cols;
+  let h=`<div class="t-row col${cols}" id="r${uid}">
+    <div class="t-cell q-cell" title="${esc(ctx.q)}"><button class="star-btn ${fav?'on':''}" id="s${uid}" onclick="event.stopPropagation();toggleFav(${uid})" title="রিভিশনে রাখুন">${fav?'★':'☆'}</button>${br(ctx.q)}</div>
+    <div class="t-cell a-cell ${rv?'revealed':'hidden'}" id="a${uid}" title="${esc(ctx.a)}">
+      <span class="a-text">${br(ctx.a)}</span>
+      <button class="eye-btn" onclick="toggleRow(${uid})">${rv?'✓':'👁'}</button>
+    </div>`;
+  if(cols===3) h+=`<div class="t-cell a-cell example-cell ${rv?'revealed':'hidden'}" id="e${uid}" title="${esc(ctx.ex)}"><span class="a-text">${br(ctx.ex)||'—'}</span></div>`;
+  h+=`</div>`;
+  if(ctx.img) h+=`<div class="item-img-wrap" id="w${uid}">${rv?`<img src="${ctx.img}" class="item-img">`:''}<span class="item-img-placeholder ${rv?'hide':''}" onclick="toggleRow(${uid})">👁 দেখতে ক্লিক করুন</span></div>`;
+  return h;
+}
+
+/* একটি সারির উত্তর দেখাও/লুকাও (DOM ইনলাইন আপডেট) */
+function _showRow(uid){
+  const r=_rows[uid]; if(!r) return;
+  revealed[r.key]=true;
+  const ac=document.getElementById('a'+uid), ec=document.getElementById('e'+uid), wrap=document.getElementById('w'+uid);
+  if(ac){ac.classList.remove('hidden');ac.classList.add('revealed');const e=ac.querySelector('.eye-btn');if(e)e.textContent='✓';}
+  if(ec){ec.classList.remove('hidden');ec.classList.add('revealed');}
+  if(wrap){
+    const ph=wrap.querySelector('.item-img-placeholder'); if(ph) ph.classList.add('hide');
+    if(!wrap.querySelector('.item-img') && r.img){
+      const img=document.createElement('img');img.src=r.img;img.className='item-img';img.loading='lazy';
+      img.style.opacity='0';img.style.transition='opacity .3s';img.onload=()=>{img.style.opacity='1';};
+      wrap.insertBefore(img,wrap.firstChild);
+    }
+  }
+}
+function _hideRow(uid){
+  const r=_rows[uid]; if(!r) return;
+  delete revealed[r.key];
+  const ac=document.getElementById('a'+uid), ec=document.getElementById('e'+uid), wrap=document.getElementById('w'+uid);
+  if(ac){ac.classList.remove('revealed');ac.classList.add('hidden');const e=ac.querySelector('.eye-btn');if(e)e.textContent='👁';}
+  if(ec){ec.classList.remove('revealed');ec.classList.add('hidden');}
+  if(wrap){
+    const img=wrap.querySelector('.item-img'); if(img) img.remove();
+    const ph=wrap.querySelector('.item-img-placeholder'); if(ph) ph.classList.remove('hide');
+  }
+}
+
+function toggleRow(uid){
+  const r=_rows[uid]; if(!r) return;
+  if(revealed[r.key]){
+    _hideRow(uid);
+    if(r.d!=null && completedDays[r.d]){ delete completedDays[r.d]; recalcStreak(); updateStreak(); renderDays(); }
+  } else {
+    _showRow(uid);
+  }
+  updateProg(); if(r.d!=null) checkDoneFor(r.d); save();
+}
+
+/* ব্লক (একটি টপিক-কার্ড) এর সব সারি দেখাও / রিসেট করো */
+function revAllBlock(bid){
+  const uids=_blocks[bid]||[]; const days=new Set();
+  uids.forEach(u=>{ _showRow(u); if(_rows[u].d!=null) days.add(_rows[u].d); });
+  const b=document.getElementById('rab'+bid); if(b){b.classList.add('done');b.textContent='✅ সব দেখানো';}
+  updateProg(); days.forEach(d=>checkDoneFor(d)); save();
+}
+function resetBlock(bid){
+  const uids=_blocks[bid]||[]; let changed=false;
+  uids.forEach(u=>{ _hideRow(u); const d=_rows[u].d; if(d!=null && completedDays[d]){ delete completedDays[d]; changed=true; } });
+  const b=document.getElementById('rab'+bid); if(b){b.classList.remove('done');b.textContent='সব দেখাও';}
+  if(changed){ recalcStreak(); updateStreak(); renderDays(); }
+  updateProg(); save(true);
+}
+
+/* বর্তমান স্ক্রিনের সব আইটেম দেখাও / রিসেট করো (progress-bar এর বাটন) */
+function revealAllVisible(){
+  if(!_rows.length) return;
+  const days=new Set();
+  _rows.forEach((r,u)=>{ _showRow(u); if(r.d!=null) days.add(r.d); });
+  document.querySelectorAll('.reveal-all-btn').forEach(b=>{b.classList.add('done');b.textContent='✅ সব দেখানো';});
+  updateProg(); days.forEach(d=>checkDoneFor(d)); save(true);
+  toast('👁 সব উত্তর দেখানো হয়েছে');
+}
+function resetAllVisible(){
+  if(!_rows.length) return;
+  if(!confirm('এই স্ক্রিনের সব উত্তর আবার হাইড করবেন?')) return;
+  let changed=false;
+  _rows.forEach((r,u)=>{ _hideRow(u); if(r.d!=null && completedDays[r.d]){ delete completedDays[r.d]; changed=true; } });
+  document.querySelectorAll('.reveal-all-btn').forEach(b=>{b.classList.remove('done');b.textContent='সব দেখাও';});
+  if(changed){ recalcStreak(); updateStreak(); }
+  renderDays(); updateProg(); save(true);
+  toast('↺ রিসেট হয়েছে');
+}
+
+/* ══════════════════════════════════════
+   ⭐ ফিচার্ড / রিভিশন আইটেম
+══════════════════════════════════════ */
+function toggleFav(uid){
+  const r=_rows[uid]; if(!r) return;
+  const k=r.favk;
+  if(favs[k]){ delete favs[k]; toast('☆ রিভিশন থেকে সরানো হয়েছে'); }
+  else { favs[k]={t:r.topic,q:r.q,a:r.a,ex:r.ex||'',icon:r.icon||'📖',d:r.d,cols:r.cols,ts:Date.now()}; toast('⭐ রিভিশনে যোগ হয়েছে'); }
+  const b=document.getElementById('s'+uid);
+  if(b){ b.classList.toggle('on', !!favs[k]); b.textContent = favs[k]?'★':'☆'; }
+  updateFavBadge(); save();
+  if(viewMode==='fav'){ renderDays(); renderContent(); }
+}
+
+/* সার্চ রেজাল্ট থেকে ফিচার করা */
+function toggleFavSr(i){
+  const r=(window._srItems||[])[i]; if(!r) return;
+  const k=favKey(r.tt, r.item.q);
+  if(favs[k]) delete favs[k];
+  else favs[k]={t:r.tt,q:r.item.q,a:r.item.a,ex:r.item.ex||r.item.example||'',icon:'📖',d:+r.dn,cols:(r.item.ex||r.item.example)?3:2,ts:Date.now()};
+  const b=document.getElementById('srs'+i);
+  if(b){ b.classList.toggle('on', !!favs[k]); b.textContent = favs[k]?'★':'☆'; }
+  updateFavBadge(); save();
+}
+
 // Reset entire current day (hide all answers again)
 function resetCurrentDay(){
   const day=allDays[currentDay]; if(!day) return;
@@ -1202,63 +1405,6 @@ function revealCurrentDay(){
   });
   save(true); renderContent(); renderDays(); checkDone();
   toast('👁 দিন '+bn(currentDay)+' এর সব উত্তর দেখানো হয়েছে');
-}
-
-// Toggle single answer (show → hide)
-function toggleAnswer(ti,ii){
-  const k=`${currentDay}_${ti}_${ii}`;
-  const ac=document.getElementById(`ac${ti}_${ii}`);
-  const ec=document.getElementById(`ec${ti}_${ii}`);
-  if(revealed[k]){
-    // HIDE again
-    delete revealed[k];
-    if(completedDays[currentDay]){ delete completedDays[currentDay]; recalcStreak(); updateStreak(); renderDays(); }
-    if(ac){ac.classList.replace('revealed','hidden'); ac.querySelector('.eye-btn').textContent='👁';}
-    if(ec) ec.classList.replace('revealed','hidden');
-    // img hide
-    const wrap=ac?.closest('.t-row')?.nextElementSibling;
-    if(wrap?.classList.contains('item-img-wrap')){
-      const img=wrap.querySelector('.item-img'); if(img) img.remove();
-      const ph=wrap.querySelector('.item-img-placeholder'); if(ph) ph.classList.remove('hide');
-    }
-  } else {
-    // SHOW
-    revealed[k]=true;
-    if(ac){ac.classList.replace('hidden','revealed'); ac.querySelector('.eye-btn').textContent='✓';}
-    if(ec) ec.classList.remove('hidden'); if(ec) ec.classList.add('revealed');
-    // img show
-    const wrap=ac?.closest('.t-row')?.nextElementSibling;
-    if(wrap?.classList.contains('item-img-wrap')){
-      const ph=wrap.querySelector('.item-img-placeholder'); if(ph) ph.classList.add('hide');
-      if(!wrap.querySelector('.item-img')){
-        const day=allDays[currentDay];
-        const imgSrc=day?.topics[ti]?.items[ii]?.img;
-        if(imgSrc){const img=document.createElement('img');img.src=imgSrc;img.className='item-img';img.loading='lazy';img.style.opacity='0';img.style.transition='opacity .3s';img.onload=()=>{img.style.opacity='1';};wrap.insertBefore(img,wrap.firstChild);}
-      }
-    }
-  }
-  updateProg(); checkDone(); save();
-}
-
-// Reset single topic
-function resetTopic(ti){
-  const day=allDays[currentDay]; if(!day) return;
-  day.topics[ti].items.forEach((_,ii)=>delete revealed[`${currentDay}_${ti}_${ii}`]);
-  if(completedDays[currentDay]){ delete completedDays[currentDay]; recalcStreak(); updateStreak(); renderDays(); }
-  renderContent();
-  save(true);
-}
-
-function revAll(ti){
-  const day=allDays[currentDay]; if(!day) return;
-  day.topics[ti].items.forEach((_,ii)=>{
-    revealed[`${currentDay}_${ti}_${ii}`]=true;
-    const ac=document.getElementById(`ac${ti}_${ii}`), ec=document.getElementById(`ec${ti}_${ii}`);
-    if(ac){ac.classList.remove('hidden');ac.classList.add('revealed');ac.querySelector('.eye-btn').textContent='✓';}
-    if(ec){ec.classList.remove('hidden');ec.classList.add('revealed');}
-  });
-  const b=document.getElementById(`rab${ti}`); if(b){b.classList.add('done');b.textContent='✅ সব দেখানো';}
-  updateProg(); checkDone(); save();
 }
 
 /* ══════════════════════════════════════
@@ -1773,10 +1919,74 @@ function renderSaved(){}
 /* ══════════════════════════════════════
    DAY SELECTOR
 ══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   ভিউ মোড: দিন / টপিক / রিভিশন
+══════════════════════════════════════ */
+function syncModeBar(){
+  const map={day:'mbDay',topic:'mbTopic',fav:'mbFav'};
+  Object.values(map).forEach(id=>{const b=document.getElementById(id); if(b) b.classList.remove('active');});
+  const on=document.getElementById(map[viewMode]); if(on) on.classList.add('active');
+  const lbl=document.getElementById('progressLabel');
+  if(lbl) lbl.textContent = viewMode==='fav' ? 'রিভিশন অগ্রগতি' : viewMode==='topic' ? 'টপিক অগ্রগতি' : 'অগ্রগতি';
+}
+
+function setViewMode(mode){
+  viewMode=mode;
+  if(mode==='topic' && !currentTopic){
+    const list=topicList();
+    currentTopic = list.length ? list[0].title : null;
+  }
+  syncModeBar(); renderDays(); renderContent();
+  window.scrollTo({top:0,behavior:'instant'});
+  save(true);
+}
+
+/* সব দিনের টপিক একত্র করে তালিকা বানায় */
+function topicList(){
+  const map={}; const order=[];
+  Object.keys(allDays).map(Number).sort((a,b)=>a-b).forEach(d=>{
+    const day=allDays[d]; if(!day||!day.topics) return;
+    day.topics.forEach(t=>{
+      if(!t||!t.title) return;
+      if(!map[t.title]){ map[t.title]={title:t.title,icon:t.icon||'📖',days:[],count:0}; order.push(t.title); }
+      map[t.title].days.push(d);
+      map[t.title].count += (t.items||[]).length;
+    });
+  });
+  return order.map(k=>map[k]);
+}
+
+/* favKey → লাইভ আইটেম (দিন/ইনডেক্স সহ) ম্যাপ */
+function buildContentIndex(){
+  const map={};
+  Object.keys(allDays).map(Number).sort((a,b)=>a-b).forEach(d=>{
+    const day=allDays[d]; if(!day||!day.topics) return;
+    day.topics.forEach((t,ti)=>(t.items||[]).forEach((item,ii)=>{
+      const k=favKey(t.title,item.q);
+      if(!map[k]) map[k]={d,ti,ii,item,t};
+    }));
+  });
+  return map;
+}
+
+function goTopic(idx){
+  const list=topicList();
+  if(!list[idx]) return;
+  currentTopic=list[idx].title;
+  renderDays(); renderContent(); window.scrollTo({top:0,behavior:'instant'}); save(true);
+}
+function goFavFilter(name){
+  favFilter = (name===favFilter) ? null : name;
+  renderDays(); renderContent(); window.scrollTo({top:0,behavior:'instant'}); save(true);
+}
+
 function renderDays(){
   const w=document.getElementById('dayScroll');
+  if(viewMode==='topic') return renderTopicChips(w);
+  if(viewMode==='fav')   return renderFavChips(w);
   const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
   if(!days.length){w.innerHTML=`<span style="color:var(--muted);font-size:.76rem;line-height:54px">পড়া নেই — ☁️ Drive চাপুন</span>`;return;}
+  w.dataset.mode='day';
   // বিদ্যমান বাটনগুলো আছে কিনা চেক — থাকলে শুধু class আপডেট
   const existing=w.querySelectorAll('.day-btn');
   if(existing.length===days.length){
@@ -1790,6 +2000,27 @@ function renderDays(){
   w.innerHTML='';
   days.forEach(d=>{const b=document.createElement('button');b.className='day-btn'+(d===currentDay?' active':'')+(completedDays[d]?' done':'');b.innerHTML=`<span class="dn">${bn(d)}</span><span class="dl">দিন</span>`;b.onclick=()=>go(d);w.appendChild(b);});
 }
+function renderTopicChips(w){
+  w.dataset.mode='topic';
+  const list=topicList();
+  if(!list.length){w.innerHTML=`<span style="color:var(--muted);font-size:.76rem;line-height:54px">পড়া নেই — ☁️ Drive চাপুন</span>`;return;}
+  w.innerHTML=list.map((t,i)=>`<button class="topic-chip${t.title===currentTopic?' active':''}" onclick="goTopic(${i})">
+    <span>${t.icon}</span><span>${t.title}</span><span class="tc-n">${bn(t.count)}</span>
+  </button>`).join('');
+  const act=w.querySelector('.topic-chip.active');
+  if(act && act.scrollIntoView) try{act.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}
+}
+
+function renderFavChips(w){
+  w.dataset.mode='fav';
+  const topics=[...new Set(Object.values(favs).map(f=>f.t))];
+  if(!topics.length){ w.innerHTML=`<span style="color:var(--muted);font-size:.76rem;line-height:54px">⭐ চিহ্ন দিয়ে আইটেম জমা করুন</span>`; return; }
+  const counts={}; Object.values(favs).forEach(f=>counts[f.t]=(counts[f.t]||0)+1);
+  let h=`<button class="topic-chip${favFilter===null?' active':''}" onclick="goFavFilter(null)"><span>⭐</span><span>সব</span><span class="tc-n">${bn(favCount())}</span></button>`;
+  h+=topics.map(t=>`<button class="topic-chip${favFilter===t?' active':''}" onclick="goFavFilter(${JSON.stringify(t).replace(/"/g,'&quot;')})"><span>📖</span><span>${t}</span><span class="tc-n">${bn(counts[t])}</span></button>`).join('');
+  w.innerHTML=h;
+}
+
 function go(d){currentDay=d;renderDays();renderContent();window.scrollTo(0,0);}
 function bn(n){return String(n).split('').map(c=>'০১২৩৪৫৬৭৮৯'[c]||c).join('');}
 
@@ -1797,49 +2028,133 @@ function bn(n){return String(n).split('').map(c=>'০১২৩৪৫৬৭৮৯
    RENDER — FIX #4 (one-line cells)
 ══════════════════════════════════════ */
 function renderContent(){
-  const mc=document.getElementById('mainContent'), day=allDays[currentDay];
-  if(!day){
-    mc.innerHTML=`<div class="center-msg"><span class="emo">☁️</span><p>কোনো পড়া লোড হয়নি।<br>নিচে <b>☁️ Drive</b> বাটন চাপুন।</p><button class="cta-btn" onclick="openDrive()">☁️ Drive থেকে লোড করুন</button></div>`;
-    updateProg(); return;
-  }
-  let h=`<div class="day-title-bar"><span class="day-badge">দিন ${bn(currentDay)}</span><span class="day-subtitle">${day.title||''}</span></div>`;
-  day.topics.forEach((t,ti)=>{
-    // কলাম বাগ ফিক্স: t.columns না থাকলে item.ex দেখে auto-detect করো
-    const hasEx=t.items.some(item=>item.ex||item.example);
-    const cols=t.columns||(hasEx?3:2);
-    const hdrs=t.columnHeaders||t.headers||(cols===3?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর']);
-    const rc=t.items.filter((_,ii)=>revealed[`${currentDay}_${ti}_${ii}`]).length, done=rc===t.items.length;
-    const animCls='';
-    // Custom column widths থাকলে data attribute হিসেবে pass করো
-    const customWidthsAttr = t.columnWidths ? ` data-custom-widths="${JSON.stringify(t.columnWidths).replace(/"/g,'&quot;')}"` : '';
-    h+=`<div class="topic-block${animCls}">
-      <div class="topic-header">
-        <div class="topic-icon">${t.icon||'📖'}</div>
-        <div><div class="topic-title">${t.title}</div><div class="topic-count">${bn(t.items.length)}টি</div></div>
-        <div class="topic-actions">
-          <button class="reset-topic-btn" onclick="resetTopic(${ti})">↺</button>
-          <button class="reveal-all-btn ${done?'done':''}" onclick="revAll(${ti})" id="rab${ti}">${done?'✅':'সব দেখাও'}</button>
-        </div>
-      </div>
-      <div class="table-wrap" data-topic="${t.title}" data-cols="${cols}"${customWidthsAttr}>
-        <div class="t-header col${cols}">${hdrs.map(hh=>`<div class="th-cell">${hh}</div>`).join('')}</div>`;
-    t.items.forEach((item,ii)=>{
-      const k=`${currentDay}_${ti}_${ii}`, rv=!!revealed[k];
-      // q cell: title attribute shows full text on long press
-      h+=`<div class="t-row col${cols}">
-        <div class="t-cell q-cell" title="${item.q}">${item.q.replace(/\n/g,'<br>')}</div>
-        <div class="t-cell a-cell ${rv?'revealed':'hidden'}" id="ac${ti}_${ii}" title="${item.a}">
-          <span class="a-text">${item.a.replace(/\n/g,'<br>')}</span>
-          <button class="eye-btn" onclick="toggleAnswer(${ti},${ii})">${rv?'✓':'👁'}</button>
-        </div>`;
-      if(cols===3){const ex=item.ex||item.example||''; h+=`<div class="t-cell a-cell example-cell ${rv?'revealed':'hidden'}" id="ec${ti}_${ii}" title="${ex}"><span class="a-text">${ex.replace(/\n/g,'<br>')||'—'}</span></div>`; }
-      h+=`</div>`;
-      if(item.img) h+=`<div class="item-img-wrap">${rv?`<img src="${item.img}" class="item-img">`:''}<span class="item-img-placeholder ${rv?'hide':''}" onclick="toggleAnswer(${ti},${ii})">👁 দেখতে ক্লিক করুন</span></div>`;
-    });
-    h+=`</div></div>${t.note?(t.note.trim().startsWith('<svg')?`<div class="topic-note topic-note-svg">${t.note}</div>`:`<div class="topic-note">${t.note.replace(/\n/g,'<br>')}</div>`):''}</div>`;
-  });
+  _rows=[]; _blocks={};
+  if(viewMode==='topic') return renderTopicContent();
+  if(viewMode==='fav')   return renderFavContent();
+  return renderDayContent();
+}
+
+function _finishRender(h){
+  const mc=document.getElementById('mainContent');
   mc.innerHTML=h; updateProg();
   if(isLandscape) setTimeout(applyLandscapeColWidths, 50);
+}
+
+/* একটি টপিক-কার্ড তৈরি করে (হেডার + টেবিল + নোট) */
+function buildTopicBlock(opt){
+  // opt: {bid, icon, title, subLabel, note, cols, headers, columnWidths, rows:[ctx...]}
+  const bid=opt.bid, cols=opt.cols;
+  const hdrs=opt.headers||(cols===3?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর']);
+  const customWidthsAttr = opt.columnWidths ? ` data-custom-widths="${JSON.stringify(opt.columnWidths).replace(/"/g,'&quot;')}"` : '';
+  const uids=[];
+  let rowsHtml='';
+  opt.rows.forEach(ctx=>{ ctx.cols=cols; rowsHtml+=buildRow(ctx); uids.push(ctx.uid); });
+  _blocks[bid]=uids;
+  const done = uids.length>0 && uids.every(u=>revealed[_rows[u].key]);
+  return `<div class="topic-block">
+    <div class="topic-header">
+      <div class="topic-icon">${opt.icon||'📖'}</div>
+      <div><div class="topic-title">${opt.title}${opt.subLabel?`<span class="src-badge">${opt.subLabel}</span>`:''}</div><div class="topic-count">${bn(uids.length)}টি</div></div>
+      <div class="topic-actions">
+        <button class="reset-topic-btn" onclick="resetBlock('${bid}')">↺</button>
+        <button class="reveal-all-btn ${done?'done':''}" onclick="revAllBlock('${bid}')" id="rab${bid}">${done?'✅ সব দেখানো':'সব দেখাও'}</button>
+      </div>
+    </div>
+    <div class="table-wrap" data-topic="${esc(opt.title)}" data-cols="${cols}"${customWidthsAttr}>
+      <div class="t-header col${cols}">${hdrs.map(hh=>`<div class="th-cell">${hh}</div>`).join('')}</div>
+      ${rowsHtml}
+    </div>
+  </div>${opt.note?(opt.note.trim().startsWith('<svg')?`<div class="topic-note topic-note-svg">${opt.note}</div>`:`<div class="topic-note">${br(opt.note)}</div>`):''}`;
+}
+
+/* একটি দিনের একটি টপিক → ব্লক */
+function _topicToBlock(d, t, ti, bid, subLabel){
+  const items=t.items||[];
+  const hasEx=items.some(item=>item.ex||item.example);
+  const cols=t.columns||(hasEx?3:2);
+  return buildTopicBlock({
+    bid, icon:t.icon||'📖', title:t.title, subLabel, note:t.note,
+    cols, headers:t.columnHeaders||t.headers, columnWidths:t.columnWidths,
+    rows: items.map((item,ii)=>({
+      key:`${d}_${ti}_${ii}`, d, ti, ii,
+      q:item.q, a:item.a, ex:item.ex||item.example||'', img:item.img,
+      topic:t.title, icon:t.icon||'📖'
+    }))
+  });
+}
+
+/* ─── ১. দিন-ভিত্তিক ভিউ (আগের মতোই) ─── */
+function renderDayContent(){
+  const day=allDays[currentDay];
+  if(!day){
+    _finishRender(`<div class="center-msg"><span class="emo">☁️</span><p>কোনো পড়া লোড হয়নি।<br>নিচে <b>☁️ Drive</b> বাটন চাপুন।</p><button class="cta-btn" onclick="openDrive()">☁️ Drive থেকে লোড করুন</button></div>`);
+    return;
+  }
+  let h=`<div class="day-title-bar"><span class="day-badge">দিন ${bn(currentDay)}</span><span class="day-subtitle">${day.title||''}</span></div>`;
+  day.topics.forEach((t,ti)=>{ h+=_topicToBlock(currentDay, t, ti, 'd'+currentDay+'_'+ti, ''); });
+  _finishRender(h);
+}
+
+/* ─── ২. টপিক-ভিত্তিক পড়া ─── */
+function renderTopicContent(){
+  const list=topicList();
+  if(!list.length){
+    _finishRender(`<div class="center-msg"><span class="emo">☁️</span><p>কোনো পড়া লোড হয়নি।<br>নিচে <b>☁️ Drive</b> বাটন চাপুন।</p><button class="cta-btn" onclick="openDrive()">☁️ Drive থেকে লোড করুন</button></div>`);
+    return;
+  }
+  if(!currentTopic || !list.some(t=>t.title===currentTopic)) currentTopic=list[0].title;
+  const info=list.find(t=>t.title===currentTopic);
+  let h=`<div class="day-title-bar"><span class="day-badge">${info.icon} টপিক</span><span class="day-subtitle">${currentTopic} · ${bn(info.days.length)} দিন · ${bn(info.count)}টি</span></div>`;
+  Object.keys(allDays).map(Number).sort((a,b)=>a-b).forEach(d=>{
+    const day=allDays[d]; if(!day||!day.topics) return;
+    day.topics.forEach((t,ti)=>{
+      if(t.title!==currentTopic) return;
+      h+=_topicToBlock(d, t, ti, 't'+d+'_'+ti, 'দিন '+bn(d));
+    });
+  });
+  _finishRender(h);
+}
+
+/* ─── ৩. ⭐ রিভিশন ভিউ (ফিচার করা আইটেম) ─── */
+function renderFavContent(){
+  const keys=Object.keys(favs);
+  if(!keys.length){
+    _finishRender(`<div class="fav-empty"><span class="fe-emo">⭐</span><p>এখনো কোনো আইটেম ফিচার করা হয়নি।<br>যেকোনো পড়ার পাশে <b>☆</b> চাপলে<br>সেটি এখানে জমা হবে — পরে শুধু<br>এগুলোই রিভিশন দিতে পারবেন।</p></div>`);
+    return;
+  }
+  const idx=buildContentIndex();
+  // টপিক অনুযায়ী গ্রুপ
+  const groups={}; const order=[];
+  keys.forEach(k=>{
+    const f=favs[k];
+    if(favFilter!==null && f.t!==favFilter) return;
+    if(!groups[f.t]){ groups[f.t]={icon:f.icon||'📖',rows:[],hasEx:false}; order.push(f.t); }
+    const live=idx[k];
+    const q=live?live.item.q:f.q, a=live?live.item.a:f.a;
+    const ex=live?(live.item.ex||live.item.example||''):(f.ex||'');
+    if(ex) groups[f.t].hasEx=true;
+    groups[f.t].rows.push({
+      key: live?`${live.d}_${live.ti}_${live.ii}`:('F|'+k),
+      d: live?live.d:null, ti:live?live.ti:null, ii:live?live.ii:null,
+      q, a, ex, img: live?live.item.img:null,
+      topic:f.t, icon:f.icon||'📖', ts:f.ts||0
+    });
+  });
+  if(!order.length){
+    _finishRender(`<div class="fav-empty"><span class="fe-emo">🔍</span><p>এই টপিকে কোনো ফিচার করা আইটেম নেই।</p></div>`);
+    return;
+  }
+  const total=order.reduce((s,t)=>s+groups[t].rows.length,0);
+  let h=`<div class="day-title-bar"><span class="day-badge">⭐ রিভিশন</span><span class="day-subtitle">${favFilter?favFilter+' · ':''}${bn(total)}টি ফিচার করা আইটেম</span></div>`;
+  order.forEach((t,gi)=>{
+    const g=groups[t];
+    g.rows.sort((x,y)=>(x.d||0)-(y.d||0));
+    h+=buildTopicBlock({
+      bid:'f'+gi, icon:g.icon, title:t, subLabel:'⭐ '+bn(g.rows.length),
+      cols: g.hasEx?3:2, rows:g.rows
+    });
+  });
+  _finishRender(h);
 }
 
 /* ══════════════════════════════════════
@@ -1853,19 +2168,27 @@ function _calcProgress(){
   day.topics.forEach((t,ti)=>t.items.forEach((_,ii)=>{total++;if(revealed[`${currentDay}_${ti}_${ii}`])done++;}));
   return {total,done};
 }
+/* অগ্রগতি = বর্তমান স্ক্রিনে যা দেখা যাচ্ছে তার উপর */
 function updateProg(){
-  const {total,done}=_calcProgress();
-  document.getElementById('progressText').textContent=`${bn(done)}/${bn(total)}`;
-  document.getElementById('progressFill').style.width=(total?Math.round(done/total*100):0)+'%';
+  let total=_rows.length, done=0;
+  _rows.forEach(r=>{ if(revealed[r.key]) done++; });
+  const pt=document.getElementById('progressText');
+  if(pt) pt.textContent=`${bn(done)}/${bn(total)}`;
+  const pf=document.getElementById('progressFill');
+  if(pf) pf.style.width=(total?Math.round(done/total*100):0)+'%';
 }
-function checkDone(){
-  const {total,done}=_calcProgress();
-  if(done>=total&&total>0&&!completedDays[currentDay]){
-    completedDays[currentDay]=true;
-    recalcStreak();
-    updateStreak();renderDays();toast('🎉 দিন '+bn(currentDay)+' সম্পন্ন!');save();
+/* নির্দিষ্ট একটি দিন সম্পূর্ণ হলো কিনা — যেকোনো ভিউ থেকে কাজ করে */
+function checkDoneFor(d){
+  const day=allDays[d]; if(!day||!day.topics) return;
+  let total=0,done=0;
+  day.topics.forEach((t,ti)=>(t.items||[]).forEach((_,ii)=>{total++;if(revealed[`${d}_${ti}_${ii}`])done++;}));
+  if(total>0&&done>=total&&!completedDays[d]){
+    completedDays[d]=true;
+    recalcStreak(); updateStreak(); renderDays();
+    toast('🎉 দিন '+bn(d)+' সম্পন্ন!'); save();
   }
 }
+function checkDone(){ checkDoneFor(currentDay); }
 /* streak = মোট কতটি দিন কমপ্লিট আছে */
 function recalcStreak(){
   streak = Object.keys(completedDays).filter(d => completedDays[d]).length;
@@ -1907,7 +2230,12 @@ function _doSearch(q){
     if(words.every(w=>haystack.includes(w))) res.push({dn,tt:t.title,item});
   })));
   if(!res.length){sr.innerHTML=`<div class="no-result">😔<br><br>"${q}" পাওয়া যায়নি</div>`;return;}
-  sr.innerHTML=res.slice(0,80).map(r=>{const ex=r.item.ex||r.item.example||'';return`<div class="search-result-card"><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hlWords(r.item.q,words)}</div><div class="sr-a">→ ${hlWords(r.item.a.replace(/\n/g,'<br>'),words)}</div>${ex?`<div class="sr-ex">${hlWords(ex,words)}</div>`:''}</div>`}).join('');
+  const shown=res.slice(0,80);
+  window._srItems=shown;
+  sr.innerHTML=shown.map((r,i)=>{
+    const ex=r.item.ex||r.item.example||'';
+    const on=!!favs[favKey(r.tt,r.item.q)];
+    return`<div class="search-result-card"><button class="star-btn ${on?'on':''}" id="srs${i}" onclick="toggleFavSr(${i})" title="রিভিশনে রাখুন">${on?'★':'☆'}</button><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hlWords(r.item.q,words)}</div><div class="sr-a">→ ${hlWords(br(r.item.a),words)}</div>${ex?`<div class="sr-ex">${hlWords(ex,words)}</div>`:''}</div>`}).join('');
 }
 function toggleClear(val){
   // শুধু clear বাটন দেখাও/লুকাও — timer cancel করবে না
