@@ -1313,23 +1313,23 @@ function toggleRow(uid){
   const r=_rows[uid]; if(!r) return;
   if(revealed[r.key]){
     _hideRow(uid);
-    if(r.d!=null && completedDays[r.d]){ delete completedDays[r.d]; recalcStreak(); updateStreak(); renderDays(); }
+    if(r.forDay && r.d!=null && completedDays[r.d]){ delete completedDays[r.d]; recalcStreak(); updateStreak(); renderDays(); }
   } else {
     _showRow(uid);
   }
-  updateProg(); if(r.d!=null) checkDoneFor(r.d); save();
+  updateProg(); if(r.forDay && r.d!=null) checkDoneFor(r.d); save();
 }
 
 /* ব্লক (একটি টপিক-কার্ড) এর সব সারি দেখাও / রিসেট করো */
 function revAllBlock(bid){
   const uids=_blocks[bid]||[]; const days=new Set();
-  uids.forEach(u=>{ _showRow(u); if(_rows[u].d!=null) days.add(_rows[u].d); });
+  uids.forEach(u=>{ _showRow(u); if(_rows[u].forDay && _rows[u].d!=null) days.add(_rows[u].d); });
   const b=document.getElementById('rab'+bid); if(b){b.classList.add('done');b.textContent='✅ সব দেখানো';}
   updateProg(); days.forEach(d=>checkDoneFor(d)); save();
 }
 function resetBlock(bid){
   const uids=_blocks[bid]||[]; let changed=false;
-  uids.forEach(u=>{ _hideRow(u); const d=_rows[u].d; if(d!=null && completedDays[d]){ delete completedDays[d]; changed=true; } });
+  uids.forEach(u=>{ _hideRow(u); const d=_rows[u].d; if(_rows[u].forDay && d!=null && completedDays[d]){ delete completedDays[d]; changed=true; } });
   const b=document.getElementById('rab'+bid); if(b){b.classList.remove('done');b.textContent='সব দেখাও';}
   if(changed){ recalcStreak(); updateStreak(); renderDays(); }
   updateProg(); save(true);
@@ -1339,16 +1339,17 @@ function resetBlock(bid){
 function revealAllVisible(){
   if(!_rows.length) return;
   const days=new Set();
-  _rows.forEach((r,u)=>{ _showRow(u); if(r.d!=null) days.add(r.d); });
+  _rows.forEach((r,u)=>{ _showRow(u); if(r.forDay && r.d!=null) days.add(r.d); });
   document.querySelectorAll('.reveal-all-btn').forEach(b=>{b.classList.add('done');b.textContent='✅ সব দেখানো';});
   updateProg(); days.forEach(d=>checkDoneFor(d)); save(true);
   toast('👁 সব উত্তর দেখানো হয়েছে');
 }
 function resetAllVisible(){
   if(!_rows.length) return;
-  if(!confirm('এই স্ক্রিনের সব উত্তর আবার হাইড করবেন?')) return;
+  const what = viewMode==='fav' ? '⭐ রিভিশন তালিকার' : viewMode==='topic' ? ('“'+(currentTopic||'')+'” টপিকের') : ('দিন '+bn(currentDay)+' এর');
+  if(!confirm(what+' সব উত্তর আবার হাইড করবেন?\n(অন্য ভিউয়ের অগ্রগতি অক্ষত থাকবে)')) return;
   let changed=false;
-  _rows.forEach((r,u)=>{ _hideRow(u); if(r.d!=null && completedDays[r.d]){ delete completedDays[r.d]; changed=true; } });
+  _rows.forEach((r,u)=>{ _hideRow(u); if(r.forDay && r.d!=null && completedDays[r.d]){ delete completedDays[r.d]; changed=true; } });
   document.querySelectorAll('.reveal-all-btn').forEach(b=>{b.classList.remove('done');b.textContent='সব দেখাও';});
   if(changed){ recalcStreak(); updateStreak(); }
   renderDays(); updateProg(); save(true);
@@ -2068,7 +2069,10 @@ function buildTopicBlock(opt){
 }
 
 /* একটি দিনের একটি টপিক → ব্লক */
-function _topicToBlock(d, t, ti, bid, subLabel){
+/* একটি দিনের একটি টপিক → ব্লক
+   pfx: কী-প্রিফিক্স — '' = দিন ভিউ, 'T|' = টপিক ভিউ
+   (আলাদা প্রিফিক্সের কারণে প্রতিটি ভিউয়ের অগ্রগতি স্বাধীন) */
+function _topicToBlock(d, t, ti, bid, subLabel, pfx, forDay){
   const items=t.items||[];
   const hasEx=items.some(item=>item.ex||item.example);
   const cols=t.columns||(hasEx?3:2);
@@ -2076,7 +2080,7 @@ function _topicToBlock(d, t, ti, bid, subLabel){
     bid, icon:t.icon||'📖', title:t.title, subLabel, note:t.note,
     cols, headers:t.columnHeaders||t.headers, columnWidths:t.columnWidths,
     rows: items.map((item,ii)=>({
-      key:`${d}_${ti}_${ii}`, d, ti, ii,
+      key:`${pfx||''}${d}_${ti}_${ii}`, d, ti, ii, forDay:!!forDay,
       q:item.q, a:item.a, ex:item.ex||item.example||'', img:item.img,
       topic:t.title, icon:t.icon||'📖'
     }))
@@ -2091,7 +2095,7 @@ function renderDayContent(){
     return;
   }
   let h=`<div class="day-title-bar"><span class="day-badge">দিন ${bn(currentDay)}</span><span class="day-subtitle">${day.title||''}</span></div>`;
-  day.topics.forEach((t,ti)=>{ h+=_topicToBlock(currentDay, t, ti, 'd'+currentDay+'_'+ti, ''); });
+  day.topics.forEach((t,ti)=>{ h+=_topicToBlock(currentDay, t, ti, 'd'+currentDay+'_'+ti, '', '', true); });
   _finishRender(h);
 }
 
@@ -2109,7 +2113,7 @@ function renderTopicContent(){
     const day=allDays[d]; if(!day||!day.topics) return;
     day.topics.forEach((t,ti)=>{
       if(t.title!==currentTopic) return;
-      h+=_topicToBlock(d, t, ti, 't'+d+'_'+ti, 'দিন '+bn(d));
+      h+=_topicToBlock(d, t, ti, 't'+d+'_'+ti, 'দিন '+bn(d), 'T|', false);
     });
   });
   _finishRender(h);
@@ -2134,7 +2138,7 @@ function renderFavContent(){
     const ex=live?(live.item.ex||live.item.example||''):(f.ex||'');
     if(ex) groups[f.t].hasEx=true;
     groups[f.t].rows.push({
-      key: live?`${live.d}_${live.ti}_${live.ii}`:('F|'+k),
+      key: 'F|'+k, forDay:false,
       d: live?live.d:null, ti:live?live.ti:null, ii:live?live.ii:null,
       q, a, ex, img: live?live.item.img:null,
       topic:f.t, icon:f.icon||'📖', ts:f.ts||0
