@@ -3361,7 +3361,7 @@ function renderProgressTab(){
   if(isDone && !isNextDayVisible()){
     const doneTaskItems = todayRoutine ? todayRoutine.tasks.map(t=>{
       const dotClass = routineDotClass(t.type);
-      return `<div class="today-task-item"><div class="today-task-dot ${dotClass}"></div><span style="text-decoration:line-through;opacity:.6">${t.label}</span></div>`;
+      return `<div class="today-task-item"><div class="today-task-dot ${dotClass}"></div><span style="text-decoration:line-through;opacity:.6">${br(t.label)}</span></div>`;
     }).join('') : '';
     const completedBox = `<div class="today-task-box" style="border-color:var(--green);background:rgba(62,207,142,.06)">
       <div class="today-task-title" style="color:var(--green)">✅ রুটিন দিন ${bn(todayRDay)} — সম্পন্ন হয়েছে!</div>
@@ -3384,7 +3384,7 @@ function renderProgressTab(){
   // Today's task box (normal / incomplete state)
   const taskItems = todayRoutine ? todayRoutine.tasks.map(t=>{
     const dotClass = routineDotClass(t.type);
-    return `<div class="today-task-item"><div class="today-task-dot ${dotClass}"></div>${t.label}</div>`;
+    return `<div class="today-task-item"><div class="today-task-dot ${dotClass}"></div>${br(t.label)}</div>`;
   }).join('') : '';
 
   const todayBox = `<div class="today-task-box">
@@ -3425,7 +3425,7 @@ function renderCalendarGrid(todayRDay){
     const r = ROUTINE[i - 1];
     const taskHtml = r ? r.tasks.map(t=>{
       const dotColor = routineDotColor(t.type);
-      return `<div class="tc-task"><div class="tc-task-dot" style="background:${dotColor}"></div><span>${t.label}</span></div>`;
+      return `<div class="tc-task"><div class="tc-task-dot" style="background:${dotColor}"></div><span>${br(t.label)}</span></div>`;
     }).join('') : '';
 
     const todayBadge = isToday
