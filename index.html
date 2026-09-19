@@ -2987,11 +2987,11 @@ function isIOS(){
   return /iPad|iPhone|iPod/.test(navigator.userAgent)
       || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
 }
-function pwaDismissed(){
-  const t=+(localStorage.getItem('ds_pwa_dismissed')||0);
-  if(!t) return false;
-  return (Date.now()-t) < 7*24*60*60*1000;   // ৭ দিন পরে আবার দেখাবে
-}
+try{ localStorage.removeItem('ds_pwa_dismissed'); }catch(e){} // পুরনো ভার্সনের স্থায়ী বন্ধ-রাখা ফ্ল্যাগ মুছে দাও
+/* যতক্ষণ পর্যন্ত অ্যাপ হিসেবে ইনস্টল না হচ্ছে, ততক্ষণ প্রতিটি রিলোডে
+   ব্যানার আবার দেখানো হবে — ✕ চাপলে শুধু এই সেশনের (এই পেজ-লোডের) জন্য বন্ধ হয়,
+   পরের রিলোডে আবার আসবে। শুধু isStandalone()-ই চিরস্থায়ীভাবে বন্ধ করে। */
+function pwaDismissed(){ return false; }
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
@@ -3002,7 +3002,6 @@ window.addEventListener('beforeinstallprompt', e => {
 window.addEventListener('appinstalled', ()=>{
   pwaInstallEvent=null;
   const b=document.getElementById('pwaBanner'); if(b) b.remove();
-  localStorage.setItem('ds_pwa_dismissed', String(Date.now()));
   toast('✅ ইনস্টল হয়েছে! হোম স্ক্রিন থেকে খুলুন');
 });
 
@@ -3056,7 +3055,7 @@ async function doInstallPWA(){
 }
 
 function dismissInstall(){
-  localStorage.setItem('ds_pwa_dismissed', String(Date.now()));
+  // এই সেশনের জন্যই শুধু বন্ধ — পরের রিলোডে আবার দেখানো হবে (ইনস্টল না করা পর্যন্ত)
   const banner = document.getElementById('pwaBanner');
   if(banner) banner.remove();
 }
@@ -3082,7 +3081,7 @@ async function pwaDebug(){
     'সার্ভিস ওয়ার্কার রেজিস্টার্ড': false,
     'beforeinstallprompt পাওয়া গেছে': !!pwaInstallEvent,
     'iOS (ম্যানুয়াল লাগবে)': isIOS(),
-    'ব্যানার বন্ধ করা আছে': pwaDismissed()
+    'এই সেশনে ব্যানার বন্ধ করা হয়েছে': _pwaBannerShown && !document.getElementById('pwaBanner')
   };
   if('serviceWorker' in navigator){
     try{ const r=await navigator.serviceWorker.getRegistrations(); out['সার্ভিস ওয়ার্কার রেজিস্টার্ড']=r.length>0; }catch(e){}
