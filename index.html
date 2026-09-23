@@ -2269,7 +2269,7 @@ function _doSearch(q){
   sr.innerHTML=shown.map((r,i)=>{
     const ex=r.item.ex||r.item.example||'';
     const on=!!favs[favKey(r.tt,r.item.q)];
-    return`<div class="search-result-card"><button class="star-btn ${on?'on':''}" id="srs${i}" onclick="toggleFavSr(${i})" title="রিভিশনে রাখুন">${on?'★':'☆'}</button><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hlWords(r.item.q,words)}</div><div class="sr-a">→ ${hlWords(br(r.item.a),words)}</div>${ex?`<div class="sr-ex">${hlWords(ex,words)}</div>`:''}</div>`}).join('');
+    return`<div class="search-result-card"><button class="star-btn ${on?'on':''}" id="srs${i}" onclick="toggleFavSr(${i})" title="রিভিশনে রাখুন">${on?'★':'☆'}</button><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hlWords(r.item.q,words)}</div><div class="sr-a">→ ${br(hlWords(r.item.a,words))}</div>${ex?`<div class="sr-ex">${hlWords(ex,words)}</div>`:''}</div>`}).join('');
 }
 function toggleClear(val){
   // শুধু clear বাটন দেখাও/লুকাও — timer cancel করবে না
@@ -2287,13 +2287,19 @@ function clearSearch(){
 }
 function hl(t,q){const i=t.toLowerCase().indexOf(q.toLowerCase());if(i===-1)return t;return t.slice(0,i)+`<span class="highlight">${t.slice(i,i+q.length)}</span>`+t.slice(i+q.length);}
 function hlWords(t,words){
-  // প্রতিটি শব্দ হাইলাইট করো
-  let out=t;
-  words.forEach(w=>{
-    const re=new RegExp('('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
-    out=out.replace(re,'<span class="highlight">$1</span>');
-  });
-  return out;
+  if(!t) return t;
+  /* আগে প্রতিটা শব্দের জন্য আলাদা .replace() চালানো হতো — ফলে দ্বিতীয় শব্দের
+     রেজেক্স আগের বসানো <span class="highlight"> ট্যাগের ভেতরের অক্ষরের সাথেও
+     ম্যাচ করত (যেমন "a" শব্দ class="highlight" এর ভেতরের 'a' এর সাথে মিলে যেত),
+     ফলে HTML ভেঙে literal ট্যাগ দেখা যেত। এখন একটাই কম্বাইন্ড রেজেক্স দিয়ে
+     এক-পাসে হাইলাইট করা হয়, যা মূল টেক্সট স্ক্যান করে — বসানো ট্যাগের সাথে
+     আর মেশে না। এক অক্ষরের শব্দ (যেমন "a", "I") বাদ দেওয়া হয়েছে যাতে পুরো
+     টেক্সট জুড়ে অতিরিক্ত হাইলাইট না হয়। */
+  const uniq=[...new Set(words.filter(w=>w && w.length>=2))].sort((a,b)=>b.length-a.length);
+  if(!uniq.length) return t;
+  const pattern=uniq.map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|');
+  const re=new RegExp('('+pattern+')','gi');
+  return t.replace(re,'<span class="highlight">$1</span>');
 }
 
 /* ADD ITEM feature removed */
