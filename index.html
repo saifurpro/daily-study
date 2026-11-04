@@ -1112,7 +1112,7 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 <div class="topbar">
   <span class="topbar-title"><img class="topbar-logo" src="./icon-192.png" alt="">লিখিত প্রস্তুতি</span>
   <div class="topbar-search">
-    <input class="search-input" id="searchInput" placeholder="🔍 সার্চ..." oninput="switchTab('study',true);handleSearch(this.value);toggleClear(this.value)">
+    <input class="search-input" id="searchInput" placeholder="🔍 সার্চ..." oninput="_searchOverlayActive=true;syncSearchOverlay();switchTab('study',true);handleSearch(this.value);toggleClear(this.value)" onfocus="if(document.getElementById('studyView').classList.contains('show')){_searchOverlayActive=true;syncSearchOverlay()}">
     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
   </div>
   <!-- landscape mode-এ header-এ nav বোতাম -->
@@ -2512,6 +2512,15 @@ function updateStreak(){
    SEARCH — debounced + multi-word
 ══════════════════════════════════════ */
 let _searchTimer = null;
+let _searchOverlayActive=false;
+function syncSearchOverlay(){
+  const topbar=document.querySelector('.topbar');
+  const overlay=document.getElementById('studyView');
+  const active=_searchOverlayActive&&overlay.classList.contains('show');
+  topbar.classList.toggle('search-active',active);
+  overlay.classList.toggle('search-active',active);
+  if(active) overlay.style.setProperty('--search-overlay-top',`${Math.ceil(topbar.getBoundingClientRect().height)}px`);
+}
 function handleSearch(q){
   // debounce: টাইপ থামার 280ms পরে সার্চ হবে
   clearTimeout(_searchTimer);
@@ -2734,6 +2743,7 @@ function openStudyMode(mode,showContent=false){
     optionGrid.replaceChildren();
   }
   showAppOverlay('studyView');
+  syncSearchOverlay();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     if(token!==_studyOpenToken||!document.getElementById('studyView').classList.contains('show')) return;
     selectDefaultStudyItem(mode,true);
@@ -2746,7 +2756,9 @@ function closeStudy(fromHistory=false){
   _studyOpenToken++;
   activeTab='home';
   studySelectionMade=false;
+  _searchOverlayActive=false;
   clearStudySearch();
+  syncSearchOverlay();
   closeAppOverlay('studyView',fromHistory);
   syncNavActive('navHome');
 }
@@ -5338,6 +5350,11 @@ body{
   background:rgba(15,26,30,.55);
   backdrop-filter:blur(5px);
 }
+.topbar.search-active{z-index:260}
+.study-overlay.search-active{inset-block-start:var(--search-overlay-top,60px)}
+.study-overlay.search-active .study-box{
+  max-height:min(88dvh,calc(100dvh - var(--search-overlay-top,60px) - 32px));
+}
 .study-box{
   display:flex;
   flex-direction:column;
@@ -5544,6 +5561,9 @@ body{
 @media (max-width:600px){
   .study-overlay{padding:10px}
   .study-box{width:100%;max-height:92dvh;padding:14px 14px 8px;border-radius:20px}
+  .study-overlay.search-active .study-box{
+    max-height:min(92dvh,calc(100dvh - var(--search-overlay-top,60px) - 20px));
+  }
   .study-dialog-header{gap:7px}
   .study-back-btn{min-height:38px;padding:7px 9px;font-size:.74rem}
   .study-dialog-title{font-size:.92rem}
