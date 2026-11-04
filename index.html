@@ -2798,7 +2798,8 @@ function _examResumeKey(){
   if(examPickerTab==='day' && examSelectedDay!==null) return `ds_exam_day_${examSelectedDay}`;
   if(examPickerTab==='topic' && examSelectedTopicKeys.length){
     const topics=examSelectedTopicKeys.slice().sort().map(encodeURIComponent).join(',');
-    return `ds_exam_topics_${topics}_${Math.max(1,examQuestionLimit||30)}`;
+    const limitKey=examQuestionLimit===0?'all':Math.max(1,examQuestionLimit||30);
+    return `ds_exam_topics_${topics}_${limitKey}`;
   }
   if(examPickerTab==='model' && modelExamSelected!==null) return `ds_exam_model_${modelExamSelected}`;
   return null;
@@ -2871,7 +2872,8 @@ function resumeExam(state){
   examSelectedTopicKeys = state.selectedTopicKeys || (examSelectedTopicKey ? [examSelectedTopicKey] : []);
   examQuestionLimit = state.questionLimit ?? 30;
   modelExamSelected = state.modelSelected ?? null;
-  if(state.title) document.getElementById('examTopTitle').textContent = state.title;
+  if(state.tab==='topic') document.getElementById('examTopTitle').textContent='📝';
+  else if(state.title) document.getElementById('examTopTitle').textContent = state.title;
   renderExamCard();
 }
 
@@ -2936,6 +2938,7 @@ async function toggleExamLandscape(){
 /* ── UNIFIED PICKER RENDERER ── */
 function renderExamPicker(){
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা বেছে নিন';
+  document.getElementById('examBackBtn').style.display='none';
   document.getElementById('examProgFill').style.width='0%';
   const resetBtn=document.getElementById('examResetBtn');
   if(resetBtn) resetBtn.style.display='none';
@@ -3004,8 +3007,8 @@ function renderExamPicker(){
       h+=`</div>
       <div class="exam-size-panel">
         <div class="exam-size-heading"><span><strong>কয়টি প্রশ্নে পরীক্ষা দেবেন?</strong><small>শর্ট টেস্টের জন্য ৩০টি ডিফল্ট · নির্বাচিত টপিক থেকে এলোমেলো প্রশ্ন</small></span><span class="exam-question-total">${bn(actualCount)}<small>প্রশ্ন</small></span></div>
-        <div class="exam-size-options">${limits.map(n=>`<button type="button" class="exam-size-option${examQuestionLimit===n?' selected':''}" onclick="setExamQuestionLimit(${n})" ${!selectedCount||n>selectedCount?'disabled':''}>${bn(n)}</button>`).join('')}</div>
-        <label class="exam-custom-size">নিজে সংখ্যা লিখুন<input type="number" min="1" max="${selectedCount||1}" value="${examQuestionLimit}" placeholder="যেমন ৩০" ${!selectedCount?'disabled':''} oninput="setExamQuestionLimit(this.value,false)" onchange="setExamQuestionLimit(this.value)"></label>
+        <div class="exam-size-options">${limits.map(n=>`<button type="button" class="exam-size-option${examQuestionLimit===n?' selected':''}" onclick="setExamQuestionLimit(${n})" ${!selectedCount||n>selectedCount?'disabled':''}>${bn(n)}</button>`).join('')}<button type="button" class="exam-size-option exam-size-all${examQuestionLimit===0?' selected':''}" onclick="setExamQuestionLimit(0)" ${!selectedCount?'disabled':''}>সবগুলো</button></div>
+        <label class="exam-custom-size">নিজে সংখ্যা লিখুন<input type="number" min="1" max="${selectedCount||1}" value="${examQuestionLimit===0?'':examQuestionLimit}" placeholder="যেমন ৩০" ${!selectedCount?'disabled':''} oninput="setExamQuestionLimit(this.value,false)" onchange="setExamQuestionLimit(this.value)"></label>
         <div class="exam-size-note">${examSelectedTopicKeys.length?`${bn(examSelectedTopicKeys.length)}টি টপিক · মোট ${bn(selectedCount)}টি প্রশ্ন`:'আগে অন্তত একটি টপিক বেছে নিন'}${examQuestionLimit&&examQuestionLimit>selectedCount&&selectedCount?` · সর্বোচ্চ ${bn(selectedCount)}টি নেওয়া যাবে`:''}</div>
       </div>
       <button type="button" class="exam-start-btn exam-topic-start" onclick="startTopicExam()" ${!examSelectedTopicKeys.length||!actualCount?'disabled':''}>▶ ${bn(actualCount)} প্রশ্নের পরীক্ষা শুরু করুন</button>`;
@@ -3063,6 +3066,7 @@ function examDataEmptyState(message){
 }
 
 function renderExamResumePrompt(saved){
+  document.getElementById('examBackBtn').style.display='';
   const resetBtn=document.getElementById('examResetBtn');
   if(resetBtn) resetBtn.style.display='none';
   const remaining = saved.queue.length - saved.idx;
@@ -3099,7 +3103,8 @@ function renderExamResumePrompt(saved){
   window._examSavedState = saved;
   document.getElementById('examBody').innerHTML = h;
   document.getElementById('examProgFill').style.width = Math.round(saved.idx/saved.queue.length*100)+'%';
-  if(saved.title) document.getElementById('examTopTitle').textContent = saved.title;
+  if(saved.tab==='topic') document.getElementById('examTopTitle').textContent='📝';
+  else if(saved.title) document.getElementById('examTopTitle').textContent = saved.title;
 }
 
 function discardAndPickNew(){
@@ -3143,7 +3148,12 @@ function selectExamTopic(idx){
 
 function setExamQuestionLimit(value,render=true){
   const parsed=Number(value);
-  if(value===''||!Number.isFinite(parsed)||parsed<1) return;
+  if(value===''||!Number.isFinite(parsed)||parsed<0) return;
+  if(parsed===0){
+    examQuestionLimit=0;
+    if(render) renderExamPicker();
+    return;
+  }
   const selected=new Set(examSelectedTopicKeys);
   const available=Object.values(allDays).reduce((total,day)=>total+((day.topics||[]).reduce((topicTotal,topic)=>(
     selected.has(topic.title)?topicTotal+(Array.isArray(topic.items)?topic.items.length:0):topicTotal
@@ -3180,7 +3190,9 @@ function startTopicExam(){
     });
   });
   if(!q.length){toast('নির্বাচিত টপিকে কোনো প্রশ্ন পাওয়া যায়নি',true);return;}
-  const requestedCount=Math.min(Math.max(1,Math.floor(examQuestionLimit)||30),q.length);
+  const requestedCount=examQuestionLimit===0
+    ?q.length
+    :Math.min(Math.max(1,Math.floor(examQuestionLimit)||30),q.length);
   const saved=(()=>{try{const raw=localStorage.getItem(_examResumeKey());return raw?JSON.parse(raw):null;}catch(e){return null;}})();
   if(saved&&Array.isArray(saved.queue)&&saved.queue.length===requestedCount&&saved.idx<saved.queue.length){
     renderExamResumePrompt(saved);
@@ -3191,8 +3203,7 @@ function startTopicExam(){
   q=q.slice(0,requestedCount);
   examQueue=q; examIdx=0; examKnow=0; examDontKnow=0; examDontKnowItems=[];
   clearExamState();
-  const label=examSelectedTopicKeys.length===1?examSelectedTopicKeys[0]:`${bn(examSelectedTopicKeys.length)}টি টপিক`;
-  document.getElementById('examTopTitle').textContent=`📝 ${label} · ${bn(q.length)} প্রশ্ন`;
+  document.getElementById('examTopTitle').textContent='📝';
   renderExamCard();
 }
 
@@ -3207,6 +3218,7 @@ async function resetCurrentExam(){
 }
 
 function renderExamCard(){
+  document.getElementById('examBackBtn').style.display='';
   const total=examQueue.length;
   if(examIdx>=total){clearExamState();renderExamResult();return;}
   // প্রতিটি প্রশ্নে state সেভ করো
@@ -3324,6 +3336,7 @@ function startModelExam(){
 }
 
 function renderExamResult(){
+  document.getElementById('examBackBtn').style.display='';
   document.getElementById('examProgFill').style.width='100%';
   const resetBtn=document.getElementById('examResetBtn');
   if(resetBtn) resetBtn.style.display='none';
@@ -4079,6 +4092,7 @@ function showCompletionMessage(){
         <span class="exam-title" id="examTopTitle">📝 পরীক্ষা</span>
       </div>
       <div class="exam-toolbar">
+        <button type="button" class="exam-back-btn" id="examBackBtn" onclick="backToExamPicker()" style="display:none;">← ফিরে যান</button>
         <button type="button" class="rotate-btn exam-reset-btn" id="examResetBtn" onclick="resetCurrentExam()" style="display:none;">↻ রিসেট</button>
         <button type="button" class="rotate-btn" id="examRotateBtn" onclick="toggleExamLandscape()" aria-label="পরীক্ষার পর্দা ঘোরান">⟳</button>
         <button type="button" class="exam-close-btn" onclick="closeExam()">✕ বন্ধ</button>
@@ -4289,7 +4303,7 @@ body{
   font-weight:800;
 }
 .exam-question-total small{font-size:.62rem;font-weight:500}
-.exam-size-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:14px 0}
+.exam-size-options{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px;margin:14px 0}
 .exam-size-option{
   min-height:38px;
   border:1px solid var(--border);
@@ -4767,6 +4781,7 @@ body{
   .exam-topic-list{grid-template-columns:1fr;gap:7px}
   .exam-topic-option{min-height:64px}
   .exam-size-panel{padding:13px}
+  .exam-size-options{grid-template-columns:repeat(3,minmax(0,1fr))}
   .exam-overlay .exam-body{padding:16px 12px 90px}
   .exam-result{padding:18px 13px}
   .study-hero{
@@ -4899,6 +4914,7 @@ body{
   outline-offset:2px;
 }
 .exam-toolbar .rotate-btn,
+.exam-toolbar .exam-back-btn,
 .exam-close-btn{
   display:inline-flex;
   align-items:center;
@@ -4915,6 +4931,7 @@ body{
   transition:background .16s,border-color .16s,color .16s,transform .16s;
 }
 .exam-toolbar .rotate-btn:hover,
+.exam-toolbar .exam-back-btn:hover,
 .exam-close-btn:hover,
 .exam-secondary-btn:hover,
 .exam-view-back:hover,
