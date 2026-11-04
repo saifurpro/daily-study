@@ -6,12 +6,25 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="দৈনিক পড়া">
-<meta name="theme-color" content="#0f1117">
-<title>দৈনিক পড়া</title>
+<meta name="apple-mobile-web-app-title" content="লিখিত প্রস্তুতি">
+<meta name="theme-color" content="#f4f6f7">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<title>লিখিত প্রস্তুতি</title>
 <script>
 /* file:// থেকে খুললে কোনো redirect দরকার নেই —
    অ্যাপ সরাসরি চলে, data localStorage-এ থাকে */
+try{
+  const palettes={
+    white:{'--bg':'#f4f6f7','--surface':'#ffffff','--card':'#eef2f3','--accent':'#087c70','--accent2':'#a85e24','--text':'#1d2b32','--muted':'#586970','--green':'#247a53','--red':'#b44747','--border':'#dce4e6','--hero-start':'#123b3b','--hero-end':'#319183'},
+    moonlight:{'--bg':'#111418','--surface':'#181c22','--card':'#1e242c','--accent':'#7888a8','--accent2':'#c0a858','--text':'#b8c0d0','--muted':'#929db0','--green':'#60aa84','--red':'#d07878','--border':'#303846','--hero-start':'#252f43','--hero-end':'#465b7b'},
+    ocean:{'--bg':'#0c1618','--surface':'#131e22','--card':'#19262a','--accent':'#4a9aaa','--accent2':'#c8a050','--text':'#a8c8cc','--muted':'#8da7aa','--green':'#5aaa84','--red':'#d07878','--border':'#294047','--hero-start':'#123b42','--hero-end':'#286879'}
+  };
+  const saved=localStorage.getItem('dainik_theme');
+  const palette=palettes[saved]||palettes.white;
+  for(const [name,value] of Object.entries(palette)) document.documentElement.style.setProperty(name,value);
+  document.documentElement.style.colorScheme=saved&&saved!=='white'&&palettes[saved]?'dark':'light';
+  document.querySelector('meta[name="theme-color"]').content=palette['--bg'];
+}catch(e){}
 </script>
 <style>
 @font-face {
@@ -33,20 +46,20 @@
 </style>
 <style>
 /* ══════════════════════════════════════════════════════
-   দৈনিক পড়া — সম্পূর্ণ নতুন UI (চোখ-বান্ধব, দীর্ঘ পড়ার জন্য)
+   লিখিত প্রস্তুতি — সম্পূর্ণ নতুন UI (চোখ-বান্ধব, দীর্ঘ পড়ার জন্য)
    Design: গভীর অলিভ-ডার্ক প্যালেট, বড় টাইপ, নরম কন্ট্রাস্ট
 ══════════════════════════════════════════════════════ */
 :root{
-  --bg:#1a1510;
-  --surface:#221c15;
-  --card:#2a231a;
-  --accent:#c8965a;
-  --accent2:#a07840;
-  --text:#c4b49a;
-  --muted:#6e5e48;
-  --green:#7aaa72;
-  --red:#a06060;
-  --border:#332a1f;
+  --bg:#f4f6f7;
+  --surface:#ffffff;
+  --card:#eef2f3;
+  --accent:#087c70;
+  --accent2:#a85e24;
+  --text:#1d2b32;
+  --muted:#586970;
+  --green:#247a53;
+  --red:#b44747;
+  --border:#dce4e6;
   --radius:14px;
 }
 
@@ -81,6 +94,9 @@ body{
 }
 .topbar a{text-decoration:none}
 .topbar-title{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
   font-size:.95rem;
   font-weight:800;
   color:var(--accent);
@@ -88,6 +104,23 @@ body{
   flex-shrink:0;
   letter-spacing:-.01em;
 }
+.topbar-logo{width:30px;height:30px;flex:0 0 30px;border-radius:9px;object-fit:cover}
+.app-preloader{
+  position:fixed;
+  inset:0;
+  z-index:2000;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  background:var(--bg,#f4f6f7);
+  opacity:1;
+  transition:opacity .22s ease;
+}
+.app-preloader.is-hidden{opacity:0;pointer-events:none}
+.app-preloader-logo{width:104px;height:104px;border-radius:26px;object-fit:cover;box-shadow:0 12px 32px rgba(24,43,50,.16)}
+.app-preloader-credit{color:var(--muted,#586970);font-size:.82rem;font-weight:700;letter-spacing:.01em}
 .topbar-search{flex:1;position:relative;display:flex;align-items:center}
 .topbar-search .search-input{background:var(--card);border-color:var(--border);font-size:.84rem;padding:7px 30px 7px 12px}
 .topbar-search .search-clear{right:8px}
@@ -181,7 +214,7 @@ body.landscape .content{padding:10px 14px 20px}
   margin-right:6px;
   transition:all .15s;
 }
-.reveal-day-btn:active{background:rgba(90,170,110,.1)}
+.reveal-day-btn:active{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .progress-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden}
 .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:4px;transition:width .4s ease}
 
@@ -239,7 +272,7 @@ body.landscape .content{padding:10px 14px 20px}
 .topic-icon{
   width:34px;height:34px;
   border-radius:10px;
-  background:rgba(90,170,110,.12);
+  background:color-mix(in srgb,var(--green) 12%,transparent);
   display:flex;align-items:center;justify-content:center;
   font-size:1rem;flex-shrink:0;
 }
@@ -258,7 +291,7 @@ body.landscape .content{padding:10px 14px 20px}
   transition:all .15s;
 }
 .reveal-all-btn{color:var(--accent);border-color:var(--accent)}
-.reveal-all-btn:active{background:rgba(90,170,110,.1)}
+.reveal-all-btn:active{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .reveal-all-btn.done{border-color:var(--green);color:var(--green)}
 .reset-topic-btn{color:var(--muted)}
 .reset-topic-btn:active{background:var(--card)}
@@ -271,7 +304,7 @@ body.landscape .content{padding:10px 14px 20px}
   contain:layout style;
   background:var(--surface);
 }
-.t-header{display:grid;background:rgba(90,170,110,.07);border-bottom:1px solid var(--border)}
+.t-header{display:grid;background:color-mix(in srgb,var(--accent) 7%,var(--surface));border-bottom:1px solid var(--border)}
 .t-header.col2{grid-template-columns:55% 45%}
 .t-header.col3{grid-template-columns:45% 28% 27%}
 .th-cell{
@@ -481,7 +514,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 }
 .sr-badge{
   display:inline-block;
-  background:rgba(90,170,110,.12);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);
   color:var(--accent);
   border-radius:6px;
   padding:2px 8px;
@@ -499,7 +532,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .topic-note{
   margin:8px 0;
   padding:10px 13px;
-  background:rgba(212,168,67,.07);
+  background:color-mix(in srgb,var(--accent2) 7%,transparent);
   border-left:3px solid var(--accent2);
   border-radius:0 10px 10px 0;
   font-size:1rem;
@@ -508,7 +541,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 }
 .topic-note-svg{
   padding:8px;
-  background:rgba(255,255,255,.02);
+  background:color-mix(in srgb,var(--card) 55%,transparent);
   border-left:3px solid var(--accent2);
   color:unset;font-size:unset;
   display:flex;justify-content:center;align-items:center;
@@ -516,7 +549,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .topic-note-svg svg{max-width:100%;height:auto;display:block}
 
 /* ── IMG ── */
-.item-img-wrap{padding:8px 12px;background:rgba(255,255,255,.02);border-bottom:.5px solid var(--border);min-height:40px}
+.item-img-wrap{padding:8px 12px;background:color-mix(in srgb,var(--card) 55%,transparent);border-bottom:.5px solid var(--border);min-height:40px}
 .item-img{max-width:100%;border-radius:9px;display:block}
 .item-img-placeholder{display:inline-block;padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:.78rem;color:var(--muted);cursor:pointer}
 .item-img-placeholder.hide{display:none}
@@ -565,17 +598,18 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .overlay{
   display:none;position:fixed;inset:0;
   background:rgba(0,0,0,.8);
-  z-index:200;align-items:flex-end;justify-content:center;
+  z-index:200;align-items:center;justify-content:center;
+  padding:16px;
 }
 .overlay.show{display:flex}
 .overlay-box{
   background:var(--surface);
-  border-radius:20px 20px 0 0;
-  padding:20px 16px 32px;
-  width:100%;max-width:520px;
-  max-height:92vh;overflow-y:auto;
+  border-radius:22px;
+  padding:24px;
+  width:min(640px,100%);max-width:640px;
+  max-height:min(84dvh,760px);overflow-y:auto;
   border:1px solid var(--border);
-  border-bottom:none;
+  box-shadow:0 24px 80px rgba(0,0,0,.24);
 }
 .ov-title{font-size:.97rem;font-weight:700;margin-bottom:5px}
 .ov-sub{font-size:.79rem;color:var(--muted);margin-bottom:14px;line-height:1.65}
@@ -650,13 +684,13 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .lc-del{background:transparent;border:none;color:var(--muted);font-size:.95rem;cursor:pointer;padding:2px 4px;flex-shrink:0}
 
 /* ── ADD OVERLAY ── */
-.add-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center}
+.add-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;padding:16px}
 .add-overlay.show{display:flex}
 .add-box{
-  background:var(--surface);border-radius:20px 20px 0 0;
-  padding:18px 16px 32px;
-  width:100%;max-width:520px;max-height:88vh;overflow-y:auto;
-  border:1px solid var(--border);border-bottom:none;
+  background:var(--surface);border-radius:22px;
+  padding:24px;
+  width:min(640px,100%);max-width:640px;max-height:min(84dvh,760px);overflow-y:auto;
+  border:1px solid var(--border);box-shadow:0 24px 80px rgba(0,0,0,.24);
 }
 .add-title{font-size:.97rem;font-weight:700;margin-bottom:13px}
 .f-label{font-size:.76rem;color:var(--muted);margin-bottom:4px;font-weight:600}
@@ -711,7 +745,7 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .exam-counter{font-size:.76rem;color:var(--muted);margin-bottom:14px;align-self:flex-start}
 .exam-topic-badge{
   font-size:.69rem;color:var(--accent);
-  background:rgba(90,170,110,.1);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);
   border-radius:6px;padding:2px 8px;
   margin-bottom:10px;align-self:flex-start;
 }
@@ -749,12 +783,12 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
 .exam-actions{display:flex;gap:10px;width:100%;margin-top:4px}
 .exam-know{
   flex:1;padding:14px;
-  background:rgba(77,184,124,.1);
+  background:color-mix(in srgb,var(--green) 10%,var(--surface));
   border:1.5px solid var(--green);color:var(--green);
   border-radius:12px;font-size:.92rem;font-weight:700;
   cursor:pointer;font-family:SolaimanLipi,sans-serif;transition:all .15s;
 }
-.exam-know:active{background:rgba(77,184,124,.22)}
+.exam-know:active{background:color-mix(in srgb,var(--green) 22%,var(--surface))}
 .exam-dontknow{
   flex:1;padding:14px;
   background:rgba(212,90,90,.1);
@@ -785,6 +819,30 @@ body.landscape .table-wrap[data-topic*="শতকরা পাশ-ফেল ম�
   cursor:pointer;font-family:SolaimanLipi,sans-serif;
 }
 .exam-start-btn:disabled{opacity:.4;cursor:not-allowed}
+.exam-empty-state{
+  display:grid;
+  justify-items:center;
+  gap:10px;
+  padding:28px 16px;
+  border:1px dashed var(--border);
+  border-radius:16px;
+  background:var(--card);
+  color:var(--muted);
+  text-align:center;
+}
+.exam-empty-icon{font-size:1.8rem}
+.exam-empty-state strong{color:var(--text);font-size:.92rem}
+.exam-empty-state span{max-width:380px;font-size:.78rem;line-height:1.65}
+.exam-empty-load{
+  margin-top:3px;
+  padding:9px 14px;
+  border:0;
+  border-radius:10px;
+  background:var(--accent);
+  color:#fff;
+  font:700 .8rem SolaimanLipi,sans-serif;
+  cursor:pointer;
+}
 
 /* Exam Result */
 .exam-result{width:100%;text-align:center;padding:10px 0}
@@ -888,11 +946,11 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 .routine-day-tasks{display:flex;flex-direction:column;gap:5px}
 .routine-task{display:flex;align-items:center;gap:7px;font-size:.83rem;color:var(--text);line-height:1.5}
 .routine-task-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dot-new{background:var(--accent)}.dot-rev{background:var(--accent2)}.dot-bigrev{background:var(--green)}.dot-gap{background:#e67e22}.dot-exam{background:var(--red)}
+.dot-new{background:var(--accent)}.dot-rev{background:var(--accent2)}.dot-bigrev{background:var(--green)}.dot-gap{background:var(--accent2)}.dot-exam{background:var(--red)}
 .tracker-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .tracker-cal-title{font-size:.92rem;font-weight:700;color:var(--text)}
 .tracker-reset-btn{background:transparent;border:1px solid var(--red);color:var(--red);padding:4px 11px;border-radius:7px;font-size:.71rem;cursor:pointer;font-family:SolaimanLipi,sans-serif}
-.study-reset-btn{background:transparent;border:1px solid #e67e22;color:#e67e22;padding:4px 11px;border-radius:7px;font-size:.71rem;cursor:pointer;font-family:SolaimanLipi,sans-serif;margin-left:6px}
+.study-reset-btn{background:transparent;border:1px solid var(--accent2);color:var(--accent2);padding:4px 11px;border-radius:7px;font-size:.71rem;cursor:pointer;font-family:SolaimanLipi,sans-serif;margin-left:6px}
 .tracker-cal-btns{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .tracker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
 .tracker-grid-head{text-align:center;font-size:.61rem;color:var(--muted);padding:3px 0;font-weight:700}
@@ -903,8 +961,8 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
   padding:11px 13px;cursor:default;
   transition:all .15s;position:relative;gap:4px;min-height:70px;
 }
-.tracker-day-cell.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(90,170,110,.2)}
-.tracker-day-cell.done{background:rgba(77,184,124,.07);border-color:var(--green)}
+.tracker-day-cell.today{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}
+.tracker-day-cell.done{background:color-mix(in srgb,var(--green) 7%,var(--card));border-color:var(--green)}
 .tracker-day-cell.done .tc-num{color:var(--green)}
 .tracker-day-cell.done::after{content:'✓';position:absolute;top:6px;right:9px;font-size:.71rem;color:var(--green)}
 .tracker-day-cell.future{opacity:.5;cursor:default}
@@ -937,8 +995,8 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 .tracker-done-btn:active{opacity:.8}
 .tracker-done-btn.undone{background:transparent;border:1.5px solid var(--green);color:var(--green)}
 .tracker-streak-box{
-  background:rgba(212,168,67,.07);
-  border:1px solid rgba(212,168,67,.3);
+  background:color-mix(in srgb,var(--accent2) 7%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent2) 30%,transparent);
   border-radius:10px;padding:10px 14px;
   display:flex;align-items:center;gap:10px;margin-bottom:14px;
 }
@@ -951,7 +1009,7 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 
 /* ── TEXT SELECTION ── */
-::selection{background:rgba(90,170,110,.3);color:#fff}
+::selection{background:color-mix(in srgb,var(--accent) 30%,transparent);color:var(--text)}
 </style>
 
 
@@ -992,7 +1050,7 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
   function showNetToast(msg, isErr){
     const t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);background:'+(isErr?'#e67e22':'#3ecf8e')+';color:#fff;padding:7px 16px;border-radius:9px;font-size:.75rem;font-family:SolaimanLipi,sans-serif;z-index:9999;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.3);pointer-events:none';
+    t.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%);background:'+(isErr?'var(--red)':'var(--green)')+';color:#fff;padding:7px 16px;border-radius:9px;font-size:.75rem;font-family:SolaimanLipi,sans-serif;z-index:9999;white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.3);pointer-events:none';
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3500);
   }
@@ -1009,34 +1067,81 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 </head>
 <body>
 
+<div class="app-preloader" id="appPreloader" role="status" aria-label="লিখিত প্রস্তুতি লোড হচ্ছে">
+  <img class="app-preloader-logo" src="./icon-192.png" alt="লিখিত প্রস্তুতি">
+  <span class="app-preloader-credit">Made by সাইফুর রহমান</span>
+</div>
+
 <div class="topbar">
-  <span class="topbar-title">📚 দৈনিক পড়া</span> 
+  <span class="topbar-title"><img class="topbar-logo" src="./icon-192.png" alt="">লিখিত প্রস্তুতি</span>
   <div class="topbar-search">
-    <input class="search-input" id="searchInput" placeholder="🔍 সার্চ..." oninput="handleSearch(this.value);toggleClear(this.value)">
+    <input class="search-input" id="searchInput" placeholder="🔍 সার্চ..." oninput="switchTab('study',true);handleSearch(this.value);toggleClear(this.value)">
     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
   </div>
   <!-- landscape mode-এ header-এ nav বোতাম -->
   <div class="ls-nav" id="lsNav">
-    <button class="ls-nav-btn" id="lsNavStudy" onclick="switchTab('study');window.scrollTo({top:0,behavior:'smooth'})" title="উপরে যান"><span class="ls-ni" id="lsCalIcon">📅</span></button>
+    <button class="ls-nav-btn" id="lsNavHome" onclick="switchTab('home')" title="পড়া"><span class="ls-ni">🏠</span><span class="ls-nl">পড়া</span></button>
     <button class="ls-nav-btn" id="lsNavExam" onclick="openExam()"><span class="ls-ni">📝</span><span class="ls-nl">পরীক্ষা</span></button>
-    <button class="ls-nav-btn" id="lsNavTracker" onclick="openTracker()"><span class="ls-ni">📊</span><span class="ls-nl">ট্র্যাক</span></button>
-    <button class="ls-nav-btn" id="lsNavDrive" onclick="openDrive()"><span class="ls-ni">☁️</span><span class="ls-nl">Drive</span></button>
+    <button class="ls-nav-btn" id="lsNavSettings" onclick="openSettings()"><span class="ls-ni">⚙️</span><span class="ls-nl">সেটিংস</span></button>
   </div>
   <div class="topbar-right">
     <span class="streak" id="streakEl">০ দিন</span>
-    <button class="rotate-btn" id="themeBtn" onclick="openThemePicker()" title="থিম বদলান">🎨</button>
-    <button class="rotate-btn" id="softRefreshBtn" onclick="softRefresh()" title="কনটেন্ট রিলোড">↻</button>
-    <button class="rotate-btn" id="rotateBtn" onclick="toggleLandscape()">⟳</button>
   </div>
 </div>
 
-<div class="mode-bar" id="modeBar">
-  <button class="mode-btn active" id="mbDay" onclick="setViewMode('day')">📅 দিন</button>
-  <button class="mode-btn" id="mbTopic" onclick="setViewMode('topic')">📚 টপিক</button>
-  <button class="mode-btn" id="mbFav" onclick="setViewMode('fav')">⭐ রিভিশন<span class="fav-badge" id="favBadge">০</span></button>
-</div>
+<section class="study-hero" id="homeBanner" aria-labelledby="studyHeroTitle">
+  <div class="study-hero-copy">
+    <span class="study-hero-kicker">আপনার শেখার প্রতিদিনের সঙ্গী</span>
+    <h1 id="studyHeroTitle">আজকের পড়া,<br>আজই শুরু হোক</h1>
+    <p>পড়া গুছিয়ে নিন, নিজের গতিতে শিখুন, আর প্রতিদিন একটু করে এগিয়ে যান।</p>
+    <p class="study-hero-dua">রব্বি জিদনি ইলমা, রব্বি জিদনি ইলমা, রব্বি জিদনি ইলম</p>
+    <button class="study-hero-cta" onclick="openStudyMode('day')"><span>📚</span> পড়া শুরু করুন <span aria-hidden="true">→</span></button>
+  </div>
+  <div class="study-hero-art" aria-hidden="true">
+    <span class="hero-spark hero-spark-one">✦</span>
+    <span class="hero-spark hero-spark-two">✳</span>
+    <div class="hero-book"><span>📖</span></div>
+    <span class="hero-orbit"></span>
+  </div>
+  <div class="study-hero-tags" aria-label="অ্যাপের সুবিধা">
+    <span>◷ নিজের সময়ে</span><span>✦ সহজ রিভিশন</span><span>↗ অগ্রগতি দেখুন</span>
+  </div>
+</section>
 
-<div class="day-scroll" id="dayScroll"></div>
+<section class="home-shortcuts" id="homeShortcuts" aria-label="পড়ার ধরন">
+  <button class="home-shortcut" onclick="openStudyMode('day')">
+    <span class="shortcut-icon day-icon">📅</span>
+    <span class="shortcut-copy"><strong>দিন অনুযায়ী</strong><small>প্রতিদিনের পড়া</small></span>
+    <span class="shortcut-arrow">→</span>
+  </button>
+  <button class="home-shortcut" onclick="openStudyMode('topic')">
+    <span class="shortcut-icon topic-icon">📚</span>
+    <span class="shortcut-copy"><strong>টপিক অনুযায়ী</strong><small>বিষয় বেছে পড়ুন</small></span>
+    <span class="shortcut-arrow">→</span>
+  </button>
+  <button class="home-shortcut" onclick="openStudyMode('fav')">
+    <span class="shortcut-icon fav-icon">⭐</span>
+    <span class="shortcut-copy"><strong>রিভিশন</strong><small><span id="homeFavCount">০</span>টি সংরক্ষিত প্রশ্ন</small></span>
+    <span class="shortcut-arrow">→</span>
+  </button>
+</section>
+
+<div class="overlay study-overlay" id="studyView">
+<section class="overlay-box study-box" aria-labelledby="studyDialogTitle">
+  <header class="study-dialog-header">
+    <button type="button" class="study-back-btn" id="studyBackBtn" onclick="backStudy()">← ফিরে যান</button>
+    <h2 class="study-dialog-title" id="studyDialogTitle">দিন অনুযায়ী</h2>
+    <button type="button" class="study-close-btn" onclick="closeStudy()" aria-label="পড়ার popup বন্ধ করুন">✕</button>
+    <div class="study-selection-controls">
+      <select class="study-mode-select" id="studyModeSelect" aria-label="পড়ার ধরন বদলান" onchange="setViewMode(this.value)">
+        <option value="day">📅 দিন</option>
+        <option value="topic">📚 টপিক</option>
+        <option value="fav">⭐ রিভিশন</option>
+      </select>
+      <select class="day-scroll" id="dayScroll" aria-label="দিন, টপিক বা রিভিশন বেছে নিন" onchange="selectStudyItem(this.value)"></select>
+    </div>
+    <div class="study-option-grid" id="studyOptionGrid" aria-label="বেছে নিন"></div>
+  </header>
 
 <div class="progress-wrap">
   <div class="progress-info">
@@ -1053,20 +1158,53 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 
 <div class="content" id="mainContent"></div>
 <div class="search-results" id="searchResults" style="display:none"></div>
+</section>
+</div>
 
 
 
 <div class="bottom-nav">
-  <button class="nav-btn active" id="navStudy" onclick="switchTab('study')"><span class="ni" id="calIcon">📅</span><span class="nl">পড়া</span></button>
-
+  <button class="nav-btn active" id="navHome" onclick="switchTab('home')"><span class="ni">🏠</span><span class="nl">পড়া</span></button>
   <button class="nav-btn" id="navExam" onclick="openExam()"><span class="ni">📝</span><span class="nl">পরীক্ষা</span></button>
-  <button class="nav-btn" id="navTracker" onclick="openTracker()"><span class="ni">📊</span><span class="nl">ট্র্যাক</span></button>
-  <button class="nav-btn" id="navDrive" onclick="openDrive()"><span class="ni">☁️</span><span class="nl">Drive</span></button>
+  <button class="nav-btn" id="navSettings" onclick="openSettings()"><span class="ni">⚙️</span><span class="nl">সেটিংস</span></button>
+</div>
+
+<div class="overlay settings-overlay" id="settingsOv">
+  <section class="overlay-box settings-box" aria-labelledby="settingsTitle">
+    <div class="settings-heading">
+      <div><span class="settings-eyebrow">আমার নিয়ন্ত্রণ</span><h2 id="settingsTitle">সেটিংস</h2></div>
+      <button class="settings-close" onclick="closeSettings()" aria-label="সেটিংস বন্ধ করুন">✕</button>
+    </div>
+    <div id="settingsMenuContent">
+      <p class="settings-intro">রুটিন ও অ্যাপের পছন্দগুলো এক জায়গায়।</p>
+      <div class="settings-grid">
+      <button class="settings-item" onclick="openSettingsSection('routine')"><span class="settings-item-icon">🗓️</span><span><strong>রুটিন</strong><small>দীর্ঘ রুটিন ও দ্রুত রিভিশন পরিকল্পনা</small></span><b>→</b></button>
+      <button class="settings-item" onclick="refreshFromSettings()"><span class="settings-item-icon">↻</span><span><strong>পড়া আপডেট করুন</strong><small>সেভ করা কনটেন্ট রিফ্রেশ করুন</small></span><b>→</b></button>
+      <button class="settings-item" onclick="openThemeFromSettings()"><span class="settings-item-icon">🎨</span><span><strong>থিম চেঞ্জ করুন</strong><small>অ্যাপের রঙ ও চেহারা বদলান</small></span><b>→</b></button>
+      <button class="settings-item orientation-setting" id="orientationSetting" onclick="closeSettings();toggleLandscape()" aria-label="পর্দার লেআউট বদলান">
+        <span class="settings-item-icon" id="orientationSettingIcon" aria-hidden="true">▯</span>
+        <span class="orientation-setting-copy">
+          <strong id="orientationSettingTitle">মোবাইল লেআউট চেঞ্জ করুন</strong>
+          <small class="orientation-current" id="orientationSettingCurrent">বর্তমান লেআউট: সোজা</small>
+          <small class="orientation-action" id="orientationSettingAction">আড়াআড়ি লেআউট করুন</small>
+        </span>
+        <b id="orientationSettingArrow">→</b>
+      </button>
+      <button class="settings-item" onclick="openDriveFromSettings()"><span class="settings-item-icon">☁️</span><span><strong>Drive ও ডাটাবেজ</strong><small>ফোল্ডার সিংক বা JSON লোড</small></span><b>→</b></button>
+      </div>
+    </div>
+    <div id="settingsSectionContent" hidden>
+      <button class="settings-section-back" onclick="showSettingsMenu()">← সেটিংসে ফিরুন</button>
+      <h3 class="settings-section-title" id="settingsSectionTitle"></h3>
+      <div id="settingsSectionBody"></div>
+    </div>
+  </section>
 </div>
 
 <!-- DRIVE OVERLAY -->
-<div class="overlay" id="driveOv" onclick="if(event.target===this)closeDrive()">
+<div class="overlay" id="driveOv">
   <div class="overlay-box">
+    <button class="settings-section-back drive-back-btn" id="driveBackBtn" onclick="closeDrive()">← ফিরে যান</button>
     <div class="ov-title">☁️ Google Drive অটো সিংক</div>
     <div class="ov-sub">ফোল্ডার লিংক একবার দিন — সব day1.json, day2.json অটোমেটিক লোড হবে।</div>
 
@@ -1101,7 +1239,14 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
   </div>
 </div>
 
-
+<dialog class="app-confirm-dialog" id="appConfirmDialog" aria-labelledby="appConfirmTitle" aria-describedby="appConfirmMessage">
+  <div class="app-confirm-brand"><span aria-hidden="true">📚</span><strong id="appConfirmTitle">লিখিত প্রস্তুতি</strong></div>
+  <p class="app-confirm-message" id="appConfirmMessage"></p>
+  <div class="app-confirm-actions">
+    <button type="button" class="app-confirm-cancel" id="appConfirmCancel" onclick="finishAppConfirm(false)">বাতিল</button>
+    <button type="button" class="app-confirm-accept" id="appConfirmAccept" onclick="finishAppConfirm(true)">নিশ্চিত করুন</button>
+  </div>
+</dialog>
 
 <script>
 /* ══════════════════════════════════════
@@ -1110,10 +1255,12 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 let allDays={}, currentDay=1, revealed={}, completedDays={}, streak=0, savedLinks={};
 let savedFolderUrl='';
 let isLandscape=false;
+let activeTab='home';
 /* ── নতুন: ভিউ মোড ও ফিচার্ড (রিভিশন) আইটেম ── */
 let viewMode='day';        // 'day' | 'topic' | 'fav'
 let currentTopic=null;     // টপিক মোডে নির্বাচিত টপিকের নাম
 let favFilter=null;        // রিভিশন মোডে টপিক ফিল্টার (null = সব)
+let studySelectionMade=false;
 let favs={};               // favKey -> {t,q,a,ex,icon,d,ts}
 let _rows=[], _blocks={};  // বর্তমানে রেন্ডার হওয়া সারি ও ব্লক
 let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট সিংকের জন্য
@@ -1121,23 +1268,25 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{ loadState(); initRoutine(); syncModeBar(); updateFavBadge(); renderDays(); renderContent(); recalcStreak(); updateStreak(); requestWakeLock(); updateCalIcon(); setTimeout(initTrackerTopbar, 0); syncNavActive('navStudy'); };
+window.onload=()=>{
+  try{
+    loadState(); initRoutine(); syncStudyDialog(); updateFavBadge(); renderDays(); renderContent();
+    recalcStreak(); updateStreak(); requestWakeLock(); setTimeout(initTrackerTopbar, 0); switchTab('home');
+  }finally{
+    setTimeout(()=>{
+      const preloader=document.getElementById('appPreloader');
+      if(!preloader) return;
+      preloader.classList.add('is-hidden');
+      setTimeout(()=>preloader.remove(),240);
+    },350);
+  }
+};
 
 function initTrackerTopbar(){
   if(typeof loadTrackerData === 'function') loadTrackerData();
   // streak সবসময় study completedDays থেকে — tracker overwrite করবে না
   recalcStreak();
   updateStreak();
-}
-
-function updateCalIcon(){
-  const now = new Date();
-  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  const html = `<span class="cal-month">${months[now.getMonth()]}</span><span class="cal-day">${now.getDate()}</span>`;
-  const el = document.getElementById('calIcon');
-  if(el) el.innerHTML = html;
-  const lsEl = document.getElementById('lsCalIcon');
-  if(lsEl) lsEl.innerHTML = html;
 }
 
 /* ══════════════════════════════════════
@@ -1187,6 +1336,7 @@ document.addEventListener('visibilitychange', async ()=>{
             if(btn){ btn.classList.remove('active'); btn.textContent = '⟳'; }
             const metaVP = document.querySelector('meta[name=viewport]');
             if(metaVP) metaVP.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+            updateOrientationSetting();
             save(true);
             return;
           }
@@ -1205,6 +1355,7 @@ document.addEventListener('visibilitychange', async ()=>{
         const metaVP = document.querySelector('meta[name=viewport]');
         if(metaVP) metaVP.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
       }
+      updateOrientationSetting();
       // Exam overlay sync
       const examOv = document.getElementById('examOv');
       const _examLS = typeof examIsLandscape !== 'undefined' && examIsLandscape;
@@ -1280,7 +1431,11 @@ function br(s){ return String(s==null?'':s).replace(/\n/g,'<br>'); }
 
 function favKey(t,q){ return (t||'')+'⟂'+(q||''); }
 function favCount(){ return Object.keys(favs).length; }
-function updateFavBadge(){ const el=document.getElementById('favBadge'); if(el) el.textContent=bn(favCount()); }
+function updateFavBadge(){
+  const count=bn(favCount());
+  const el=document.getElementById('favBadge'); if(el) el.textContent=count;
+  const homeCount=document.getElementById('homeFavCount'); if(homeCount) homeCount.textContent=count;
+}
 
 /* একটি সারি তৈরি করে HTML ফেরত দেয় এবং _rows-এ রেজিস্টার করে */
 function buildRow(ctx){
@@ -1365,10 +1520,10 @@ function revealAllVisible(){
   updateProg(); days.forEach(d=>checkDoneFor(d)); save(true);
   toast('👁 সব উত্তর দেখানো হয়েছে');
 }
-function resetAllVisible(){
+async function resetAllVisible(){
   if(!_rows.length) return;
   const what = viewMode==='fav' ? '⭐ রিভিশন তালিকার' : viewMode==='topic' ? ('“'+(currentTopic||'')+'” টপিকের') : ('দিন '+bn(currentDay)+' এর');
-  if(!confirm(what+' সব উত্তর আবার হাইড করবেন?\n(অন্য ভিউয়ের অগ্রগতি অক্ষত থাকবে)')) return;
+  if(!await showAppConfirm(what+' সব উত্তর আবার হাইড করবেন?\n(অন্য ভিউয়ের অগ্রগতি অক্ষত থাকবে)')) return;
   let changed=false;
   _rows.forEach((r,u)=>{ _hideRow(u); if(r.forDay && r.d!=null && completedDays[r.d]){ delete completedDays[r.d]; changed=true; } });
   document.querySelectorAll('.reveal-all-btn').forEach(b=>{b.classList.remove('done');b.textContent='সব দেখাও';});
@@ -1380,13 +1535,13 @@ function resetAllVisible(){
 /* ══════════════════════════════════════
    ⭐ ফিচার্ড / রিভিশন আইটেম
 ══════════════════════════════════════ */
-function toggleFav(uid){
+async function toggleFav(uid){
   const r=_rows[uid]; if(!r) return;
   const k=r.favk;
   if(favs[k]){
     // রিমুভ করার আগে সতর্কবার্তা
     const q=(r.q||'').replace(/\n/g,' ').slice(0,40);
-    if(!confirm('⭐ রিভিশন তালিকা থেকে সরাবেন?\n\n“'+q+(((r.q||'').length>40)?'…':'')+'”\n\nপরে আবার ☆ চেপে যোগ করতে পারবেন।')) return;
+    if(!await showAppConfirm('⭐ রিভিশন তালিকা থেকে সরাবেন?\n\n“'+q+(((r.q||'').length>40)?'…':'')+'”\n\nপরে আবার ☆ চেপে যোগ করতে পারবেন।')) return;
     delete favs[k]; toast('☆ রিভিশন থেকে সরানো হয়েছে');
   }
   else { favs[k]={t:r.topic,q:r.q,a:r.a,ex:r.ex||'',icon:r.icon||'📖',d:r.d,cols:r.cols,ts:Date.now()}; toast('⭐ রিভিশনে যোগ হয়েছে'); }
@@ -1397,12 +1552,12 @@ function toggleFav(uid){
 }
 
 /* সার্চ রেজাল্ট থেকে ফিচার করা */
-function toggleFavSr(i){
+async function toggleFavSr(i){
   const r=(window._srItems||[])[i]; if(!r) return;
   const k=favKey(r.tt, r.item.q);
   if(favs[k]){
     const q=(r.item.q||'').replace(/\n/g,' ').slice(0,40);
-    if(!confirm('⭐ রিভিশন তালিকা থেকে সরাবেন?\n\n“'+q+(((r.item.q||'').length>40)?'…':'')+'”\n\nপরে আবার ☆ চেপে যোগ করতে পারবেন।')) return;
+    if(!await showAppConfirm('⭐ রিভিশন তালিকা থেকে সরাবেন?\n\n“'+q+(((r.item.q||'').length>40)?'…':'')+'”\n\nপরে আবার ☆ চেপে যোগ করতে পারবেন।')) return;
     delete favs[k]; toast('☆ রিভিশন থেকে সরানো হয়েছে');
   }
   else { favs[k]={t:r.tt,q:r.item.q,a:r.item.a,ex:r.item.ex||r.item.example||'',icon:'📖',d:+r.dn,cols:(r.item.ex||r.item.example)?3:2,ts:Date.now()}; toast('⭐ রিভিশনে যোগ হয়েছে'); }
@@ -1412,9 +1567,9 @@ function toggleFavSr(i){
 }
 
 // Reset entire current day (hide all answers again)
-function resetCurrentDay(){
+async function resetCurrentDay(){
   const day=allDays[currentDay]; if(!day) return;
-  if(!confirm('দিন '+bn(currentDay)+' এর সব উত্তর আবার হাইড করবেন?')) return;
+  if(!await showAppConfirm('দিন '+bn(currentDay)+' এর সব উত্তর আবার হাইড করবেন?')) return;
   day.topics.forEach((_,ti)=>{
     allDays[currentDay].topics[ti].items.forEach((_,ii)=>{
       delete revealed[`${currentDay}_${ti}_${ii}`];
@@ -1507,9 +1662,12 @@ async function toggleLandscape(){
 
   isLandscape = !isLandscape;
   const btn = document.getElementById('rotateBtn');
-  btn.classList.toggle('active', isLandscape);
-  btn.textContent = isLandscape ? '↩ সোজা' : '⟳';
+  if(btn){
+    btn.classList.toggle('active', isLandscape);
+    btn.textContent = isLandscape ? '↩ সোজা' : '⟳';
+  }
   document.body.classList.toggle('landscape', isLandscape);
+  updateOrientationSetting();
 
   if(isLandscape){
     try{
@@ -1818,6 +1976,7 @@ async function syncFolder(){
     // routine.json ও sync করো
     await syncRoutineFromDrive(folderId);
     save(true);renderDays();renderContent();renderSavedFolder();
+    if(document.getElementById('examOv').classList.contains('show')) renderExamPicker();
     const skipMsg=skipped>0?`, ${bn(skipped)}টি অপরিবর্তিত`:'';
     if(status) status.textContent=`✅ ${bn(loaded)}টি আপডেট হয়েছে${skipMsg}${failed?` (${bn(failed)}টি ব্যর্থ)`:''}`;
     toast(`✅ ${bn(loaded)}টি ফাইল আপডেট হয়েছে!`);
@@ -1895,7 +2054,6 @@ async function softRefresh(){
   // ৩. UI পুনরায় রেন্ডার করো (ব্রাউজার রিলোড ছাড়া)
   recalcStreak();
   updateStreak();
-  updateCalIcon();
   renderDays();
   renderContent();
   updateTrackerStreakTopbar();
@@ -1906,8 +2064,8 @@ async function softRefresh(){
   }, 800);
 }
 
-function clearFolder(){
-  if(!confirm('ফোল্ডার সংযোগ মুছবেন?')) return;
+async function clearFolder(){
+  if(!await showAppConfirm('ফোল্ডার সংযোগ মুছবেন?')) return;
   savedFolderUrl='';save(true);renderSavedFolder();
   toast('ফোল্ডার সরানো হয়েছে');
 }
@@ -1939,6 +2097,7 @@ function loadLocalFile(inp){
       const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
       if(k.length && !allDays[currentDay]) currentDay=k[0];
       save(true);renderDays();renderContent();
+      if(document.getElementById('examOv').classList.contains('show')) renderExamPicker();
       closeDrive();toast(`✅ দিন ${data.day} লোড হয়েছে!`);
     }catch(err){toast('❌ JSON সমস্যা: '+err.message,1);}
   };
@@ -1953,23 +2112,47 @@ function renderSaved(){}
 /* ══════════════════════════════════════
    ভিউ মোড: দিন / টপিক / রিভিশন
 ══════════════════════════════════════ */
-function syncModeBar(){
-  const map={day:'mbDay',topic:'mbTopic',fav:'mbFav'};
-  Object.values(map).forEach(id=>{const b=document.getElementById(id); if(b) b.classList.remove('active');});
-  const on=document.getElementById(map[viewMode]); if(on) on.classList.add('active');
+function syncStudyDialog(){
+  const modeSelect=document.getElementById('studyModeSelect');
+  if(modeSelect) modeSelect.value=viewMode;
+  const title=document.getElementById('studyDialogTitle');
+  if(title){
+    title.textContent=viewMode==='day'
+      ?studySelectionMade?`দিন ${bn(currentDay)}`:'দিন অনুযায়ী'
+      :viewMode==='topic'
+        ?studySelectionMade&&currentTopic?currentTopic:'টপিক অনুযায়ী'
+        :studySelectionMade&&favFilter?favFilter:'রিভিশন';
+  }
+  const back=document.getElementById('studyBackBtn');
+  if(back) back.textContent=studySelectionMade?'← তালিকায় ফিরুন':'← হোমে ফিরুন';
   const lbl=document.getElementById('progressLabel');
-  if(lbl) lbl.textContent = viewMode==='fav' ? 'রিভিশন অগ্রগতি' : viewMode==='topic' ? 'টপিক অগ্রগতি' : 'অগ্রগতি';
+  if(lbl) lbl.textContent=viewMode==='fav'?'রিভিশন অগ্রগতি':viewMode==='topic'?'টপিক অগ্রগতি':'অগ্রগতি';
 }
 
 function setViewMode(mode){
-  viewMode=mode;
-  if(mode==='topic' && !currentTopic){
-    const list=topicList();
-    currentTopic = list.length ? list[0].title : null;
-  }
-  syncModeBar(); renderDays(); renderContent();
+  selectDefaultStudyItem(mode);
+  clearStudySearch();
+  syncStudyDialog(); renderDays(); renderContent();
   window.scrollTo({top:0,behavior:'instant'});
   save(true);
+}
+function selectDefaultStudyItem(mode,preserveSelection=false){
+  viewMode=mode;
+  if(mode==='day'){
+    const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+    if(!preserveSelection||!days.includes(currentDay)) currentDay=days[0]||currentDay;
+    studySelectionMade=days.length>0;
+  }else if(mode==='topic'){
+    const topics=topicList();
+    if(!preserveSelection||!topics.some(topic=>topic.title===currentTopic)){
+      currentTopic=topics.length?topics[0].title:null;
+    }
+    studySelectionMade=topics.length>0;
+  }else{
+    const topics=[...new Set(Object.values(favs).map(f=>f.t))];
+    if(!preserveSelection|| (favFilter!==null&&!topics.includes(favFilter))) favFilter=null;
+    studySelectionMade=topics.length>0;
+  }
 }
 
 /* সব দিনের টপিক একত্র করে তালিকা বানায় */
@@ -2004,11 +2187,13 @@ function goTopic(idx){
   const list=topicList();
   if(!list[idx]) return;
   currentTopic=list[idx].title;
-  renderDays(); renderContent(); window.scrollTo({top:0,behavior:'instant'}); save(true);
+  studySelectionMade=true;
+  syncStudyDialog(); renderDays(); renderContent(); window.scrollTo({top:0,behavior:'instant'}); save(true);
 }
 function goFavFilter(name){
-  favFilter = (name===favFilter) ? null : name;
-  renderDays(); renderContent(); window.scrollTo({top:0,behavior:'instant'}); save(true);
+  favFilter = studySelectionMade&&name===favFilter ? null : name;
+  studySelectionMade=true;
+  syncStudyDialog(); renderDays(); renderContent(); window.scrollTo({top:0,behavior:'instant'}); save(true);
 }
 
 function renderDays(){
@@ -2016,43 +2201,89 @@ function renderDays(){
   if(viewMode==='topic') return renderTopicChips(w);
   if(viewMode==='fav')   return renderFavChips(w);
   const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
-  if(!days.length){w.innerHTML=`<span style="color:var(--muted);font-size:.76rem;line-height:54px">পড়া নেই — ☁️ Drive চাপুন</span>`;return;}
   w.dataset.mode='day';
-  // বিদ্যমান বাটনগুলো আছে কিনা চেক — থাকলে শুধু class আপডেট
-  const existing=w.querySelectorAll('.day-btn');
-  if(existing.length===days.length){
-    existing.forEach((b,i)=>{
-      const d=days[i];
-      b.className='day-btn'+(d===currentDay?' active':'')+(completedDays[d]?' done':'');
-    });
-    return;
-  }
-  // নতুন বাটন তৈরি করো
-  w.innerHTML='';
-  days.forEach(d=>{const b=document.createElement('button');b.className='day-btn'+(d===currentDay?' active':'')+(completedDays[d]?' done':'');b.innerHTML=`<span class="dn">${bn(d)}</span><span class="dl">দিন</span>`;b.onclick=()=>go(d);w.appendChild(b);});
+  renderStudyOptions(w,'দিন বেছে নিন',days.map(d=>({
+    value:String(d),
+    label:`দিন ${bn(d)}${completedDays[d]?' ✓':''}`
+  })),String(currentDay));
 }
 function renderTopicChips(w){
   w.dataset.mode='topic';
   const list=topicList();
-  if(!list.length){w.innerHTML=`<span style="color:var(--muted);font-size:.76rem;line-height:54px">পড়া নেই — ☁️ Drive চাপুন</span>`;return;}
-  w.innerHTML=list.map((t,i)=>`<button class="topic-chip${t.title===currentTopic?' active':''}" onclick="goTopic(${i})">
-    <span>${t.icon}</span><span>${t.title}</span><span class="tc-n">${bn(t.count)}</span>
-  </button>`).join('');
-  const act=w.querySelector('.topic-chip.active');
-  if(act && act.scrollIntoView) try{act.scrollIntoView({block:'nearest',inline:'center'});}catch(e){}
+  renderStudyOptions(w,'টপিক বেছে নিন',list.map((topic,index)=>({
+    value:String(index),
+    label:`${topic.icon} ${topic.title} · ${bn(topic.count)}টি`
+  })),String(list.findIndex(topic=>topic.title===currentTopic)));
 }
 
 function renderFavChips(w){
   w.dataset.mode='fav';
   const topics=[...new Set(Object.values(favs).map(f=>f.t))];
-  if(!topics.length){ w.innerHTML=`<span style="color:var(--muted);font-size:.76rem;line-height:54px">⭐ চিহ্ন দিয়ে আইটেম জমা করুন</span>`; return; }
   const counts={}; Object.values(favs).forEach(f=>counts[f.t]=(counts[f.t]||0)+1);
-  let h=`<button class="topic-chip${favFilter===null?' active':''}" onclick="goFavFilter(null)"><span>⭐</span><span>সব</span><span class="tc-n">${bn(favCount())}</span></button>`;
-  h+=topics.map(t=>`<button class="topic-chip${favFilter===t?' active':''}" onclick="goFavFilter(${JSON.stringify(t).replace(/"/g,'&quot;')})"><span>📖</span><span>${t}</span><span class="tc-n">${bn(counts[t])}</span></button>`).join('');
-  w.innerHTML=h;
+  const options=topics.map((topic,index)=>({
+    value:String(index),
+    label:`📖 ${topic} · ${bn(counts[topic])}টি`
+  }));
+  if(topics.length) options.unshift({value:'all',label:`⭐ সব রিভিশন · ${bn(favCount())}টি`});
+  renderStudyOptions(w,'রিভিশন বেছে নিন',options,
+    favFilter===null&&topics.length?'all':String(topics.indexOf(favFilter)));
+}
+function renderStudyOptions(select,placeholder,options,selectedValue){
+  const grid=document.getElementById('studyOptionGrid');
+  const hasSelection=!!selectedValue&&options.some(option=>option.value===selectedValue);
+  grid.dataset.mode=viewMode;
+  select.hidden=!studySelectionMade;
+  grid.hidden=studySelectionMade;
+  const placeholderOption=document.createElement('option');
+  placeholderOption.value='';
+  placeholderOption.textContent=placeholder;
+  placeholderOption.disabled=true;
+  placeholderOption.selected=studySelectionMade&&!hasSelection;
+  select.replaceChildren(placeholderOption);
+  grid.replaceChildren();
+  if(!options.length){
+    const emptyOption=document.createElement('option');
+    emptyOption.value='';
+    emptyOption.textContent=viewMode==='fav'?'⭐ চিহ্ন দিয়ে আইটেম জমা করুন':'পড়া নেই — ☁️ Drive চাপুন';
+    emptyOption.disabled=true;
+    select.appendChild(emptyOption);
+    const emptyMessage=document.createElement('p');
+    emptyMessage.className='study-option-empty';
+    emptyMessage.textContent=viewMode==='fav'?'⭐ চিহ্ন দিয়ে আইটেম জমা করুন':'পড়া নেই — ☁️ Drive চাপুন';
+    grid.appendChild(emptyMessage);
+  }else{
+    options.forEach(({value,label})=>{
+      const option=document.createElement('option');
+      option.value=value;
+      option.textContent=label;
+      select.appendChild(option);
+      const button=document.createElement('button');
+      button.type='button';
+      button.className='study-option-card';
+      button.classList.toggle('active',value===selectedValue);
+      button.textContent=label;
+      button.setAttribute('aria-pressed',String(value===selectedValue));
+      button.onclick=()=>selectStudyItem(value);
+      grid.appendChild(button);
+    });
+  }
+  if(studySelectionMade&&hasSelection) select.value=selectedValue;
+}
+function selectStudyItem(value){
+  if(!value) return;
+  if(viewMode==='day'){
+    go(Number(value));
+  }else if(viewMode==='topic'){
+    goTopic(Number(value));
+  }else if(value==='all'){
+    goFavFilter(null);
+  }else if(viewMode==='fav'){
+    const topics=[...new Set(Object.values(favs).map(f=>f.t))];
+    if(topics[Number(value)]!==undefined) goFavFilter(topics[Number(value)]);
+  }
 }
 
-function go(d){currentDay=d;renderDays();renderContent();window.scrollTo(0,0);}
+function go(d){currentDay=d;studySelectionMade=true;syncStudyDialog();renderDays();renderContent();window.scrollTo(0,0);}
 function bn(n){return String(n).split('').map(c=>'০১২৩৪৫৬৭৮৯'[c]||c).join('');}
 
 /* ══════════════════════════════════════
@@ -2060,6 +2291,13 @@ function bn(n){return String(n).split('').map(c=>'০১২৩৪৫৬৭৮৯
 ══════════════════════════════════════ */
 function renderContent(){
   _rows=[]; _blocks={};
+  const progress=document.querySelector('.progress-wrap');
+  if(progress) progress.style.display=studySelectionMade?'':'none';
+  if(!studySelectionMade){
+    document.getElementById('mainContent').innerHTML='';
+    updateProg();
+    return;
+  }
   if(viewMode==='topic') return renderTopicContent();
   if(viewMode==='fav')   return renderFavContent();
   return renderDayContent();
@@ -2244,7 +2482,7 @@ function handleSearch(q){
 function _doSearch(q){
   const sr=document.getElementById('searchResults'),mc=document.getElementById('mainContent'),pw=document.querySelector('.progress-wrap');
   if(!q.trim()){
-    sr.style.display='none';mc.style.display='block';pw.style.display='block';
+    sr.style.display='none';mc.style.display='block';pw.style.display=studySelectionMade?'block':'none';
     // সার্চ শেষে পুরনো স্ক্রিন পজিশনে ফেরত যাও
     if(window._searchScrollY !== undefined){
       requestAnimationFrame(()=>{ window.scrollTo({top: window._searchScrollY, behavior: 'instant'}); window._searchScrollY = undefined; });
@@ -2270,6 +2508,14 @@ function _doSearch(q){
     const ex=r.item.ex||r.item.example||'';
     const on=!!favs[favKey(r.tt,r.item.q)];
     return`<div class="search-result-card"><button class="star-btn ${on?'on':''}" id="srs${i}" onclick="toggleFavSr(${i})" title="রিভিশনে রাখুন">${on?'★':'☆'}</button><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hlWords(r.item.q,words)}</div><div class="sr-a">→ ${br(hlWords(r.item.a,words))}</div>${ex?`<div class="sr-ex">${hlWords(ex,words)}</div>`:''}</div>`}).join('');
+}
+function clearStudySearch(){
+    clearTimeout(_searchTimer);
+    const search=document.getElementById('searchInput');
+    if(!search||!search.value) return;
+    search.value='';
+    _doSearch('');
+    toggleClear('');
 }
 function toggleClear(val){
   // শুধু clear বাটন দেখাও/লুকাও — timer cancel করবে না
@@ -2310,21 +2556,96 @@ function saveItem(){}
 /* ══════════════════════════════════════
    OVERLAYS / TABS / TOAST
 ══════════════════════════════════════ */
-function openDrive(){
-  if(savedFolderUrl){const inp=document.getElementById('folderInp');if(inp)inp.value=savedFolderUrl;}
-  renderSavedFolder();
-  switchDriveTab('folder');
-  document.getElementById('driveOv').classList.add('show');
-  syncNavActive('navDrive');
+const appOverlayStack=[];
+let appOverlayToken=0;
+
+function showAppOverlay(id){
+  const el=document.getElementById(id);
+  if(!el||appOverlayStack.some(entry=>entry.id===id)) return;
+  const token=++appOverlayToken;
+  history.pushState({...history.state,appOverlayToken:token},'',location.href);
+  appOverlayStack.push({id,token});
+  if(id==='themeOverlay') el.style.display='flex';
+  else el.classList.add('show');
+  syncAppOverlayLayers();
 }
-function closeDrive(){document.getElementById('driveOv').classList.remove('show');syncNavActive('navStudy');}
+function hideAppOverlayElement(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  if(id==='themeOverlay') el.style.display='none';
+  else el.classList.remove('show');
+}
+function syncAppOverlayLayers(){
+  appOverlayStack.forEach((entry,index)=>{
+    const el=document.getElementById(entry.id);
+    if(el) el.style.zIndex=String(200+index*10);
+  });
+  document.body.classList.toggle('no-scroll',appOverlayStack.length>0);
+  syncNavActive(appOverlayStack.some(entry=>entry.id==='settingsOv')
+    ?'navSettings'
+    :activeTab==='study'?null:'navHome');
+}
+function closeAppOverlay(id,fromHistory=false){
+  const index=appOverlayStack.findIndex(entry=>entry.id===id);
+  if(index<0){hideAppOverlayElement(id);return;}
+  const wasTop=index===appOverlayStack.length-1;
+  appOverlayStack.splice(index,1);
+  hideAppOverlayElement(id);
+  syncAppOverlayLayers();
+  if(wasTop&&!fromHistory) history.back();
+}
+function closeTopAppOverlay(fromHistory=false){
+  const top=appOverlayStack[appOverlayStack.length-1];
+  if(top) closeAppOverlay(top.id,fromHistory);
+}
+function closeAppOverlayFromHistory(event){
+  const targetToken=event.state&&event.state.appOverlayToken||null;
+  while(appOverlayStack.length&&appOverlayStack[appOverlayStack.length-1].token!==targetToken){
+    const top=appOverlayStack.pop();
+    if(top.id==='examOv') closeExam(true);
+    else if(top.id==='studyView') closeStudy(true);
+    else if(top.id==='trackerOv') closeTracker(true);
+    else if(top.id==='driveOv') closeDrive(true);
+    else if(top.id==='settingsOv') closeSettings(true);
+    else if(top.id==='themeOverlay') closeThemePicker(true);
+    else hideAppOverlayElement(top.id);
+  }
+  syncAppOverlayLayers();
+}
+window.addEventListener('popstate',closeAppOverlayFromHistory);
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&appOverlayStack.length){
+    event.preventDefault();
+    closeTopAppOverlay();
+  }
+});
+
+function openDrive(fromSettings=false){
+ const backBtn=document.getElementById('driveBackBtn');
+ if(backBtn) backBtn.textContent=fromSettings?'← সেটিংসে ফিরুন':'← ফিরে যান';
+ if(savedFolderUrl){const inp=document.getElementById('folderInp');if(inp)inp.value=savedFolderUrl;}
+ renderSavedFolder();
+ switchDriveTab('folder');
+ showAppOverlay('driveOv');
+ syncNavActive(fromSettings?'navSettings':document.getElementById('examOv').classList.contains('show')
+  ?'navExam'
+  :activeTab==='study'?null:'navHome');
+}
+function closeDrive(fromHistory=false){
+ closeAppOverlay('driveOv',fromHistory);
+ syncNavActive(appOverlayStack.some(entry=>entry.id==='settingsOv')
+   ?'navSettings'
+   :document.getElementById('examOv').classList.contains('show')
+     ?'navExam'
+   :activeTab==='study'?null:'navHome');
+}
 /* nav active state — bottom-nav ও ls-nav উভয় sync */
 function syncNavActive(id){
   // bottom nav
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   // ls-nav
   document.querySelectorAll('.ls-nav-btn').forEach(b=>b.classList.remove('active'));
-  // id mapping: navStudy→lsNavStudy, navExam→lsNavExam, ইত্যাদি
+  // Landscape navigation shares the same ids as the bottom navigation.
   if(id){
     const bot=document.getElementById(id);
     if(bot) bot.classList.add('active');
@@ -2332,16 +2653,133 @@ function syncNavActive(id){
     if(ls) ls.classList.add('active');
   }
 }
-function switchTab(tab){
-  if(tab==='study'){syncNavActive('navStudy');const si=document.getElementById('searchInput');si.value='';handleSearch('');toggleClear('');}
-  else if(tab==='search'){syncNavActive('navSearch');document.getElementById('searchInput').focus();}
+function switchTab(tab,preserveSearch=false){
+  if(tab!=='study'&&tab!=='home') return;
+  if(tab==='study'){
+    if(!document.getElementById('studyView').classList.contains('show')) openStudyMode(viewMode,true);
+    if(!preserveSearch){
+      const si=document.getElementById('searchInput');
+      if(si.value){si.value='';handleSearch('');toggleClear('');}
+    }
+    return;
+  }
+  activeTab='home';
+  document.getElementById('homeBanner').hidden=false;
+  document.getElementById('homeShortcuts').hidden=false;
+  const studyOverlay=document.getElementById('studyView');
+  if(studyOverlay.classList.contains('show')) closeStudy();
+  syncNavActive('navHome');
+  {
+    const si=document.getElementById('searchInput');
+    if(si.value){si.value='';handleSearch('');toggleClear('');}
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
 }
+function openStudyMode(mode,showContent=false){
+  activeTab='home';
+  selectDefaultStudyItem(mode,showContent);
+  if(!showContent) clearStudySearch();
+  syncStudyDialog();
+  renderDays();
+  renderContent();
+  showAppOverlay('studyView');
+}
+function closeStudy(fromHistory=false){
+  activeTab='home';
+  studySelectionMade=false;
+  clearStudySearch();
+  closeAppOverlay('studyView',fromHistory);
+  syncNavActive('navHome');
+}
+function backStudy(){
+  if(!studySelectionMade){
+    closeStudy();
+    return;
+  }
+  clearStudySearch();
+  studySelectionMade=false;
+  syncStudyDialog();
+  renderDays();
+  renderContent();
+}
+let settingsSection = null;
+function openSettings(){
+  updateOrientationSetting();
+  showSettingsMenu();
+  showAppOverlay('settingsOv');
+  syncNavActive('navSettings');
+}
+function closeSettings(fromHistory=false){closeAppOverlay('settingsOv',fromHistory);syncNavActive(activeTab==='study'?null:'navHome');}
+function showSettingsMenu(){
+  settingsSection = null;
+  document.getElementById('settingsMenuContent').hidden = false;
+  document.getElementById('settingsSectionContent').hidden = true;
+}
+function openSettingsSection(section){
+  settingsSection = section;
+  loadTrackerData();
+  document.getElementById('settingsMenuContent').hidden = true;
+  document.getElementById('settingsSectionContent').hidden = false;
+  renderSettingsSection();
+}
+function renderSettingsSection(){
+  if(!settingsSection) return;
+  const isRoutine = settingsSection === 'routine';
+  document.getElementById('settingsSectionTitle').textContent = isRoutine ? 'রুটিন' : 'পড়ার ট্র্যাক';
+  const typeTabs = `<div class="tracker-tabs settings-routine-tabs">
+    <button class="tracker-tab ${routineType==='long'?'active':''}" onclick="switchRoutineType('long')">📘 দীর্ঘ রুটিন</button>
+    <button class="tracker-tab ${routineType==='short'?'active':''}" onclick="switchRoutineType('short')">⚡ দ্রুত রিভিশন</button>
+  </div>`;
+  const body = isRoutine
+    ? `${typeTabs}<p class="settings-section-note">প্রতিদিনের পড়ার পরিকল্পনা</p>${ROUTINE.length ? renderCalendarGrid(getTodayRoutineDay()) : renderProgressTab()}`
+    : `${typeTabs}${renderProgressTab()}`;
+  document.getElementById('settingsSectionBody').innerHTML = body;
+}
+function updateOrientationSetting(){
+  const item=document.getElementById('orientationSetting');
+  if(!item) return;
+  const current=document.getElementById('orientationSettingCurrent');
+  const action=document.getElementById('orientationSettingAction');
+  const icon=document.getElementById('orientationSettingIcon');
+  const arrow=document.getElementById('orientationSettingArrow');
+  item.classList.toggle('is-landscape',isLandscape);
+  if(current) current.textContent=`বর্তমান লেআউট: ${isLandscape?'আড়াআড়ি':'সোজা'}`;
+  if(action) action.textContent=isLandscape?'সোজা লেআউটে ফিরুন':'আড়াআড়ি লেআউট করুন';
+  if(icon) icon.textContent=isLandscape?'▱':'▯';
+  if(arrow) arrow.textContent=isLandscape?'↩':'→';
+  item.setAttribute('aria-label',`বর্তমান লেআউট ${isLandscape?'আড়াআড়ি':'সোজা'}; ${isLandscape?'সোজা':'আড়াআড়ি'} লেআউটে বদলান`);
+}
+function openDriveFromSettings(){openDrive(true);}
+function openThemeFromSettings(){openThemePicker();}
+function refreshFromSettings(){closeSettings();softRefresh();}
 function toast(msg,err){
   const t=document.createElement('div');t.textContent=msg;
-  t.style.cssText=`position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:${err?'#e74c3c':'#3ecf8e'};color:#fff;padding:9px 18px;border-radius:10px;font-size:.82rem;font-family:SolaimanLipi,sans-serif;z-index:999;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.3)`;
+  t.style.cssText=`position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:${err?'var(--red)':'var(--green)'};color:#fff;padding:9px 18px;border-radius:10px;font-size:.82rem;font-family:SolaimanLipi,sans-serif;z-index:999;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,.3)`;
   document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
 }
 
+let pendingAppConfirm=null;
+function showAppConfirm(message){
+  if(pendingAppConfirm) return Promise.resolve(false);
+  const dialog=document.getElementById('appConfirmDialog');
+  document.getElementById('appConfirmMessage').textContent=message;
+  return new Promise(resolve=>{
+    pendingAppConfirm=resolve;
+    dialog.showModal();
+    document.getElementById('appConfirmCancel').focus();
+  });
+}
+function finishAppConfirm(accepted){
+  if(!pendingAppConfirm) return;
+  const resolve=pendingAppConfirm;
+  pendingAppConfirm=null;
+  document.getElementById('appConfirmDialog').close();
+  resolve(accepted);
+}
+document.getElementById('appConfirmDialog').addEventListener('cancel',event=>{
+  event.preventDefault();
+  finishAppConfirm(false);
+});
 
 /* ══════════════════════════════════════
    EXAM MODE
@@ -2349,6 +2787,8 @@ function toast(msg,err){
 let examQueue=[], examIdx=0, examKnow=0, examDontKnow=0, examAnsRevealed=false;
 let examSelectedDay=null, examPickerTab='day'; // 'day' বা 'topic' বা 'model'
 let examSelectedTopicKey=null; // "dayNum|topicTitle"
+let examSelectedTopicKeys=[];
+let examQuestionLimit=30;
 let modelExamSelected=null; // মডেল নম্বর (0-based index)
 
 /* ── EXAM RESUME: প্রতিটি পরীক্ষার ধরন আলাদা key-তে সেভ হয় ── */
@@ -2356,7 +2796,10 @@ let modelExamSelected=null; // মডেল নম্বর (0-based index)
 
 function _examResumeKey(){
   if(examPickerTab==='day' && examSelectedDay!==null) return `ds_exam_day_${examSelectedDay}`;
-  if(examPickerTab==='topic' && examSelectedTopicKey) return `ds_exam_topic_${examSelectedTopicKey}`;
+  if(examPickerTab==='topic' && examSelectedTopicKeys.length){
+    const topics=examSelectedTopicKeys.slice().sort().map(encodeURIComponent).join(',');
+    return `ds_exam_topics_${topics}_${Math.max(1,examQuestionLimit||30)}`;
+  }
   if(examPickerTab==='model' && modelExamSelected!==null) return `ds_exam_model_${modelExamSelected}`;
   return null;
 }
@@ -2370,9 +2813,12 @@ function saveExamState(){
     idx: examIdx,
     know: examKnow,
     dontKnow: examDontKnow,
+    dontKnowItems: examDontKnowItems,
     tab: examPickerTab,
     selectedDay: examSelectedDay,
     selectedTopicKey: examSelectedTopicKey,
+    selectedTopicKeys: examSelectedTopicKeys,
+    questionLimit: examQuestionLimit,
     modelSelected: modelExamSelected,
     title: document.getElementById('examTopTitle')?.textContent || ''
   };
@@ -2418,9 +2864,12 @@ function resumeExam(state){
   examIdx = state.idx;
   examKnow = state.know;
   examDontKnow = state.dontKnow;
+  examDontKnowItems = state.dontKnowItems || [];
   examPickerTab = state.tab || 'day';
   examSelectedDay = state.selectedDay ?? null;
   examSelectedTopicKey = state.selectedTopicKey ?? null;
+  examSelectedTopicKeys = state.selectedTopicKeys || (examSelectedTopicKey ? [examSelectedTopicKey] : []);
+  examQuestionLimit = state.questionLimit ?? 30;
   modelExamSelected = state.modelSelected ?? null;
   if(state.title) document.getElementById('examTopTitle').textContent = state.title;
   renderExamCard();
@@ -2430,7 +2879,7 @@ function openExam(){
   // Body scroll lock
   document.body.classList.add('no-scroll');
   
-  document.getElementById('examOv').classList.add('show');
+  showAppOverlay('examOv');
   document.getElementById('examTopTitle').textContent='📝 পরীক্ষা দিন';
   syncNavActive('navExam');
 
@@ -2445,20 +2894,19 @@ function openExam(){
   examOvEl.classList.toggle('exam-landscape', examIsLandscape);
 
   // সরাসরি picker দেখাও — resume prompt শুধু নির্দিষ্ট দিন/টপিক/মডেল সিলেক্ট করার পর আসবে
-  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day'; modelExamSelected=null;
+  examSelectedDay=null; examSelectedTopicKey=null; examSelectedTopicKeys=[]; examPickerTab='day'; modelExamSelected=null;
   renderExamPicker();
 }
-function closeExam(){
-  // Body scroll unlock
-  document.body.classList.remove('no-scroll');
-  
+function closeExam(fromHistory=false){
   if(document.getElementById('examOv').classList.contains('exam-landscape')) toggleExamLandscape();
   // পরীক্ষা চলাকালে বন্ধ করলে state সেভ করো
   if(examQueue.length && examIdx < examQueue.length){
     saveExamState();
   }
-  document.getElementById('examOv').classList.remove('show');
-  syncNavActive('navStudy');
+  closeAppOverlay('examOv',fromHistory);
+  syncNavActive(appOverlayStack.some(entry=>entry.id==='settingsOv')
+    ?'navSettings'
+    :activeTab==='study'?null:'navHome');
 }
 
 let examIsLandscape=false;
@@ -2487,30 +2935,35 @@ async function toggleExamLandscape(){
 
 /* ── UNIFIED PICKER RENDERER ── */
 function renderExamPicker(){
+  document.getElementById('examTopTitle').textContent='📝 পরীক্ষা বেছে নিন';
   document.getElementById('examProgFill').style.width='0%';
   const resetBtn=document.getElementById('examResetBtn');
   if(resetBtn) resetBtn.style.display='none';
   let h=`<div class="exam-day-picker">
     <div class="exam-pick-title">পরীক্ষার ধরন বেছে নিন</div>
     <!-- TAB TOGGLE -->
-    <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--card);border-radius:10px;padding:4px;">
-      <button onclick="examSwitchTab('day')" style="flex:1;padding:7px 4px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.72rem;cursor:pointer;font-weight:600;transition:all .15s;${examPickerTab==='day'?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📅 দিন-ভিত্তিক</button>
-      <button onclick="examSwitchTab('topic')" style="flex:1;padding:7px 4px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.72rem;cursor:pointer;font-weight:600;transition:all .15s;${examPickerTab==='topic'?'background:var(--accent);color:#fff;':'background:transparent;color:var(--muted);'}">📚 টপিক-ভিত্তিক</button>
-      <button onclick="examSwitchTab('model')" style="flex:1;padding:7px 4px;border:none;border-radius:7px;font-family:SolaimanLipi,sans-serif;font-size:.72rem;cursor:pointer;font-weight:600;transition:all .15s;${examPickerTab==='model'?'background:var(--accent2);color:#1a1d27;':'background:transparent;color:var(--muted);'}">🏆 মডেল পরীক্ষা</button>
+    <div class="exam-picker-tabs" role="tablist" aria-label="পরীক্ষার ধরন">
+      <button type="button" class="exam-picker-tab ${examPickerTab==='day'?'active':''}" onclick="examSwitchTab('day')" role="tab" aria-selected="${examPickerTab==='day'}">📅 দিন-ভিত্তিক</button>
+      <button type="button" class="exam-picker-tab ${examPickerTab==='topic'?'active':''}" onclick="examSwitchTab('topic')" role="tab" aria-selected="${examPickerTab==='topic'}">📚 টপিক-ভিত্তিক</button>
+      <button type="button" class="exam-picker-tab ${examPickerTab==='model'?'active model-active':''}" onclick="examSwitchTab('model')" role="tab" aria-selected="${examPickerTab==='model'}">🏆 মডেল পরীক্ষা</button>
     </div>`;
 
   if(examPickerTab==='day'){
     /* ─── DAY TAB ─── */
     const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
-    h+=`<div class="exam-pick-sub">একটি দিন বেছে নিন — সেই দিনের সব প্রশ্ন এলোমেলোভাবে আসবে।</div>
-    <div class="exam-day-grid">`;
-    days.forEach(d=>{
-      h+=`<div class="exam-day-item${examSelectedDay===d?' selected':''}" onclick="selectExamDay(${d})">
-        <div class="edi-num">${bn(d)}</div><div class="edi-lbl">দিন</div>
-      </div>`;
-    });
-    h+=`</div>
-    <button class="exam-start-btn" onclick="startExam()" ${examSelectedDay===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>`;
+    if(!days.length){
+      h+=examDataEmptyState('পরীক্ষার জন্য কোনো পড়া লোড নেই');
+    } else {
+      h+=`<div class="exam-pick-sub">একটি দিন বেছে নিন — সেই দিনের সব প্রশ্ন এলোমেলোভাবে আসবে।</div>
+      <div class="exam-day-grid">`;
+      days.forEach(d=>{
+        h+=`<button type="button" class="exam-day-item${examSelectedDay===d?' selected':''}" onclick="selectExamDay(${d})" aria-pressed="${examSelectedDay===d}">
+          <div class="edi-num">${bn(d)}</div><div class="edi-lbl">দিন</div>
+        </button>`;
+      });
+      h+=`</div>
+      <button type="button" class="exam-start-btn" onclick="startExam()" ${examSelectedDay===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>`;
+    }
   } else if(examPickerTab==='topic'){
     /* ─── TOPIC TAB ─── */
     // সব দিনের সব টপিক সংগ্রহ করো (বাড়ির কাজ বাদ)
@@ -2531,36 +2984,43 @@ function renderExamPicker(){
     // index→key ম্যাপ window এ রাখো যাতে onclick এ string quote সমস্যা না হয়
     window._examTopicKeys=topicKeys;
     if(!topicKeys.length){
-      h+=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:.85rem;">কোনো টপিক পাওয়া যায়নি</div>`;
+      h+=examDataEmptyState('কোনো টপিক পাওয়া যায়নি');
     } else {
-      h+=`<div class="exam-pick-sub">একটি টপিক বেছে নিন — সব দিনের ওই টপিকের প্রশ্ন একসাথে আসবে।</div>
-      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:16px;">`;
+      h+=`<div class="exam-pick-sub">এক বা একাধিক টপিক বেছে নিন। নির্বাচিত টপিকগুলো থেকেই নির্দিষ্ট সংখ্যক প্রশ্ন আসবে।</div>
+      <div class="exam-topic-list">`;
       topicKeys.forEach((key,idx)=>{
         const info=topicMap[key];
-        const isSel=examSelectedTopicKey===key;
-        h+=`<div onclick="selectExamTopic(${idx})" style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;border:1.5px solid ${isSel?'var(--accent)':'var(--border)'};background:${isSel?'rgba(79,142,247,.12)':'var(--card)'};cursor:pointer;transition:all .15s;">
-          <span style="font-size:1.1rem;">${info.icon}</span>
-          <div style="flex:1;">
-            <div style="font-size:.85rem;font-weight:600;color:${isSel?'var(--accent)':'var(--text)'};">${key}</div>
-            <div style="font-size:.65rem;color:var(--muted);margin-top:2px;">${bn(info.days.length)}টি দিন · মোট ${bn(info.totalItems)}টি প্রশ্ন</div>
-          </div>
-          ${isSel?'<span style="color:var(--accent);font-size:.9rem;">✓</span>':''}
-        </div>`;
+        const isSel=examSelectedTopicKeys.includes(key);
+        h+=`<button type="button" class="exam-topic-option${isSel?' selected':''}" onclick="selectExamTopic(${idx})" aria-pressed="${isSel}">
+          <span class="exam-topic-check">${isSel?'✓':''}</span>
+          <span class="exam-topic-emoji">${info.icon}</span>
+          <span class="exam-topic-copy"><strong>${esc(key)}</strong><small>${bn(info.days.length)}টি দিন · ${bn(info.totalItems)}টি প্রশ্ন</small></span>
+          <span class="exam-topic-count">${bn(info.totalItems)}</span>
+        </button>`;
       });
+      const selectedCount=topicKeys.reduce((sum,key)=>sum+(examSelectedTopicKeys.includes(key)?topicMap[key].totalItems:0),0);
+      const actualCount=examQuestionLimit?Math.min(examQuestionLimit,selectedCount):selectedCount;
+      const limits=[10,20,30,50,100];
       h+=`</div>
-      <button class="exam-start-btn" onclick="startTopicExam()" ${examSelectedTopicKey===null?'disabled':''}>▶ পরীক্ষা শুরু করুন</button>`;
+      <div class="exam-size-panel">
+        <div class="exam-size-heading"><span><strong>কয়টি প্রশ্নে পরীক্ষা দেবেন?</strong><small>শর্ট টেস্টের জন্য ৩০টি ডিফল্ট · নির্বাচিত টপিক থেকে এলোমেলো প্রশ্ন</small></span><span class="exam-question-total">${bn(actualCount)}<small>প্রশ্ন</small></span></div>
+        <div class="exam-size-options">${limits.map(n=>`<button type="button" class="exam-size-option${examQuestionLimit===n?' selected':''}" onclick="setExamQuestionLimit(${n})" ${!selectedCount||n>selectedCount?'disabled':''}>${bn(n)}</button>`).join('')}</div>
+        <label class="exam-custom-size">নিজে সংখ্যা লিখুন<input type="number" min="1" max="${selectedCount||1}" value="${examQuestionLimit}" placeholder="যেমন ৩০" ${!selectedCount?'disabled':''} oninput="setExamQuestionLimit(this.value,false)" onchange="setExamQuestionLimit(this.value)"></label>
+        <div class="exam-size-note">${examSelectedTopicKeys.length?`${bn(examSelectedTopicKeys.length)}টি টপিক · মোট ${bn(selectedCount)}টি প্রশ্ন`:'আগে অন্তত একটি টপিক বেছে নিন'}${examQuestionLimit&&examQuestionLimit>selectedCount&&selectedCount?` · সর্বোচ্চ ${bn(selectedCount)}টি নেওয়া যাবে`:''}</div>
+      </div>
+      <button type="button" class="exam-start-btn exam-topic-start" onclick="startTopicExam()" ${!examSelectedTopicKeys.length||!actualCount?'disabled':''}>▶ ${bn(actualCount)} প্রশ্নের পরীক্ষা শুরু করুন</button>`;
     }
   } else {
     /* ─── MODEL TAB ─── */
     const days = Object.keys(allDays).map(Number).sort((a,b)=>a-b);
     const totalDays = days.length;
     if(!totalDays){
-      h+=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:.85rem;">কোনো দিনের তথ্য পাওয়া যায়নি</div>`;
+      h+=examDataEmptyState('পরীক্ষার জন্য কোনো দিনের তথ্য নেই');
     } else {
       const MODEL_SIZE = 5; // প্রতি মডেলে ৫টি JSON
       const totalModels = Math.ceil(totalDays / MODEL_SIZE);
       h+=`<div class="exam-pick-sub">প্রতি ${bn(MODEL_SIZE)}টি দিনের সব প্রশ্ন মিলিয়ে একটি মডেল পরীক্ষা। মোট ${bn(totalModels)}টি মডেল পরীক্ষায় পুরো সিলেবাস শেষ হবে।</div>
-      <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px;">`;
+      <div class="exam-model-list">`;
       for(let m=0; m<totalModels; m++){
         const startIdx = m * MODEL_SIZE;
         const endIdx = Math.min(startIdx + MODEL_SIZE - 1, totalDays - 1);
@@ -2576,31 +3036,42 @@ function renderExamPicker(){
           });
         });
         const isSel = modelExamSelected === m;
-        h+=`<div onclick="selectModelExam(${m})" style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;border:1.5px solid ${isSel?'var(--accent2)':'var(--border)'};background:${isSel?'rgba(247,201,79,.1)':'var(--card)'};cursor:pointer;transition:all .15s;">
-          <div style="width:36px;height:36px;border-radius:10px;background:${isSel?'var(--accent2)':'rgba(247,201,79,.15)'};display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;color:${isSel?'#1a1d27':'var(--accent2)'};flex-shrink:0;">${bn(m+1)}</div>
-          <div style="flex:1;">
-            <div style="font-size:.86rem;font-weight:700;color:${isSel?'var(--accent2)':'var(--text)'};">মডেল ${bn(m+1)} — দিন ${bn(dayFrom)}-${bn(dayTo)}</div>
-            <div style="font-size:.65rem;color:var(--muted);margin-top:3px;">${bn(modelDays.length)}টি দিন · মোট ${bn(totalQ)}টি প্রশ্ন</div>
-          </div>
-          ${isSel?'<span style="color:var(--accent2);font-size:1rem;">✓</span>':'<span style="color:var(--muted);font-size:.8rem;">▶</span>'}
-        </div>`;
+        h+=`<button type="button" class="exam-model-option${isSel?' selected':''}" onclick="selectModelExam(${m})" aria-pressed="${isSel}">
+          <span class="exam-model-number">${bn(m+1)}</span>
+          <span class="exam-model-copy">
+            <strong>মডেল ${bn(m+1)} — দিন ${bn(dayFrom)}-${bn(dayTo)}</strong>
+            <small>${bn(modelDays.length)}টি দিন · মোট ${bn(totalQ)}টি প্রশ্ন</small>
+          </span>
+          <span class="exam-model-arrow" aria-hidden="true">${isSel?'✓':'→'}</span>
+        </button>`;
       }
       h+=`</div>
-      <button class="exam-start-btn" onclick="startModelExam()" ${modelExamSelected===null?'disabled':''} style="background:linear-gradient(135deg,var(--accent2),#e8a020);color:#1a1d27;">▶ মডেল পরীক্ষা শুরু করুন</button>`;
+      <button type="button" class="exam-start-btn exam-model-start" onclick="startModelExam()" ${modelExamSelected===null?'disabled':''}>▶ মডেল পরীক্ষা শুরু করুন</button>`;
     }
   }
   h+=`</div>`;
   document.getElementById('examBody').innerHTML=h;
 }
 
+function examDataEmptyState(message){
+  return `<div class="exam-empty-state">
+    <div class="exam-empty-icon">☁️</div>
+    <strong>${message}</strong>
+    <span>আগে Drive থেকে পড়ার JSON ফাইল সিংক করুন, অথবা লোকাল JSON ফাইল লোড করুন।</span>
+    <button type="button" class="exam-empty-load" onclick="openDrive()">☁️ Drive ও ডাটাবেজ খুলুন</button>
+  </div>`;
+}
+
 function renderExamResumePrompt(saved){
+  const resetBtn=document.getElementById('examResetBtn');
+  if(resetBtn) resetBtn.style.display='none';
   const remaining = saved.queue.length - saved.idx;
   const total = saved.queue.length;
   const answered = saved.know + saved.dontKnow;
   const tabLabel = saved.tab==='topic' ? '📚 টপিক-ভিত্তিক' : saved.tab==='model' ? '🏆 মডেল পরীক্ষা' : '📅 দিন-ভিত্তিক';
-  const h = `<div style="padding:24px 16px;display:flex;flex-direction:column;gap:14px;">
-    <div style="text-align:center;font-size:2rem;">⏸️</div>
-    <div style="text-align:center;font-size:1rem;font-weight:700;color:var(--text);">অসম্পূর্ণ পরীক্ষা পাওয়া গেছে!</div>
+  const h = `<div class="exam-resume">
+    <div class="exam-resume-icon">⏸️</div>
+    <div class="exam-resume-title">অসম্পূর্ণ পরীক্ষা পাওয়া গেছে!</div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
       <div style="font-size:.78rem;color:var(--muted);">পরীক্ষার ধরন</div>
       <div style="font-size:.88rem;font-weight:600;color:var(--accent);">${saved.title || tabLabel}</div>
@@ -2621,8 +3092,9 @@ function renderExamResumePrompt(saved){
         </div>
       </div>
     </div>
-    <button onclick="resumeExam(window._examSavedState)" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:11px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:SolaimanLipi,sans-serif;">▶ যেখানে ছিলাম সেখান থেকে শুরু করি</button>
-    <button onclick="discardAndPickNew()" style="width:100%;padding:11px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:11px;font-size:.84rem;cursor:pointer;font-family:SolaimanLipi,sans-serif;">🔄 নতুন পরীক্ষা শুরু করি</button>
+    <button type="button" class="exam-start-btn" onclick="resumeExam(window._examSavedState)">▶ যেখানে ছিলাম সেখান থেকে শুরু করি</button>
+    <button type="button" class="exam-secondary-btn" onclick="discardAndPickNew()">🔄 নতুন পরীক্ষা শুরু করি</button>
+    <button type="button" class="exam-view-back" onclick="backToExamPicker()">← পরীক্ষার ধরন বেছে নিন</button>
   </div>`;
   window._examSavedState = saved;
   document.getElementById('examBody').innerHTML = h;
@@ -2633,13 +3105,19 @@ function renderExamResumePrompt(saved){
 function discardAndPickNew(){
   clearExamState();
   window._examSavedState = null;
-  examSelectedDay=null; examSelectedTopicKey=null; examPickerTab='day'; modelExamSelected=null;
+  examSelectedDay=null; examSelectedTopicKey=null; examSelectedTopicKeys=[]; examPickerTab='day'; modelExamSelected=null;
+  renderExamPicker();
+}
+
+function backToExamPicker(){
+  if(document.querySelector('#examBody .exam-actions')&&examQueue.length&&examIdx<examQueue.length) saveExamState();
+  document.getElementById('examTopTitle').textContent='📝 পরীক্ষা বেছে নিন';
   renderExamPicker();
 }
 
 function examSwitchTab(tab){
   examPickerTab=tab;
-  examSelectedDay=null; examSelectedTopicKey=null; modelExamSelected=null;
+  examSelectedDay=null; examSelectedTopicKey=null; examSelectedTopicKeys=[]; modelExamSelected=null;
   renderExamPicker();
 }
 
@@ -2654,13 +3132,24 @@ function selectExamDay(d){
 }
 
 function selectExamTopic(idx){
-  examSelectedTopicKey=(window._examTopicKeys&&window._examTopicKeys[idx])||null;
-  const saved = loadExamStateFor('topic', null, examSelectedTopicKey, null);
-  if(saved && saved.queue && saved.queue.length && saved.idx < saved.queue.length){
-    renderExamResumePrompt(saved);
-  } else {
-    startTopicExam();
-  }
+  const key=(window._examTopicKeys&&window._examTopicKeys[idx])||null;
+  if(!key) return;
+  examSelectedTopicKeys=examSelectedTopicKeys.includes(key)
+    ? examSelectedTopicKeys.filter(topic=>topic!==key)
+    : [...examSelectedTopicKeys,key];
+  examSelectedTopicKey=examSelectedTopicKeys.length===1?examSelectedTopicKeys[0]:null;
+  renderExamPicker();
+}
+
+function setExamQuestionLimit(value,render=true){
+  const parsed=Number(value);
+  if(value===''||!Number.isFinite(parsed)||parsed<1) return;
+  const selected=new Set(examSelectedTopicKeys);
+  const available=Object.values(allDays).reduce((total,day)=>total+((day.topics||[]).reduce((topicTotal,topic)=>(
+    selected.has(topic.title)?topicTotal+(Array.isArray(topic.items)?topic.items.length:0):topicTotal
+  ),0)),0);
+  examQuestionLimit=Math.min(Math.floor(parsed),available||Math.floor(parsed));
+  if(render) renderExamPicker();
 }
 
 function startExam(){
@@ -2679,26 +3168,36 @@ function startExam(){
 }
 
 function startTopicExam(){
-  if(!examSelectedTopicKey) return;
-  const key=examSelectedTopicKey;
+  if(!examSelectedTopicKeys.length) return;
+  const selected=new Set(examSelectedTopicKeys);
   const days=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
   let q=[];
   days.forEach(d=>{
     const day=allDays[d]; if(!day) return;
     day.topics.forEach(t=>{
-      if(t.title!==key) return;
+      if(!selected.has(t.title)) return;
       t.items.forEach(item=>q.push({q:item.q,a:item.a,ex:item.ex||item.example||'',topic:`দিন ${bn(d)} · ${t.title}`,cols:t.columns||(t.items.some(i=>i.ex||i.example)?3:2),headers:t.columnHeaders||t.headers||null}));
     });
   });
+  if(!q.length){toast('নির্বাচিত টপিকে কোনো প্রশ্ন পাওয়া যায়নি',true);return;}
+  const requestedCount=Math.min(Math.max(1,Math.floor(examQuestionLimit)||30),q.length);
+  const saved=(()=>{try{const raw=localStorage.getItem(_examResumeKey());return raw?JSON.parse(raw):null;}catch(e){return null;}})();
+  if(saved&&Array.isArray(saved.queue)&&saved.queue.length===requestedCount&&saved.idx<saved.queue.length){
+    renderExamResumePrompt(saved);
+    return;
+  }
+  if(saved) clearExamState();
   for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]];}
+  q=q.slice(0,requestedCount);
   examQueue=q; examIdx=0; examKnow=0; examDontKnow=0; examDontKnowItems=[];
   clearExamState();
-  document.getElementById('examTopTitle').textContent=`📝 ${key} পরীক্ষা`;
+  const label=examSelectedTopicKeys.length===1?examSelectedTopicKeys[0]:`${bn(examSelectedTopicKeys.length)}টি টপিক`;
+  document.getElementById('examTopTitle').textContent=`📝 ${label} · ${bn(q.length)} প্রশ্ন`;
   renderExamCard();
 }
 
-function resetCurrentExam(){
-  if(!confirm('এই পরীক্ষা রিসেট করবেন? প্রথম থেকে শুরু হবে।')) return;
+async function resetCurrentExam(){
+  if(!await showAppConfirm('এই পরীক্ষা রিসেট করবেন? প্রথম থেকে শুরু হবে।')) return;
   clearExamState();
   examIdx=0; examKnow=0; examDontKnow=0; examDontKnowItems=[];
   // Queue নতুনভাবে shuffle করো
@@ -2745,15 +3244,16 @@ function renderExamCard(){
     <div class="exam-counter">${bn(examIdx+1)} / ${bn(total)}</div>
     <div class="exam-topic-badge">${item.topic}</div>
     <div class="exam-q-card">${item.q}</div>
-    <div class="exam-ans-wrap" id="examAnsWrap" onclick="toggleExamAns()">
+    <div class="exam-ans-wrap" id="examAnsWrap" onclick="toggleExamAns()" role="group" aria-label="উত্তর">
       ${ansLabel}<span class="exam-ans-text" id="examAnsText">${item.a.replace(/\n/g,'<br>')}</span>
-      <button class="exam-eye" id="examEyeBtn">👁</button>
+      <button type="button" class="exam-eye" id="examEyeBtn" aria-label="উত্তর দেখুন" aria-pressed="false">👁</button>
     </div>
     ${exHtml}
     <div class="exam-actions">
-      <button class="exam-dontknow" onclick="examAnswer(false)">❌ জানি না</button>
-      <button class="exam-know" onclick="examAnswer(true)">✅ জানি</button>
+      <button type="button" class="exam-dontknow" onclick="examAnswer(false)">❌ জানি না</button>
+      <button type="button" class="exam-know" onclick="examAnswer(true)">✅ জানি</button>
     </div>
+    <button type="button" class="exam-view-back" onclick="backToExamPicker()">← পরীক্ষার ধরন বেছে নিন</button>
     ${scoreHtml}`;
   document.getElementById('examBody').innerHTML=h;
   document.getElementById('examBody').scrollTop=0;
@@ -2766,9 +3266,11 @@ function toggleExamAns(){
   const exWrap=document.getElementById('examExWrap');
   if(examAnsRevealed){
     wrap.classList.add('revealed-ans');eye.textContent='✓';
+    eye.setAttribute('aria-label','উত্তর লুকান');eye.setAttribute('aria-pressed','true');
     if(exWrap) exWrap.classList.add('revealed-ans');
   } else {
     wrap.classList.remove('revealed-ans');eye.textContent='👁';
+    eye.setAttribute('aria-label','উত্তর দেখুন');eye.setAttribute('aria-pressed','false');
     if(exWrap) exWrap.classList.remove('revealed-ans');
   }
 }
@@ -2892,7 +3394,7 @@ function renderExamResult(){
   }
   
   const h=`<div class="exam-result">
-    <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:18px;">পরীক্ষার ফলাফল 🎯</div>
+    <div class="exam-result-title">পরীক্ষার ফলাফল 🎯</div>
     <div class="result-circle" style="--pct:${pct}%">
       <div class="result-inner"><div class="result-pct">${bn(pct)}%</div><div class="result-lbl">সঠিক</div></div>
     </div>
@@ -2901,8 +3403,8 @@ function renderExamResult(){
       <div class="rstat red"><div class="rstat-num">${bn(examDontKnow)}</div><div class="rstat-lbl">❌ জানি না</div></div>
       <div class="rstat"><div class="rstat-num">${bn(total)}</div><div class="rstat-lbl">মোট প্রশ্ন</div></div>
     </div>
-    <button class="result-retry" onclick="${examPickerTab==='topic'?'startTopicExam':examPickerTab==='model'?'startModelExam':'startExam'}()">🔄 আবার পরীক্ষা দিন</button>
-    <button class="result-back" onclick="renderExamPicker()">← অন্য পরীক্ষা বেছে নিন</button>
+    <button type="button" class="result-retry" onclick="${examPickerTab==='topic'?'startTopicExam':examPickerTab==='model'?'startModelExam':'startExam'}()">🔄 আবার পরীক্ষা দিন</button>
+    <button type="button" class="result-back" onclick="backToExamPicker()">← অন্য পরীক্ষা বেছে নিন</button>
     ${dontKnowHTML}
   </div>`;
   document.getElementById('examBody').innerHTML=h;
@@ -2932,14 +3434,14 @@ function _makeIcon(size){
   try{
     const c=document.createElement('canvas'); c.width=c.height=size;
     const x=c.getContext('2d'); if(!x) return null;
-    x.fillStyle='#1a1510'; x.fillRect(0,0,size,size);
+    x.fillStyle='#123b3b'; x.fillRect(0,0,size,size);
     const r=size*0.30;
     x.beginPath(); x.arc(size/2,size/2,r,0,Math.PI*2);
-    x.fillStyle='#c8965a'; x.fill();
-    x.fillStyle='#1a1510';
+    x.fillStyle='#f2c77f'; x.fill();
+    x.fillStyle='#123b3b';
     x.font='bold '+Math.round(size*0.34)+'px "SolaimanLipi","Noto Sans Bengali",sans-serif';
     x.textAlign='center'; x.textBaseline='middle';
-    x.fillText('প', size/2, size/2+size*0.02);
+    x.fillText('লি', size/2, size/2+size*0.02);
     return c.toDataURL('image/png');
   }catch(e){ return null; }
 }
@@ -2959,11 +3461,11 @@ function _makeIcon(size){
     if(i512) icons.push({src:i512,sizes:'512x512',type:'image/png',purpose:'any'});
     if(i512) icons.push({src:i512,sizes:'512x512',type:'image/png',purpose:'maskable'});
     const manifest={
-      name:'দৈনিক পড়া', short_name:'দৈনিক পড়া',
-      description:'প্রতিদিনের পড়ার অ্যাপ',
+      name:'লিখিত প্রস্তুতি', short_name:'লিখিত প্রস্তুতি',
+      description:'লিখিত পরীক্ষার প্রস্তুতির অ্যাপ',
       start_url:location.href.split('#')[0],
       scope:dir,
-      display:'standalone', background_color:'#1a1510', theme_color:'#1a1510',
+      display:'standalone', background_color:'#f4f6f7', theme_color:'#f4f6f7',
       lang:'bn', icons
     };
     try{
@@ -3141,7 +3643,7 @@ function routineDotColor(type){
   if(type==='new') return 'var(--accent)';
   if(type==='bigrev') return 'var(--green)';
   if(type==='exam') return 'var(--red)';
-  if(type==='gap') return '#e67e22';
+  if(type==='gap') return 'var(--accent2)';
   return 'var(--accent2)';
 }
 
@@ -3202,7 +3704,7 @@ function initRoutine(){
     const fid = extractFolderId(savedFolderUrl);
     if(fid){
       syncRoutineFromDrive(fid).then(ok=>{
-        if(ok && document.getElementById('trackerOv').classList.contains('show')){
+        if(ok && (document.getElementById('trackerOv').classList.contains('show') || settingsSection)){
           renderTracker();
         }
       });
@@ -3240,25 +3742,26 @@ function switchRoutineType(type){
   try{ localStorage.setItem('ds_routine_type', type); }catch(e){}
   loadRoutineFromStorage();
   loadTrackerData();
-  renderTracker();
+  if(settingsSection){
+    renderSettingsSection();
+    updateTrackerStreakTopbar();
+  } else {
+    renderTracker();
+  }
 }
 
 /* ── OPEN / CLOSE ── */
 function openTracker(){
-  // Body scroll lock
-  document.body.classList.add('no-scroll');
-  
   loadTrackerData();
-  document.getElementById('trackerOv').classList.add('show');
-  syncNavActive('navTracker');
+  showAppOverlay('trackerOv');
+  syncNavActive('navSettings');
   renderTracker();
 }
-function closeTracker(){
-  // Body scroll unlock
-  document.body.classList.remove('no-scroll');
-  
-  document.getElementById('trackerOv').classList.remove('show');
-  syncNavActive('navStudy');
+function closeTracker(fromHistory=false){
+  closeAppOverlay('trackerOv',fromHistory);
+  syncNavActive(appOverlayStack.some(entry=>entry.id==='settingsOv')
+    ?'navSettings'
+    :activeTab==='study'?null:'navHome');
 }
 
 /* ── MAIN RENDER ── */
@@ -3269,6 +3772,7 @@ function renderTracker(){
     <button class="tracker-tab ${routineType==='short'?'active':''}" onclick="switchRoutineType('short')">⚡ দ্রুত রিভিশন</button>
   </div>`;
   body.innerHTML = tabs + renderProgressTab();
+  renderSettingsSection();
   updateTrackerStreakTopbar();
 }
 
@@ -3486,8 +3990,8 @@ function toggleDayDone(routineDay){
   renderTracker();
 }
 
-function confirmTrackerReset(){
-  if(!confirm('সব অগ্রগতি মুছে নতুন করে শুরু করবেন?')) return;
+async function confirmTrackerReset(){
+  if(!await showAppConfirm('সব অগ্রগতি মুছে নতুন করে শুরু করবেন?')) return;
   trackerData = {_currentDay: 1};
   trackerStartDate = todayStr();
   saveTrackerData();
@@ -3495,8 +3999,8 @@ function confirmTrackerReset(){
   toast('🔄 ট্র্যাকার রিসেট হয়েছে!');
 }
 
-function confirmStudyProgressReset(){
-  if(!confirm('সব দিনের পড়ার অগ্রগতি (revealed উত্তর ও completed দিন) মুছে দেবেন?\nএটি পূর্বাবস্থায় ফেরানো যাবে না।')) return;
+async function confirmStudyProgressReset(){
+  if(!await showAppConfirm('সব দিনের পড়ার অগ্রগতি (revealed উত্তর ও completed দিন) মুছে দেবেন?\nএটি পূর্বাবস্থায় ফেরানো যাবে না।')) return;
   revealed = {};
   completedDays = {};
   recalcStreak(); updateStreak();
@@ -3568,16 +4072,21 @@ function showCompletionMessage(){
 
 <!-- EXAM OVERLAY -->
 <div class="exam-overlay" id="examOv">
-  <div class="exam-topbar">
-    <span class="exam-title" id="examTopTitle">📝 পরীক্ষা</span>
-    <div style="display:flex;gap:6px;align-items:center;">
-      <button class="rotate-btn" id="examResetBtn" onclick="resetCurrentExam()" style="display:none;background:rgba(231,76,60,.15);border-color:rgba(231,76,60,.4);color:#e74c3c;">🔄 রিসেট</button>
-      <button class="rotate-btn" id="examRotateBtn" onclick="toggleExamLandscape()">⟳</button>
-      <button class="exam-close-btn" onclick="closeExam()">✕ বন্ধ</button>
+  <div class="exam-panel">
+    <div class="exam-topbar">
+      <div class="exam-heading">
+        <span class="exam-eyebrow">আমার অনুশীলন</span>
+        <span class="exam-title" id="examTopTitle">📝 পরীক্ষা</span>
+      </div>
+      <div class="exam-toolbar">
+        <button type="button" class="rotate-btn exam-reset-btn" id="examResetBtn" onclick="resetCurrentExam()" style="display:none;">↻ রিসেট</button>
+        <button type="button" class="rotate-btn" id="examRotateBtn" onclick="toggleExamLandscape()" aria-label="পরীক্ষার পর্দা ঘোরান">⟳</button>
+        <button type="button" class="exam-close-btn" onclick="closeExam()">✕ বন্ধ</button>
+      </div>
     </div>
+    <div class="exam-progress-track"><div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgFill" style="width:0%"></div></div></div>
+    <div class="exam-body" id="examBody"></div>
   </div>
-  <div class="exam-progress-bar"><div class="exam-progress-fill" id="examProgFill" style="width:0%"></div></div>
-  <div class="exam-body" id="examBody"></div>
 </div>
 
 
@@ -3585,8 +4094,8 @@ function showCompletionMessage(){
 <div id="themeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:flex-end;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--border);border-bottom:none;border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:520px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button class="theme-back-btn" onclick="closeThemePicker()">← সেটিংসে ফিরুন</button>
       <span style="font-size:.97rem;font-weight:700;color:var(--text)">🎨 থিম বেছে নিন</span>
-      <button onclick="closeThemePicker()" style="background:var(--card);border:1px solid var(--border);color:var(--muted);padding:4px 11px;border-radius:8px;font-size:.79rem;cursor:pointer;font-family:SolaimanLipi,sans-serif">✕ বন্ধ</button>
     </div>
     <div id="themeGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:68vh;overflow-y:auto;padding-right:2px"></div>
   </div>
@@ -3603,6 +4112,15 @@ function showCompletionMessage(){
 }
 .theme-card.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .theme-card:active{transform:scale(.97)}
+.theme-back-btn{
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:7px 10px;
+  background:var(--card);
+  color:var(--accent);
+  font:700 .78rem SolaimanLipi,sans-serif;
+  cursor:pointer;
+}
 .theme-swatch{display:flex;gap:4px;flex-shrink:0}
 .theme-dot{width:13px;height:13px;border-radius:50%}
 .theme-name{font-size:.84rem;font-weight:700;color:var(--text)}
@@ -3613,21 +4131,21 @@ function showCompletionMessage(){
 const THEMES = {
   white:{
     name:'ক্লিন হোয়াইট',
-    desc:'সাদা পটভূমি, কালো টেক্সট',
-    dots:['#ffffff','#333333','#666666'],
-    vars:{'--bg':'#ffffff','--surface':'#f5f5f5','--card':'#eeeeee','--accent':'#444444','--accent2':'#888888','--text':'#222222','--muted':'#888888','--green':'#2a7a4a','--red':'#a03030','--border':'#dddddd'}
+    desc:'পরিষ্কার, চোখে আরামদায়ক',
+    dots:['#f4f6f7','#087c70','#1d2b32'],
+    vars:{'--bg':'#f4f6f7','--surface':'#ffffff','--card':'#eef2f3','--accent':'#087c70','--accent2':'#a85e24','--text':'#1d2b32','--muted':'#586970','--green':'#247a53','--red':'#b44747','--border':'#dce4e6','--hero-start':'#123b3b','--hero-end':'#319183'}
   },
   moonlight:{
     name:'মুনলাইট',
     desc:'চাঁদের আলোর নরম সিলভার',
     dots:['#111418','#7888a8','#b8c0d0'],
-    vars:{'--bg':'#111418','--surface':'#181c22','--card':'#1e242c','--accent':'#7888a8','--accent2':'#c0a858','--text':'#b8c0d0','--muted':'#506070','--green':'#60aa84','--red':'#a06060','--border':'#242c38'}
+    vars:{'--bg':'#111418','--surface':'#181c22','--card':'#1e242c','--accent':'#7888a8','--accent2':'#c0a858','--text':'#b8c0d0','--muted':'#929db0','--green':'#60aa84','--red':'#d07878','--border':'#303846','--hero-start':'#252f43','--hero-end':'#465b7b'}
   },
   ocean:{
     name:'ওশান ডিপ',
     desc:'সমুদ্রের গভীর নীল-সবুজ',
     dots:['#0c1618','#4a9aaa','#a8c8cc'],
-    vars:{'--bg':'#0c1618','--surface':'#131e22','--card':'#19262a','--accent':'#4a9aaa','--accent2':'#c8a050','--text':'#a8c8cc','--muted':'#406070','--green':'#5aaa84','--red':'#a06060','--border':'#1e3038'}
+    vars:{'--bg':'#0c1618','--surface':'#131e22','--card':'#19262a','--accent':'#4a9aaa','--accent2':'#c8a050','--text':'#a8c8cc','--muted':'#8da7aa','--green':'#5aaa84','--red':'#d07878','--border':'#294047','--hero-start':'#123b42','--hero-end':'#286879'}
   }
 };
 
@@ -3652,30 +4170,1311 @@ function applyTheme(key){
   if(!t) return;
   const root = document.documentElement;
   Object.entries(t.vars).forEach(([k,v]) => root.style.setProperty(k, v));
+  root.style.colorScheme = key==='white' ? 'light' : 'dark';
+  document.querySelector('meta[name="theme-color"]').content=t.vars['--bg'];
   localStorage.setItem('dainik_theme', key);
   buildThemeGrid();
 }
 
 function openThemePicker(){
   buildThemeGrid();
-  const ov = document.getElementById('themeOverlay');
-  ov.style.display = 'flex';
-  document.body.classList.add('no-scroll');
+  showAppOverlay('themeOverlay');
 }
-function closeThemePicker(){
-  document.getElementById('themeOverlay').style.display = 'none';
-  document.body.classList.remove('no-scroll');
+function closeThemePicker(fromHistory=false){
+  closeAppOverlay('themeOverlay',fromHistory);
 }
-document.getElementById('themeOverlay').addEventListener('click', function(e){
-  if(e.target === this) closeThemePicker();
-});
-
 // পেজ লোডে সেভ করা থিম প্রয়োগ — কিছু সেভ না থাকলে ডিফল্ট 'ক্লিন হোয়াইট'
 (function(){
   const saved = localStorage.getItem('dainik_theme');
   applyTheme((saved && THEMES[saved]) ? saved : 'white');
 })();
 </script>
+
+<style>
+body{
+  max-width:none;
+  background:var(--bg);
+  color:var(--text);
+}
+
+[hidden]{display:none!important}
+.exam-day-picker{
+  max-width:760px;
+  padding:22px;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:var(--surface);
+  box-shadow:0 12px 34px rgba(24,43,50,.08);
+}
+.exam-pick-title{font-size:1.28rem;line-height:1.5}
+.exam-pick-sub{font-size:.9rem;line-height:1.8}
+.exam-day-grid{grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:10px}
+.exam-day-item{padding:13px 8px;border-radius:14px;background:var(--bg)}
+.exam-day-item.selected{color:#fff}
+.exam-topic-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  max-height:min(42vh,360px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  margin-bottom:16px;
+  padding:2px 3px 4px 0;
+}
+.exam-topic-option{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+  min-height:70px;
+  padding:11px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:var(--bg);
+  color:var(--text);
+  text-align:left;
+  font-family:SolaimanLipi,sans-serif;
+  cursor:pointer;
+  transition:border-color .15s,background .15s,transform .15s;
+}
+.exam-topic-option:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent) 50%,var(--border))}
+.exam-topic-option.selected{
+  border:1.5px solid var(--accent);
+  background:color-mix(in srgb,var(--accent) 9%,var(--surface));
+}
+.exam-topic-check{
+  display:grid;
+  width:22px;height:22px;
+  flex:0 0 22px;
+  place-items:center;
+  border:1.5px solid var(--border);
+  border-radius:7px;
+  color:#fff;
+  font-size:.78rem;
+}
+.exam-topic-option.selected .exam-topic-check{border-color:var(--accent);background:var(--accent)}
+.exam-topic-emoji{font-size:1.15rem}
+.exam-topic-copy{display:grid;gap:3px;min-width:0;flex:1}
+.exam-topic-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.86rem}
+.exam-topic-copy small{color:var(--muted);font-size:.7rem}
+.exam-topic-count{
+  flex:0 0 auto;
+  padding:3px 7px;
+  border-radius:8px;
+  background:var(--surface);
+  color:var(--muted);
+  font-size:.69rem;
+}
+.exam-size-panel{
+  margin:4px 0 14px;
+  padding:16px;
+  border:1px solid var(--border);
+  border-radius:17px;
+  background:var(--bg);
+}
+.exam-size-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.exam-size-heading>span:first-child{display:grid;gap:4px}
+.exam-size-heading strong{font-size:.9rem}
+.exam-size-heading small{color:var(--muted);font-size:.72rem}
+.exam-question-total{
+  display:grid;
+  min-width:54px;
+  min-height:50px;
+  place-content:center;
+  border-radius:13px;
+  background:color-mix(in srgb,var(--accent) 12%,var(--surface));
+  color:var(--accent);
+  text-align:center;
+  font-size:1.15rem;
+  font-weight:800;
+}
+.exam-question-total small{font-size:.62rem;font-weight:500}
+.exam-size-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:14px 0}
+.exam-size-option{
+  min-height:38px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--text);
+  font-family:SolaimanLipi,sans-serif;
+  font-size:.82rem;
+  cursor:pointer;
+}
+.exam-size-option.selected{border-color:var(--accent);background:var(--accent);color:#fff}
+.exam-size-option:disabled{opacity:.42;cursor:not-allowed}
+.exam-custom-size{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:.76rem}
+.exam-custom-size input{
+  width:105px;
+  min-height:38px;
+  padding:6px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  outline:none;
+  background:var(--surface);
+  color:var(--text);
+  font-family:SolaimanLipi,sans-serif;
+  font-size:.86rem;
+}
+.exam-custom-size input:focus{border-color:var(--accent)}
+.exam-size-note{margin-top:9px;color:var(--muted);font-size:.72rem;line-height:1.6}
+.exam-topic-start{min-height:50px;box-shadow:0 5px 14px color-mix(in srgb,var(--accent) 20%,transparent)}
+.exam-overlay .exam-title{font-size:1.08rem}
+.exam-overlay .exam-body{padding:24px 16px 110px}
+.exam-overlay .exam-q-card{max-width:760px;border-radius:18px;line-height:1.85}
+.exam-overlay .exam-ans-wrap{max-width:760px;width:100%;border-radius:15px}
+.exam-overlay .exam-actions{max-width:760px}
+.exam-result{max-width:760px;margin:0 auto;padding:24px;border:1px solid var(--border);border-radius:22px;background:var(--surface)}
+
+.study-hero{
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  grid-template-columns:minmax(0,1.3fr) minmax(190px,.7fr);
+  align-items:center;
+  gap:20px;
+  max-width:1020px;
+  min-height:286px;
+  overflow:hidden;
+  margin:24px auto 0;
+  padding:34px clamp(24px,5vw,54px) 68px;
+  border-radius:28px;
+  color:#fff;
+  background:linear-gradient(118deg,var(--hero-start) 0%,var(--accent) 58%,var(--hero-end) 100%);
+  box-shadow:0 18px 38px rgba(14,79,71,.18);
+}
+.study-hero::before,.study-hero::after{
+  position:absolute;
+  z-index:-1;
+  content:"";
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:50%;
+}
+.study-hero::before{width:360px;height:360px;right:4%;top:-180px}
+.study-hero::after{width:260px;height:260px;right:9%;top:-130px}
+.study-hero-copy{max-width:570px}
+.study-hero-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:color-mix(in srgb,var(--text) 45%,#fff);
+  font-size:.86rem;
+  font-weight:700;
+  letter-spacing:.02em;
+}
+.study-hero-kicker::before{
+  width:22px;height:2px;
+  background:var(--accent2);
+  content:"";
+}
+.study-hero h1{
+  margin:12px 0 8px;
+  color:#fff;
+  font-size:clamp(2rem,4vw,3rem);
+  font-weight:800;
+  line-height:1.28;
+  letter-spacing:-.025em;
+}
+.study-hero p{
+  max-width:450px;
+  color:rgba(255,255,255,.8);
+  font-size:1rem;
+  line-height:1.85;
+}
+.study-hero .study-hero-dua{
+  max-width:530px;
+  margin:12px 0 0;
+  padding:9px 13px;
+  border-left:3px solid var(--accent2);
+  border-radius:0 10px 10px 0;
+  background:rgba(255,255,255,.1);
+  color:#fff;
+  font-size:.9rem;
+  font-weight:700;
+  line-height:1.7;
+}
+.study-hero-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  min-height:46px;
+  margin-top:18px;
+  padding:10px 18px;
+  border:0;
+  border-radius:12px;
+  background:var(--accent2);
+  color:var(--bg);
+  font-family:SolaimanLipi,sans-serif;
+  font-size:.94rem;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 5px 16px rgba(4,36,32,.2);
+}
+.study-hero-cta span:last-child{font-size:1.15rem}
+.study-hero-art{position:relative;display:grid;place-items:center;min-height:170px}
+.hero-book{
+  display:grid;
+  width:154px;height:154px;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:42px;
+  background:linear-gradient(145deg,rgba(255,255,255,.2),rgba(255,255,255,.07));
+  box-shadow:0 20px 45px rgba(5,42,38,.22),inset 0 1px rgba(255,255,255,.2);
+  transform:rotate(7deg);
+}
+.hero-book span{font-size:4.7rem;filter:drop-shadow(0 8px 8px rgba(4,40,36,.2))}
+.hero-spark{position:absolute;color:#f2c77f}
+.hero-spark-one{top:12%;right:20%;font-size:1.8rem}
+.hero-spark-two{bottom:14%;left:17%;font-size:1.2rem}
+.hero-orbit{position:absolute;width:204px;height:204px;border:1px dashed rgba(255,255,255,.32);border-radius:50%}
+.study-hero-tags{
+  position:absolute;
+  right:clamp(24px,5vw,54px);
+  bottom:20px;
+  left:clamp(24px,5vw,54px);
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.study-hero-tags span{
+  padding:5px 10px;
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:999px;
+  background:rgba(255,255,255,.09);
+  color:rgba(255,255,255,.88);
+  font-size:.72rem;
+}
+.home-shortcuts{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+  max-width:1020px;
+  margin:18px auto 0;
+  padding-bottom:120px;
+}
+.home-shortcut{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  min-height:100px;
+  padding:16px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--surface);
+  color:var(--text);
+  text-align:left;
+  font-family:SolaimanLipi,sans-serif;
+  cursor:pointer;
+  scroll-margin-bottom:120px;
+  box-shadow:0 6px 20px rgba(24,43,50,.045);
+  transition:transform .18s,border-color .18s,box-shadow .18s;
+}
+.home-shortcut:hover{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--accent) 45%,var(--border));
+  box-shadow:0 10px 24px rgba(24,43,50,.09);
+}
+.shortcut-icon{
+  display:grid;
+  width:46px;height:46px;
+  flex:0 0 46px;
+  place-items:center;
+  border-radius:14px;
+  font-size:1.2rem;
+}
+.day-icon{background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
+.topic-icon{background:color-mix(in srgb,var(--green) 14%,var(--surface))}
+.fav-icon{background:color-mix(in srgb,var(--accent2) 14%,var(--surface))}
+.shortcut-copy{display:grid;gap:3px;min-width:0}
+.shortcut-copy strong{font-size:.92rem;font-weight:700}
+.shortcut-copy small{color:var(--muted);font-size:.75rem}
+.shortcut-arrow{margin-left:auto;color:var(--accent);font-size:1.2rem}
+.settings-overlay{z-index:250}
+.settings-box{max-width:620px}
+.settings-section-back{
+  margin:8px 0 12px;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--bg);
+  color:var(--accent);
+  font:700 .8rem SolaimanLipi,sans-serif;
+  cursor:pointer;
+}
+.settings-section-title{margin:0 0 12px;color:var(--text);font-size:1.05rem}
+.settings-section-note{margin:0 0 10px;color:var(--muted);font-size:.78rem}
+.settings-routine-tabs{margin-bottom:12px}
+.settings-heading{display:flex;align-items:center;justify-content:space-between}
+.settings-eyebrow{color:var(--accent);font-size:.78rem;font-weight:700}
+.settings-heading h2{margin-top:3px;color:var(--text);font-size:1.35rem}
+.settings-close{
+  width:38px;height:38px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--bg);
+  color:var(--muted);
+  font-size:1rem;
+  cursor:pointer;
+}
+.settings-intro{margin:8px 0 18px;color:var(--muted);font-size:.88rem}
+.settings-grid{display:grid;gap:9px}
+.settings-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-height:68px;
+  padding:11px 13px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--bg);
+  color:var(--text);
+  text-align:left;
+  font-family:SolaimanLipi,sans-serif;
+  cursor:pointer;
+}
+.settings-item-icon{
+  display:grid;
+  width:42px;height:42px;
+  flex:0 0 42px;
+  place-items:center;
+  border-radius:13px;
+  background:color-mix(in srgb,var(--accent) 11%,var(--surface));
+  font-size:1.1rem;
+}
+.settings-item>span:nth-child(2){display:grid;gap:3px;min-width:0}
+.settings-item strong{font-size:.88rem}
+.settings-item small{color:var(--muted);font-size:.74rem;line-height:1.5}
+.settings-item>b{margin-left:auto;color:var(--accent);font-size:1.1rem}
+.orientation-setting{border-color:color-mix(in srgb,var(--accent) 32%,var(--border))}
+.orientation-setting .settings-item-icon{
+  background:color-mix(in srgb,var(--accent) 12%,var(--surface));
+  color:var(--accent);
+  font-size:1.55rem;
+  font-weight:700;
+}
+.orientation-setting-copy{align-content:center}
+.orientation-current{
+  width:max-content;
+  max-width:100%;
+  padding:2px 8px;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--accent) 11%,var(--surface));
+  color:var(--accent)!important;
+  font-size:.72rem!important;
+  font-weight:700;
+}
+.orientation-action{font-size:.74rem}
+.orientation-setting.is-landscape{
+  border-color:color-mix(in srgb,var(--accent2) 55%,var(--border));
+  background:color-mix(in srgb,var(--accent2) 5%,var(--bg));
+}
+.orientation-setting.is-landscape .settings-item-icon,
+.orientation-setting.is-landscape .orientation-current{
+  background:color-mix(in srgb,var(--accent2) 13%,var(--surface));
+  color:var(--accent2)!important;
+}
+
+.topbar{
+  padding:12px clamp(16px,4vw,36px);
+  gap:12px;
+  background:var(--surface);
+  box-shadow:0 2px 12px rgba(24,43,50,.05);
+}
+.topbar-title{font-size:1.12rem;color:var(--text)}
+.topbar-search{max-width:440px;margin-left:auto}
+.topbar-search .search-input{
+  min-height:42px;
+  background:var(--bg);
+  border-color:var(--border);
+  border-radius:12px;
+  color:var(--text);
+}
+.topbar-right{gap:7px}
+.streak{
+  color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);
+  border-radius:999px;
+  padding:6px 10px;
+}
+.rotate-btn{
+  min-width:40px;
+  min-height:40px;
+  color:var(--text);
+  background:var(--bg);
+  border-color:var(--border);
+  border-radius:11px;
+  font-size:.9rem;
+}
+
+.mode-bar{
+  max-width:1020px;
+  margin:20px auto 0;
+  padding:0 clamp(16px,4vw,36px);
+  gap:8px;
+  background:transparent;
+}
+.mode-btn{
+  min-height:44px;
+  padding:9px 14px;
+  border-radius:12px;
+  background:var(--surface);
+  border-color:var(--border);
+  color:var(--muted);
+  font-size:.86rem;
+}
+.mode-btn.active{box-shadow:0 3px 9px color-mix(in srgb,var(--accent) 20%,transparent)}
+
+.day-scroll{
+  margin:12px auto 0;
+  padding:12px clamp(16px,4vw,36px);
+  gap:9px;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.day-btn{
+  width:58px;
+  height:64px;
+  border-radius:14px;
+  background:var(--bg);
+  color:var(--muted);
+}
+.day-btn.active{box-shadow:0 3px 9px color-mix(in srgb,var(--accent) 22%,transparent)}
+
+.progress-wrap{
+  max-width:1020px;
+  margin:0 auto;
+  padding:16px clamp(16px,4vw,36px) 0;
+}
+.progress-info{font-size:.82rem;color:var(--text)}
+.reveal-day-btn,.reset-btn{min-height:34px;padding:5px 11px;font-size:.74rem;border-radius:9px}
+.progress-bar{height:7px;background:color-mix(in srgb,var(--border) 72%,var(--surface))}
+
+.content{
+  max-width:1020px;
+  margin:0 auto;
+  padding:22px clamp(16px,4vw,36px) 112px;
+}
+.day-title-bar{padding:4px 0 18px;gap:12px}
+.day-badge{border-radius:10px;padding:5px 13px}
+.day-subtitle{font-size:.92rem}
+.topic-block{margin-bottom:28px}
+.topic-header{gap:12px;margin-bottom:12px}
+.topic-icon{width:42px;height:42px;border-radius:13px;font-size:1.15rem}
+.topic-title{font-size:1.08rem}
+.topic-count{font-size:.8rem;color:var(--muted)}
+.reveal-all-btn,.reset-topic-btn{min-height:34px;padding:5px 11px;font-size:.75rem}
+.table-wrap{
+  border-radius:16px;
+  border-color:var(--border);
+  background:var(--surface);
+  box-shadow:0 4px 16px rgba(24,43,50,.045);
+}
+.t-header{background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.th-cell{padding:11px 14px;font-size:.8rem}
+.t-cell{padding:14px;font-size:1rem;line-height:1.85}
+.t-row:nth-child(even){background:color-mix(in srgb,var(--bg) 62%,var(--surface))}
+.a-cell.revealed .a-text{color:var(--text)}
+.eye-btn{width:28px;height:28px;min-width:28px;font-size:.76rem;border-radius:8px}
+.center-msg{
+  min-height:0;
+  max-width:620px;
+  margin:clamp(28px,6vh,64px) auto;
+  padding:clamp(26px,5vw,44px);
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:var(--surface);
+  box-shadow:0 10px 32px rgba(24,43,50,.06);
+}
+.center-msg .emo{
+  width:68px;height:68px;
+  display:grid;place-items:center;
+  border-radius:20px;
+  background:color-mix(in srgb,var(--accent) 10%,var(--surface));
+  font-size:2rem;
+}
+.center-msg p{max-width:390px;color:var(--muted);font-size:.98rem}
+.cta-btn{
+  min-height:48px;
+  padding:12px 24px;
+  border-radius:12px;
+  background:var(--accent);
+  font-size:.95rem;
+  box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 22%,transparent);
+}
+
+.search-results{max-width:1020px;margin:0 auto;padding:0 clamp(16px,4vw,36px) 112px}
+.search-result-card{border-radius:16px;padding:18px;background:var(--surface);box-shadow:0 4px 16px rgba(24,43,50,.045)}
+.sr-q{font-size:1.05rem;line-height:1.8}
+.sr-a{font-size:1.02rem;line-height:1.75}
+.sr-ex{font-size:.9rem;line-height:1.7}
+
+.bottom-nav{
+  max-width:720px;
+  bottom:14px;
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 8px 28px rgba(24,43,50,.14);
+}
+.nav-btn{min-width:68px;padding:6px 12px}
+.nav-btn.active{color:var(--accent)}
+.nav-btn .ni{font-size:1.3rem}
+.nav-btn .nl{font-size:.68rem}
+.overlay,.add-overlay{background:rgba(15,26,30,.52);backdrop-filter:blur(5px)}
+.overlay-box,.add-box{
+  width:min(640px,100%);
+  max-width:640px;
+  max-height:min(84dvh,760px);
+  overflow-y:auto;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:var(--surface);
+  box-shadow:0 24px 80px rgba(0,0,0,.24);
+}
+.overlay,.add-overlay{
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+#themeOverlay{
+  align-items:center!important;
+  justify-content:center!important;
+  padding:16px;
+  background:rgba(15,26,30,.52)!important;
+  backdrop-filter:blur(5px);
+}
+#themeOverlay>div{
+  width:min(640px,100%)!important;
+  max-width:640px!important;
+  max-height:min(84dvh,760px);
+  overflow-y:auto;
+  border:1px solid var(--border)!important;
+  border-radius:22px!important;
+  padding:24px!important;
+  border-bottom:1px solid var(--border)!important;
+  box-shadow:0 24px 80px rgba(0,0,0,.24);
+}
+.link-inp,.f-inp{background:var(--bg);color:var(--text)}
+
+@media (min-width:760px){
+  .topbar{padding-left:max(36px,calc((100vw - 1020px)/2));padding-right:max(36px,calc((100vw - 1020px)/2))}
+  body.landscape .topbar{padding:10px 36px}
+}
+@media (max-width:600px){
+  .exam-day-picker{padding:17px 13px;border-radius:18px}
+  .exam-topic-list{grid-template-columns:1fr;gap:7px}
+  .exam-topic-option{min-height:64px}
+  .exam-size-panel{padding:13px}
+  .exam-overlay .exam-body{padding:16px 12px 90px}
+  .exam-result{padding:18px 13px}
+  .study-hero{
+    grid-template-columns:minmax(0,1fr) 100px;
+    gap:4px;
+    min-height:270px;
+    margin:14px 14px 0;
+    padding:25px 20px 70px;
+    border-radius:22px;
+  }
+  .study-hero-kicker{font-size:.76rem}
+  .study-hero h1{font-size:1.85rem}
+  .study-hero p{font-size:.88rem;line-height:1.7}
+  .study-hero .study-hero-dua{margin-top:9px;padding:8px 10px;font-size:.76rem;line-height:1.65}
+  .study-hero-cta{min-height:42px;margin-top:13px;padding:8px 13px;font-size:.84rem}
+  .study-hero-art{min-height:130px}
+  .hero-book{width:92px;height:92px;border-radius:28px}
+  .hero-book span{font-size:3rem}
+  .hero-orbit{width:126px;height:126px}
+  .hero-spark-one{right:7%;font-size:1.3rem}
+  .hero-spark-two{left:0}
+  .study-hero-tags{right:18px;bottom:15px;left:18px;gap:5px}
+  .study-hero-tags span{padding:4px 7px;font-size:.64rem}
+  .home-shortcuts{grid-template-columns:1fr;gap:9px;margin:12px 14px 0;padding-bottom:120px}
+  .home-shortcut{min-height:76px;padding:12px 14px;border-radius:15px}
+  .shortcut-icon{width:42px;height:42px;flex-basis:42px}
+  .settings-item{min-height:64px}
+  .topbar{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:10px 12px;
+    padding:11px 16px;
+  }
+  .topbar-title{font-size:1.02rem}
+  .topbar-search{grid-column:1 / -1;grid-row:2;max-width:none;width:100%;margin:0}
+  .topbar-right{grid-column:2;grid-row:1;gap:5px}
+  .streak{padding:5px 8px;font-size:.75rem}
+  .rotate-btn{min-width:36px;min-height:36px;padding:4px 8px}
+  body.landscape .topbar{display:flex;padding:8px 12px;gap:7px}
+  body.landscape .topbar-search{max-width:220px}
+  .mode-bar{margin-top:10px;padding:0 14px;gap:6px}
+  .mode-btn{min-height:42px;padding:8px 5px;font-size:.78rem}
+  .day-scroll{margin-top:10px;padding:10px 14px}
+  .day-btn{width:54px;height:60px}
+  .progress-wrap{padding:13px 16px 0}
+  .content{padding:18px 16px 104px}
+  .topic-block{margin-bottom:24px}
+  .topic-header{align-items:flex-start}
+  .topic-actions{gap:4px}
+  .t-cell{font-size:1.03rem;line-height:1.85}
+  body:not(.landscape) .t-cell{padding:10px 13px;font-size:1.04rem}
+  body:not(.landscape) .t-cell.q-cell{font-size:1.08rem;padding-bottom:5px}
+  .center-msg{margin:28px 16px;padding:28px 20px;border-radius:18px}
+  .bottom-nav{
+    bottom:0;
+    max-width:none;
+    padding:8px 8px max(10px,env(safe-area-inset-bottom));
+    border-radius:18px 18px 0 0;
+    border-bottom:0;
+  }
+  .nav-btn{flex:1;min-width:0}
+  .overlay,.add-overlay,#themeOverlay{padding:12px}
+  .overlay-box,.add-box,#themeOverlay>div{
+    width:100%;
+    max-height:min(88dvh,760px);
+    padding:20px 16px max(20px,env(safe-area-inset-bottom))!important;
+    border-radius:20px!important;
+  }
+}
+@media (max-width:360px){
+  .study-hero{grid-template-columns:minmax(0,1fr) 74px;padding:22px 15px 72px}
+  .study-hero h1{font-size:1.55rem}
+  .study-hero p{font-size:.82rem}
+  .hero-book{width:72px;height:72px;border-radius:22px}
+  .hero-book span{font-size:2.4rem}
+  .hero-orbit{width:100px;height:100px}
+  .study-hero-tags{right:12px;left:12px}
+  .study-hero-tags span{font-size:.58rem}
+  .home-shortcut{gap:9px}
+  .topbar{grid-template-columns:minmax(0,1fr);gap:8px}
+  .topbar-title{grid-column:1;grid-row:1}
+  .topbar-right{grid-column:1;grid-row:2;justify-content:space-between}
+  .topbar-search{grid-column:1;grid-row:3}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
+.exam-overlay{
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(15,26,30,.52);
+  backdrop-filter:blur(5px);
+}
+.exam-panel{
+  display:flex;
+  flex-direction:column;
+  container-type:inline-size;
+  width:min(820px,100%);
+  height:min(88dvh,800px);
+  overflow:hidden;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:var(--surface);
+  box-shadow:0 24px 80px rgba(0,0,0,.24);
+}
+.exam-topbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  min-height:76px;
+  padding:12px 20px;
+  gap:12px;
+  background:var(--surface);
+  border-bottom:0;
+}
+.exam-heading{display:grid;flex:1 1 0;gap:2px;min-width:0}
+.exam-eyebrow{color:var(--accent);font-size:.74rem;font-weight:700}
+.exam-title{color:var(--text);font-size:1.16rem;font-weight:800}
+.exam-toolbar{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.exam-overlay button{
+  font-family:SolaimanLipi,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+.exam-overlay button:focus-visible,
+.exam-custom-size input:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  outline-offset:2px;
+}
+.exam-toolbar .rotate-btn,
+.exam-close-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  min-height:40px;
+  padding:7px 12px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--bg);
+  color:var(--muted);
+  font:700 .8rem SolaimanLipi,sans-serif;
+  cursor:pointer;
+  transition:background .16s,border-color .16s,color .16s,transform .16s;
+}
+.exam-toolbar .rotate-btn:hover,
+.exam-close-btn:hover,
+.exam-secondary-btn:hover,
+.exam-view-back:hover,
+.result-back:hover{border-color:color-mix(in srgb,var(--accent) 42%,var(--border));background:color-mix(in srgb,var(--accent) 6%,var(--surface));color:var(--accent)}
+.exam-reset-btn{color:var(--red)!important}
+.exam-reset-btn:hover{border-color:color-mix(in srgb,var(--red) 42%,var(--border))!important;background:color-mix(in srgb,var(--red) 7%,var(--surface))!important}
+.exam-overlay .rotate-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.exam-progress-track{padding:0 20px 12px;background:var(--surface)}
+.exam-progress-bar{height:5px;border-radius:999px;background:var(--card);overflow:hidden}
+.exam-progress-fill{border-radius:inherit}
+.exam-body{
+  min-height:0;
+  padding:16px 20px 24px;
+  background:var(--bg);
+  overscroll-behavior:contain;
+}
+.exam-day-picker{
+  width:100%;
+  max-width:760px;
+  padding:20px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--surface);
+  box-shadow:0 6px 20px rgba(24,43,50,.045);
+}
+.exam-pick-title{margin-bottom:6px;color:var(--text);font-size:1.15rem;font-weight:800}
+.exam-pick-sub{margin-bottom:14px;color:var(--muted);font-size:.82rem}
+.exam-picker-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:6px;
+  margin-bottom:16px;
+  padding:5px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--bg);
+}
+.exam-picker-tab{
+  min-height:42px;
+  padding:7px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background:transparent;
+  color:var(--muted);
+  font:700 .8rem SolaimanLipi,sans-serif;
+  cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.exam-picker-tab.active{
+  border-color:color-mix(in srgb,var(--accent) 25%,var(--border));
+  background:var(--surface);
+  color:var(--accent);
+  box-shadow:0 2px 6px rgba(24,43,50,.06);
+}
+.exam-picker-tab:hover{border-color:var(--border);background:var(--surface);color:var(--accent)}
+.exam-picker-tab.model-active{color:var(--accent2)}
+.exam-picker-tab.model-active.active{
+  border-color:color-mix(in srgb,var(--accent2) 28%,var(--border));
+  color:var(--accent2);
+}
+.exam-day-item{
+  display:grid;
+  place-content:center;
+  gap:2px;
+  width:100%;
+  min-height:68px;
+  border:1px solid var(--border);
+  border-radius:13px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:SolaimanLipi,sans-serif;
+  cursor:pointer;
+  transition:transform .16s,border-color .16s,background .16s,color .16s,box-shadow .16s;
+}
+.exam-day-item:hover{transform:translateY(-1px);border-color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 12%,transparent)}
+.exam-day-item.selected{background:var(--accent);border-color:var(--accent);color:#fff}
+.exam-topic-list{max-height:min(35vh,300px)}
+.exam-topic-option{
+  border-radius:14px;
+  background:var(--bg);
+}
+.exam-topic-option.selected{background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.exam-topic-option:focus-visible,.exam-model-option:focus-visible{outline-offset:1px}
+.exam-size-panel{
+  padding:15px;
+  border-radius:15px;
+  background:var(--bg);
+}
+.exam-size-option{border-radius:11px}
+.exam-size-option:hover:not(:disabled){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--surface))}
+.exam-size-option.selected:hover{background:var(--accent);color:#fff}
+.exam-size-option:focus-visible{outline-offset:1px}
+.exam-custom-size input{border-radius:11px}
+.exam-start-btn{
+  min-height:48px;
+  border-radius:12px;
+  background:var(--accent);
+  box-shadow:0 5px 14px color-mix(in srgb,var(--accent) 18%,transparent);
+  transition:transform .15s,opacity .15s,box-shadow .15s;
+}
+.exam-start-btn:not(:disabled):hover{transform:translateY(-1px)}
+.exam-start-btn:not(:disabled):active,.result-retry:active,.exam-empty-load:active{transform:translateY(0) scale(.99)}
+.exam-start-btn:disabled{box-shadow:none}
+.exam-secondary-btn,.exam-view-back{
+  width:100%;
+  min-height:44px;
+  padding:10px 14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--surface);
+  color:var(--text);
+  font-size:.86rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:background .16s,border-color .16s,color .16s,transform .16s;
+}
+.exam-view-back{margin-top:14px;background:transparent;color:var(--muted);font-weight:600}
+.exam-model-list{display:grid;gap:9px;margin-bottom:16px}
+.exam-resume{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  width:100%;
+  max-width:620px;
+  padding:22px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:var(--surface);
+}
+.exam-resume-icon{text-align:center;font-size:1.9rem}
+.exam-resume-title{text-align:center;color:var(--text);font-size:1rem;font-weight:800}
+.exam-resume>button{box-shadow:none}
+.exam-result-title{margin-bottom:18px;color:var(--text);font-size:1.08rem;font-weight:800}
+.exam-model-option{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  min-height:68px;
+  padding:11px 13px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:var(--bg);
+  color:var(--text);
+  text-align:left;
+  font-family:SolaimanLipi,sans-serif;
+  cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.exam-model-option.selected{
+  border-color:color-mix(in srgb,var(--accent2) 55%,var(--border));
+  background:color-mix(in srgb,var(--accent2) 7%,var(--surface));
+}
+.exam-model-option:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--accent2) 48%,var(--border))}
+.exam-model-number{
+  display:grid;
+  width:42px;height:42px;
+  flex:0 0 42px;
+  place-items:center;
+  border-radius:13px;
+  background:color-mix(in srgb,var(--accent2) 13%,var(--surface));
+  color:var(--accent2);
+  font-size:.94rem;
+  font-weight:800;
+}
+.exam-model-option.selected .exam-model-number{
+  background:var(--accent2);
+  color:var(--bg);
+}
+.exam-model-copy{display:grid;gap:3px;min-width:0;flex:1}
+.exam-model-copy strong{font-size:.85rem}
+.exam-model-copy small{color:var(--muted);font-size:.72rem}
+.exam-model-arrow{color:var(--accent2);font-size:1.05rem;font-weight:800}
+.exam-model-start{background:var(--accent2);color:var(--bg)}
+.exam-counter{
+  align-self:stretch;
+  width:max-content;
+  margin-bottom:12px;
+  padding:5px 10px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  background:var(--surface);
+  color:var(--accent);
+  font-weight:700;
+}
+.exam-topic-badge{border-radius:999px;padding:4px 10px;font-weight:700}
+.exam-q-card{
+  padding:22px;
+  border-radius:17px;
+  box-shadow:0 4px 16px rgba(24,43,50,.045);
+}
+.exam-ans-wrap{border-radius:14px;background:var(--surface)}
+.exam-eye{width:34px;height:34px;min-width:34px;border-radius:10px}
+.exam-eye:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface));color:var(--accent)}
+.exam-know,.exam-dontknow{min-height:50px;border-radius:13px;font-weight:700}
+.exam-know:hover{background:color-mix(in srgb,var(--green) 18%,var(--surface));transform:translateY(-1px)}
+.exam-dontknow{
+  background:color-mix(in srgb,var(--red) 8%,var(--surface));
+  border-color:color-mix(in srgb,var(--red) 60%,var(--border));
+}
+.exam-dontknow:active{background:color-mix(in srgb,var(--red) 18%,var(--surface))}
+.exam-dontknow:hover{background:color-mix(in srgb,var(--red) 15%,var(--surface));transform:translateY(-1px)}
+.exam-know:active,.exam-dontknow:active{transform:translateY(0)}
+.exam-score-card{border-radius:14px!important;background:var(--surface)!important}
+.exam-result{box-shadow:0 6px 20px rgba(24,43,50,.045)}
+.rstat{min-width:90px;border-radius:13px;background:var(--bg)}
+.result-retry{min-height:48px;border-radius:12px}
+.result-back{min-height:44px;background:var(--bg);color:var(--accent)}
+.exam-empty-load{min-height:42px;padding:9px 16px;border-radius:11px;font-weight:700;transition:transform .15s,filter .15s}
+.exam-empty-load:hover{filter:brightness(.96);transform:translateY(-1px)}
+.result-retry{transition:transform .15s,filter .15s,box-shadow .15s}
+.result-retry:hover{filter:brightness(.96);box-shadow:0 5px 14px color-mix(in srgb,var(--accent) 18%,transparent)}
+.result-back{border-radius:12px;font-weight:700;transition:background .16s,border-color .16s,color .16s}
+.exam-overlay.exam-landscape{padding:0}
+.exam-overlay.exam-landscape .exam-panel{
+  width:100%;
+  height:100dvh;
+  max-width:none;
+  border:0;
+  border-radius:0;
+}
+.exam-overlay.exam-landscape .exam-topbar{min-height:52px;padding:6px 14px}
+.exam-overlay.exam-landscape .exam-progress-track{padding:0 14px 6px}
+.exam-overlay.exam-landscape .exam-body{padding:8px 14px 12px}
+.exam-overlay.exam-landscape .exam-picker-tabs{margin-bottom:8px}
+.exam-overlay.exam-landscape .exam-day-picker{padding:14px}
+.exam-overlay.exam-landscape .exam-topic-list{max-height:24vh}
+.exam-overlay.exam-landscape .exam-q-card{padding:13px}
+
+@media (max-width:600px){
+  .exam-overlay{padding:12px}
+  .exam-panel{width:100%;height:min(90dvh,820px);border-radius:20px}
+  .exam-topbar{min-height:66px;padding:10px 14px}
+  .exam-eyebrow{font-size:.68rem}
+  .exam-title{font-size:1.02rem}
+  .exam-toolbar{gap:5px}
+  .exam-toolbar .rotate-btn{min-width:36px;min-height:36px;padding:4px 8px}
+  .exam-close-btn{min-height:36px;padding:6px 9px;font-size:.73rem}
+  .exam-progress-track{padding:0 14px 10px}
+  .exam-body{padding:12px 12px 18px}
+  .exam-day-picker{padding:15px 13px;border-radius:17px}
+  .exam-picker-tab{min-height:40px;padding:6px 3px;font-size:.71rem}
+  .exam-topic-list{max-height:31vh}
+  .exam-q-card{padding:17px 15px}
+  .exam-result{padding:17px 13px}
+  .exam-overlay.exam-landscape{padding:0}
+}
+@media (max-width:820px){
+  .exam-topbar{flex-wrap:wrap;row-gap:12px}
+  .exam-heading{flex:1 1 100%}
+  .exam-toolbar{width:100%;justify-content:flex-end}
+  .exam-title{font-size:.98rem}
+}
+@container (max-width:700px){
+  .exam-topbar{
+    grid-template-columns:minmax(0,1fr);
+    justify-items:stretch;
+    row-gap:12px;
+  }
+  .exam-heading{width:100%;min-width:0}
+  .exam-title{white-space:normal;word-break:normal;overflow-wrap:normal}
+  .exam-toolbar{width:100%;justify-content:flex-end}
+}
+
+.mode-bar{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  max-width:1020px;
+  margin:16px auto 0;
+  padding:5px clamp(16px,4vw,36px);
+  gap:5px;
+}
+.mode-btn{
+  min-width:0;
+  min-height:46px;
+  padding:8px 10px;
+  border:1px solid transparent;
+  border-radius:12px;
+  background:transparent;
+  color:var(--muted);
+  white-space:normal;
+  transition:background .16s,border-color .16s,color .16s,box-shadow .16s;
+}
+.mode-btn.active{
+  background:var(--surface);
+  border-color:var(--border);
+  color:var(--accent);
+  box-shadow:0 2px 8px rgba(24,43,50,.07);
+}
+.day-scroll{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(62px,1fr));
+  max-width:1020px;
+  margin:12px auto 0;
+  padding:12px clamp(16px,4vw,36px);
+  gap:8px;
+  overflow:visible;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--surface);
+}
+.day-scroll[data-mode="topic"],
+.day-scroll[data-mode="fav"]{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));
+}
+.day-btn{
+  width:100%;
+  min-width:0;
+  height:58px;
+  border-radius:12px;
+  background:var(--bg);
+}
+.topic-chip{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-content:center;
+  justify-content:stretch;
+  min-width:0;
+  width:100%;
+  min-height:48px;
+  height:auto;
+  padding:8px 10px;
+  gap:4px 8px;
+  border-radius:12px;
+  background:var(--bg);
+  white-space:normal;
+}
+.topic-chip>span:nth-child(2){
+  min-width:0;
+  overflow-wrap:anywhere;
+  line-height:1.45;
+}
+.topic-chip .tc-n{
+  justify-self:end;
+  padding:2px 6px;
+  border-radius:999px;
+  background:var(--surface);
+}
+.topic-chip.active .tc-n{background:rgba(255,255,255,.2)}
+.study-overlay{
+  z-index:240;
+  padding:16px;
+  background:rgba(15,26,30,.55);
+  backdrop-filter:blur(5px);
+}
+.study-box{
+  display:flex;
+  flex-direction:column;
+  width:min(920px,100%);
+  max-width:920px;
+  max-height:88dvh;
+  padding:18px clamp(16px,3vw,26px);
+  overflow:hidden;
+}
+.study-dialog-header{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+}
+.study-selection-controls{
+  display:grid;
+  grid-column:1 / -1;
+  grid-template-columns:minmax(90px,.38fr) minmax(0,1fr);
+  gap:8px;
+  width:100%;
+  min-width:0;
+}
+.study-selection-controls>.day-scroll[hidden],.study-option-grid[hidden]{display:none!important}
+.study-option-grid{
+  display:grid;
+  grid-column:1 / -1;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+  max-height:min(34dvh,280px);
+  min-width:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  padding:10px 2px 2px;
+}
+.study-option-grid[data-mode="day"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+.study-option-card{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  min-height:46px;
+  padding:9px 12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--bg);
+  color:var(--text);
+  font:700 .8rem/1.45 SolaimanLipi,sans-serif;
+  text-align:left;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+  transition:background .16s,border-color .16s,color .16s,box-shadow .16s;
+}
+.study-option-card:hover{
+  border-color:color-mix(in srgb,var(--accent) 45%,var(--border));
+  background:color-mix(in srgb,var(--accent) 7%,var(--surface));
+}
+.study-option-card.active{
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#fff;
+  box-shadow:0 3px 9px color-mix(in srgb,var(--accent) 22%,transparent);
+}
+.study-option-empty{
+  grid-column:1 / -1;
+  margin:0;
+  padding:12px;
+  border:1px dashed var(--border);
+  border-radius:12px;
+  color:var(--muted);
+  font-size:.8rem;
+  text-align:center;
+}
+.app-confirm-dialog{
+  width:min(420px,calc(100% - 32px));
+  max-height:min(80dvh,560px);
+  margin:auto;
+  padding:22px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:var(--surface);
+  color:var(--text);
+  box-shadow:0 24px 80px rgba(0,0,0,.28);
+  font-family:SolaimanLipi,sans-serif;
+}
+.app-confirm-dialog::backdrop{background:rgba(15,26,30,.58);backdrop-filter:blur(3px)}
+.app-confirm-brand{display:flex;align-items:center;gap:9px;color:var(--accent);font-size:1rem}
+.app-confirm-brand>span{display:grid;width:34px;height:34px;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.app-confirm-message{margin:18px 0 22px;color:var(--text);font-size:.9rem;line-height:1.75;white-space:pre-line}
+.app-confirm-actions{display:flex;justify-content:flex-end;gap:9px}
+.app-confirm-actions button{
+  min-height:40px;
+  padding:8px 14px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  font:700 .8rem SolaimanLipi,sans-serif;
+  cursor:pointer;
+}
+.app-confirm-cancel{background:var(--bg);color:var(--muted)}
+.app-confirm-accept{border-color:var(--accent)!important;background:var(--accent);color:#fff}
+.app-confirm-actions button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+.study-dialog-title{
+  min-width:0;
+  margin:0;
+  overflow:hidden;
+  color:var(--text);
+  font-size:1.04rem;
+  font-weight:800;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.study-back-btn,.study-close-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--bg);
+  color:var(--muted);
+  font:700 .8rem SolaimanLipi,sans-serif;
+  cursor:pointer;
+  transition:background .16s,border-color .16s,color .16s;
+}
+.study-back-btn:hover,.study-close-btn:hover{
+  border-color:color-mix(in srgb,var(--accent) 45%,var(--border));
+  background:color-mix(in srgb,var(--accent) 7%,var(--surface));
+  color:var(--accent);
+}
+.study-mode-select{
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  outline:none;
+  background:var(--bg);
+  color:var(--text);
+  font:700 .8rem SolaimanLipi,sans-serif;
+}
+.study-mode-select:focus-visible,.day-scroll:focus-visible,.study-back-btn:focus-visible,.study-close-btn:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  outline-offset:2px;
+}
+.study-close-btn{width:40px;padding:8px}
+.study-selection-controls>.day-scroll{
+  display:block;
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  min-height:40px;
+  margin:0;
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:11px;
+  outline:none;
+  background:var(--bg);
+  color:var(--text);
+  font:700 .8rem SolaimanLipi,sans-serif;
+  text-overflow:ellipsis;
+}
+.study-box>.progress-wrap{
+  flex:0 0 auto;
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:12px 0 0;
+}
+.study-box>.content{
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  max-width:none;
+  margin:0;
+  padding:16px 0 20px;
+  overflow-x:hidden;
+  overflow-y:auto;
+}
+.study-box>.search-results{
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  max-width:none;
+  margin:0;
+  padding:14px 0 20px;
+  overflow-y:auto;
+}
+
+@media (max-width:600px){
+  .study-overlay{padding:10px}
+  .study-box{width:100%;max-height:92dvh;padding:14px 14px 8px;border-radius:20px}
+  .study-dialog-header{gap:7px}
+  .study-back-btn{min-height:38px;padding:7px 9px;font-size:.74rem}
+  .study-dialog-title{font-size:.92rem}
+  .study-selection-controls{grid-template-columns:minmax(82px,.38fr) minmax(0,1fr);gap:7px}
+  .study-mode-select,.study-selection-controls>.day-scroll{min-height:38px;padding:6px 8px;font-size:.74rem}
+  .study-option-grid,.study-option-grid[data-mode="day"]{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding-top:8px}
+  .study-option-card{min-height:42px;padding:7px 9px;font-size:.74rem}
+  .app-confirm-dialog{padding:18px;border-radius:18px}
+  .study-box>.content{padding:12px 0 16px}
+  .study-box>.progress-wrap{padding-top:10px}
+}
+@media (max-width:360px){
+  .study-option-grid,.study-option-grid[data-mode="day"]{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  .exam-picker-tab,.exam-model-option,.exam-start-btn{transition:none!important}
+}
+</style>
 
 </body>
 </html>

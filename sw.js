@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════
-   SERVICE WORKER — দৈনিক পড়া
+   SERVICE WORKER — লিখিত প্রস্তুতি
    GitHub Pages: https://saifurpro.github.io/daily-study/
    
    কাজ:
@@ -9,7 +9,7 @@
    ৪. Apps Script / Drive request সরাসরি নেটওয়ার্কে পাঠায়
 ══════════════════════════════════════ */
 
-const CACHE_NAME = 'daily-study-v1';
+const CACHE_NAME = 'likhito-prostuti-v2';
 const SCOPE = '/daily-study/';
 
 // Cache করার ফাইলগুলো
