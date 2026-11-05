@@ -446,16 +446,16 @@ body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] 
 .pwa-banner{
   position:fixed;bottom:calc(78px + env(safe-area-inset-bottom));left:50%;
   transform:translateX(-50%);
-  width:calc(100% - 28px);max-width:420px;
+  width:calc(100% - 28px);max-width:440px;
   display:grid;grid-template-columns:48px minmax(0,1fr) 34px;
   align-items:center;gap:12px;
-  padding:14px;border:1px solid color-mix(in srgb,var(--accent) 25%,var(--border));
-  border-radius:20px;
-  background:color-mix(in srgb,var(--surface) 94%,var(--accent) 6%);
+  padding:16px;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--border));
+  border-radius:22px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 8%,var(--surface)),var(--surface) 58%);
   z-index:500;
-  box-shadow:0 14px 42px rgba(0,0,0,.22),0 3px 10px rgba(0,0,0,.1);
+  box-shadow:0 18px 48px rgba(0,0,0,.24),0 3px 12px rgba(0,0,0,.1);
   animation:pwaBannerIn .32s cubic-bezier(.2,.8,.2,1) both;
-  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
   font-family:SolaimanLipi,sans-serif;
 }
 @keyframes pwaBannerIn{
@@ -465,38 +465,44 @@ body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] 
 body.landscape .pwa-banner{bottom:14px}
 .pwa-icon{
   width:48px;height:48px;display:grid;place-items:center;overflow:hidden;
-  border-radius:15px;background:color-mix(in srgb,var(--accent) 12%,var(--surface));
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 12%,transparent);
+  border-radius:16px;background:color-mix(in srgb,var(--accent) 13%,var(--surface));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent),0 5px 14px rgba(0,0,0,.08);
 }
 .pwa-icon img{width:36px;height:36px;object-fit:contain}
 .pwa-copy{min-width:0}
-.pwa-t{font-size:.9rem;font-weight:800;line-height:1.4;color:var(--text);margin-bottom:3px}
-.pwa-s{font-size:.73rem;color:var(--muted);line-height:1.55}
+.pwa-t{font-size:.96rem;font-weight:800;line-height:1.4;color:var(--text);margin-bottom:4px}
+.pwa-s{font-size:.75rem;color:var(--muted);line-height:1.6}
 .pwa-s b{color:var(--accent);font-weight:700}
 .pwa-go{
-  grid-column:1/-1;min-height:44px;
+  grid-column:1/-1;min-height:48px;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 76%,#123c48));
-  color:#fff;border:0;border-radius:13px;
-  padding:10px 16px;font-size:.86rem;font-weight:800;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 72%,#123c48));
+  color:#fff;border:0;border-radius:15px;
+  padding:11px 16px;font-size:.9rem;font-weight:800;cursor:pointer;
   font-family:SolaimanLipi,sans-serif;
-  box-shadow:0 5px 14px color-mix(in srgb,var(--accent) 25%,transparent);
+  box-shadow:0 7px 18px color-mix(in srgb,var(--accent) 28%,transparent);
   transition:transform .16s,filter .16s,box-shadow .16s;
 }
 .pwa-go:hover{filter:brightness(1.06);box-shadow:0 7px 18px color-mix(in srgb,var(--accent) 32%,transparent)}
 .pwa-go:active{transform:scale(.98)}
+.pwa-go:focus-visible,.pwa-x:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,white);outline-offset:3px}
 .pwa-x{
   width:34px;height:34px;display:grid;place-items:center;
-  border:0;border-radius:11px;background:var(--card);
+  border:1px solid var(--border);border-radius:11px;background:var(--card);
   color:var(--muted);font-size:.9rem;cursor:pointer;
 }
 .pwa-x:hover{background:color-mix(in srgb,var(--accent) 10%,var(--card));color:var(--text)}
 @media(max-width:380px){
-  .pwa-banner{width:calc(100% - 20px);padding:12px;gap:9px;grid-template-columns:42px minmax(0,1fr) 32px}
+  .pwa-banner{width:calc(100% - 20px);padding:13px;gap:9px;grid-template-columns:42px minmax(0,1fr) 32px}
   .pwa-icon{width:42px;height:42px;border-radius:13px}
   .pwa-icon img{width:32px;height:32px}
-  .pwa-t{font-size:.84rem}
-  .pwa-s{font-size:.69rem}
+  .pwa-t{font-size:.88rem}
+  .pwa-s{font-size:.7rem}
+  .pwa-go{min-height:46px}
+}
+@media(prefers-reduced-motion:reduce){
+  .pwa-banner{animation:none}
+  .pwa-go{transition:none}
 }
 
 .ls-nav{display:none;align-items:center;gap:2px;flex-shrink:0}
@@ -3609,14 +3615,12 @@ function showInstallBanner(mode){
   let body, btn;
   if(mode==='auto'){
     body='হোম স্ক্রিন থেকেই এক ট্যাপে পড়া শুরু করুন।';
-    btn='<button type="button" onclick="doInstallPWA()" class="pwa-go">📲 অ্যাপ ইনস্টল করুন</button>';
   } else if(mode==='ios'){
     body='নিচের <b>শেয়ার</b> ⬆️ বাটন চাপুন, তারপর <b>Add to Home Screen</b> বেছে নিন।';
-    btn='';
   } else {
     body='ব্রাউজার মেনু <b>⋮</b> খুলে <b>Install app</b> বা <b>Add to Home screen</b> চাপুন।';
-    btn='';
   }
+  btn='<button type="button" onclick="doInstallPWA()" class="pwa-go">📲 অ্যাপ ইনস্টল করুন</button>';
 
   const banner = document.createElement('div');
   banner.id = 'pwaBanner';
@@ -3635,7 +3639,14 @@ function showInstallBanner(mode){
 }
 
 async function doInstallPWA(){
-  if(!pwaInstallEvent){ toast('ব্রাউজার মেনু ⋮ → Install app ব্যবহার করুন', true); return; }
+  if(!pwaInstallEvent){
+    if(isIOS()){
+      toast('শেয়ার বাটন ⬆️ চাপুন → Add to Home Screen নির্বাচন করুন', true);
+    }else{
+      toast('ব্রাউজার মেনু ⋮ খুলে Install app নির্বাচন করুন', true);
+    }
+    return;
+  }
   try{
     pwaInstallEvent.prompt();
     const result = await pwaInstallEvent.userChoice;
