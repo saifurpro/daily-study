@@ -1118,7 +1118,7 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 <div class="topbar">
   <span class="topbar-title"><img class="topbar-logo" src="./icon-192.png" alt="">লিখিত প্রস্তুতি</span>
   <div class="topbar-search">
-    <input class="search-input" id="searchInput" placeholder="🔍 সার্চ..." oninput="_searchOverlayActive=true;syncSearchOverlay();switchTab('study',true);handleSearch(this.value);toggleClear(this.value)" onfocus="if(document.getElementById('studyView').classList.contains('show')){_searchOverlayActive=true;syncSearchOverlay()}">
+    <input class="search-input" id="searchInput" placeholder="🔍 সার্চ..." oninput="if(!(_searchOverlayActive&&document.getElementById('studyView').classList.contains('show'))){_searchOverlayActive=true;syncSearchOverlay();}switchTab('study',true);handleSearch(this.value);toggleClear(this.value)" onfocus="if(document.getElementById('studyView').classList.contains('show')){_searchOverlayActive=true;syncSearchOverlay()}">
     <button class="search-clear" id="searchClear" onclick="clearSearch()" title="মুছুন">✕</button>
   </div>
   <!-- landscape mode-এ header-এ nav বোতাম -->
@@ -1134,9 +1134,7 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 
 <section class="study-hero" id="homeBanner" aria-labelledby="studyHeroTitle">
   <div class="study-hero-copy">
-    <span class="study-hero-kicker">আপনার শেখার প্রতিদিনের সঙ্গী</span>
-    <h1 id="studyHeroTitle">আজকের পড়া,<br>আজই শুরু হোক</h1>
-    <p>পড়া গুছিয়ে নিন, নিজের গতিতে শিখুন, আর প্রতিদিন একটু করে এগিয়ে যান।</p>
+    <h1 id="studyHeroTitle">মন না চাইলেও পড়তে বসো,<br>কারণ, Success সব সময় Motivation থেকে আসে না... আসে পরিশ্রম থেকে</h1>
     <p class="study-hero-dua">রব্বি জিদনি ইলমা, রব্বি জিদনি ইলমা, রব্বি জিদনি ইলমা</p>
     <button class="study-hero-cta" onclick="openStudyMode('day')"><span>📚</span> পড়া শুরু করুন <span aria-hidden="true">→</span></button>
   </div>
@@ -1165,6 +1163,11 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
   <button class="home-shortcut" onclick="openStudyMode('fav')">
     <span class="shortcut-icon fav-icon">⭐</span>
     <span class="shortcut-copy"><strong>রিভিশন</strong><small><span id="homeFavCount">০</span>টি সংরক্ষিত প্রশ্ন</small></span>
+    <span class="shortcut-arrow">→</span>
+  </button>
+  <button class="home-shortcut" onclick="openQM()">
+    <span class="shortcut-icon topic-icon">🧾</span>
+    <span class="shortcut-copy"><strong>Question Maker</strong><small>টপিক বেছে প্রশ্নপত্র বানান</small></span>
     <span class="shortcut-arrow">→</span>
   </button>
 </section>
@@ -1312,7 +1315,7 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 /* ══════════════════════════════════════
    INIT
 ══════════════════════════════════════ */
-window.onload=()=>{
+const __appInit=()=>{
   try{
     loadState(); initRoutine(); syncStudyDialog(); updateFavBadge(); renderDays(); renderContent();
     recalcStreak(); updateStreak(); requestWakeLock(); setTimeout(initTrackerTopbar, 0); switchTab('home');
@@ -1325,6 +1328,10 @@ window.onload=()=>{
     },350);
   }
 };
+/* window.onload ছবি/নেটওয়ার্ক রিসোর্স লোডের জন্য অপেক্ষা করে — নেটে MB না থাকলে ছবি আটকে অ্যাপ শুরুই হতো না।
+   তাই DOM তৈরি হওয়া মাত্র অ্যাপ চালু করা হচ্ছে (ডেটা সবই localStorage থেকে আসে)। */
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',__appInit);
+else __appInit();
 
 function initTrackerTopbar(){
   if(typeof loadTrackerData === 'function') loadTrackerData();
@@ -2527,6 +2534,18 @@ function syncSearchOverlay(){
   overlay.classList.toggle('search-active',active);
   if(active) overlay.style.setProperty('--search-overlay-top',`${Math.ceil(topbar.getBoundingClientRect().height)}px`);
 }
+let _srIdx=null,_srIdxSig='';
+function _getSearchIndex(){
+  let sig='';
+  Object.keys(allDays).forEach(dn=>{const d=allDays[dn]; sig+=dn+':'+((d&&d.topics)||[]).map(t=>(t.items||[]).length).join(',')+';';});
+  if(_srIdx&&sig===_srIdxSig) return _srIdx;
+  const out=[];
+  Object.entries(allDays).forEach(([dn,day])=>((day&&day.topics)||[]).forEach(t=>(t.items||[]).forEach(item=>{
+    const ex=item.ex||item.example||'';
+    out.push({dn,tt:t.title,item,h:(item.q+' '+item.a+' '+ex).toLowerCase()});
+  })));
+  _srIdx=out;_srIdxSig=sig;return out;
+}
 function handleSearch(q){
   // debounce: টাইপ থামার 280ms পরে সার্চ হবে
   clearTimeout(_searchTimer);
@@ -2537,6 +2556,10 @@ function _doSearch(q){
   if(!q.trim()){
     sr.style.display='none';mc.style.display='block';pw.style.display=studySelectionMade?'block':'none';
     // সার্চ শেষে পুরনো স্ক্রিন পজিশনে ফেরত যাও
+    const _pending=!!window._studyRenderPending; window._studyRenderPending=false;
+    if(_pending&&document.getElementById('studyView').classList.contains('show')){
+      requestAnimationFrame(()=>{ selectDefaultStudyItem(viewMode,true); syncStudyDialog(); renderDays(); renderContent(); });
+    }
     if(window._searchScrollY !== undefined){
       requestAnimationFrame(()=>{ window.scrollTo({top: window._searchScrollY, behavior: 'instant'}); window._searchScrollY = undefined; });
     }
@@ -2548,12 +2571,12 @@ function _doSearch(q){
   // মাল্টি-ওয়ার্ড AND সার্চ: শব্দগুলো আলাদা করে খোঁজো
   const words=q.toLowerCase().split(/\s+/).filter(Boolean);
   let res=[];
-  Object.entries(allDays).forEach(([dn,day])=>day.topics.forEach(t=>t.items.forEach(item=>{
-    const ex=item.ex||item.example||'';
-    const haystack=(item.q+' '+item.a+' '+ex).toLowerCase();
+  const idx=_getSearchIndex();
+  for(let i=0;i<idx.length;i++){
+    const e=idx[i];
     // সব শব্দ থাকলেই ম্যাচ (AND logic)
-    if(words.every(w=>haystack.includes(w))) res.push({dn,tt:t.title,item});
-  })));
+    if(words.every(w=>e.h.includes(w))) res.push({dn:e.dn,tt:e.tt,item:e.item});
+  }
   if(!res.length){sr.innerHTML=`<div class="no-result">😔<br><br>"${q}" পাওয়া যায়নি</div>`;return;}
   const shown=res.slice(0,80);
   window._srItems=shown;
@@ -2733,9 +2756,10 @@ function openStudyMode(mode,showContent=false){
   const token=++_studyOpenToken;
   viewMode=mode;
   studySelectionMade=false;
+  window._studyRenderPending=false;
   if(!showContent) clearStudySearch();
-  syncStudyDialog();
   const hasSearch=showContent&&!!document.getElementById('searchInput')?.value;
+  if(!hasSearch) syncStudyDialog();
   if(!hasSearch){
     const mainContent=document.getElementById('mainContent');
     mainContent.innerHTML='<div class="study-loading" role="status">📖 পড়া প্রস্তুত হচ্ছে…</div>';
@@ -2752,6 +2776,7 @@ function openStudyMode(mode,showContent=false){
   syncSearchOverlay();
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     if(token!==_studyOpenToken||!document.getElementById('studyView').classList.contains('show')) return;
+    if(hasSearch){ window._studyRenderPending=true; return; } // সার্চ ফল ঢেকে রাখে, তাই ভারী রেন্ডার সার্চ শেষে হবে
     selectDefaultStudyItem(mode,true);
     syncStudyDialog();
     renderDays();
@@ -4188,6 +4213,19 @@ function showCompletionMessage(){
 </div>
 
 
+<!-- ══════════════ QUESTION MAKER OVERLAY ══════════════ -->
+<div class="qm-overlay" id="qmOv">
+  <div class="qm-top">
+    <b id="qmTitle">Question Maker</b>
+    <div class="qm-top-btns">
+      <button type="button" class="qm-btn" id="qmRegen" onclick="qmGenerate()" style="display:none">🔄 নতুন প্রশ্ন</button>
+      <button type="button" class="qm-btn" id="qmBack" onclick="qmBackToPicker()" style="display:none">← ফিরে যান</button>
+      <button type="button" class="qm-btn" onclick="closeQM()">✕ বন্ধ</button>
+    </div>
+  </div>
+  <div class="qm-body" id="qmBody"></div>
+</div>
+
 <!-- ══════════════ THEME PICKER OVERLAY ══════════════ -->
 <div id="themeOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:flex-end;justify-content:center">
   <div style="background:var(--surface);border:1px solid var(--border);border-bottom:none;border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;max-width:520px">
@@ -5594,5 +5632,187 @@ body{
 }
 </style>
 
+<style>
+/* ── QUESTION MAKER (সাদা, সাধারণ) ── */
+.qm-overlay{display:none;position:fixed;inset:0;background:#fff;color:#111;flex-direction:column;overflow:hidden;font-family:SolaimanLipi,sans-serif;z-index:300}
+.qm-overlay.show{display:flex}
+.qm-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid #ddd;flex-shrink:0;background:#fff}
+.qm-top b{font-size:1rem;color:#111}
+.qm-top-btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.qm-btn{border:1px solid #bbb;background:#fff;color:#111;padding:6px 12px;border-radius:6px;font-family:inherit;font-size:.85rem;cursor:pointer}
+.qm-btn.main{background:#111;color:#fff;border-color:#111}
+.qm-btn:disabled{opacity:.4;cursor:not-allowed}
+.qm-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 40px;width:100%;max-width:820px;margin:0 auto;box-sizing:border-box}
+.qm-tabs{display:flex;gap:8px;margin-bottom:12px}
+.qm-tab{flex:1;border:1px solid #bbb;background:#fff;color:#111;padding:9px 6px;border-radius:6px;font-family:inherit;font-size:.92rem;cursor:pointer}
+.qm-tab.on{background:#111;color:#fff;border-color:#111}
+.qm-sub-head{display:flex;align-items:center;justify-content:space-between;margin:4px 0 6px;font-size:.85rem;color:#555}
+.qm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #eee}
+.qm-row.off{opacity:.45}
+.qm-row input[type=checkbox]{width:18px;height:18px;flex-shrink:0}
+.qm-row label{flex:1;font-size:.98rem;cursor:pointer;color:#111}
+.qm-avail{font-size:.72rem;color:#777;white-space:nowrap}
+.qm-row input[type=number]{width:56px;padding:5px;border:1px solid #bbb;border-radius:6px;font-family:inherit;font-size:.9rem;text-align:center;background:#fff;color:#111}
+.qm-foot{position:sticky;bottom:0;background:#fff;border-top:1px solid #ddd;padding:12px 0 6px;margin-top:14px}
+.qm-sum{font-size:.85rem;color:#555;margin-bottom:8px}
+.qm-foot .qm-btn{width:100%;padding:11px;font-size:.98rem}
+.qm-t{font-weight:700;margin:20px 0 8px;font-size:1.02rem;color:#111}
+.qm-t:first-child{margin-top:4px}
+.qm-q{margin:6px 0 6px 20px;line-height:1.75;font-size:.98rem;color:#111}
+.qm-a{margin:0 0 8px 38px;line-height:1.7;font-size:.95rem;color:#0a6b3d}
+.qm-ansbar{margin-top:26px;padding-top:14px;border-top:1px solid #ddd}
+.qm-ansbar .qm-btn{width:100%;padding:11px;font-size:.98rem}
+.qm-empty{padding:30px 6px;text-align:center;color:#555;line-height:1.8}
+</style>
+<script>
+/* ══════════════════════════════════════
+   QUESTION MAKER
+   লোড করা পড়া (allDays) থেকে টপিক-অনুযায়ী প্রশ্নপত্র
+══════════════════════════════════════ */
+const QM_LETTERS=['ক','খ','গ','ঘ','ঙ','চ','ছ','জ','ঝ','ঞ','ট','ঠ','ড','ঢ','ণ','ত','থ','দ','ধ','ন'];
+const qmHas=(n,...ks)=>ks.some(k=>n.includes(k));
+const QM_SUBJECTS=[
+  {id:'bn',name:'বাংলা',topics:[
+    {id:'bagdhara',label:'বাগধারা',title:'বাগধারার অর্থ লিখুন',def:5,match:n=>qmHas(n,'বাগধারা')},
+    {id:'ekkothay',label:'এক কথায় প্রকাশ',title:'এক কথায় প্রকাশ লিখুন',def:5,match:n=>qmHas(n,'এক কথায়','একক')},
+    {id:'banan',label:'বানান শুদ্ধি',title:'বানান শুদ্ধি লিখুন',def:5,match:n=>qmHas(n,'বানান')},
+    {id:'biporit',label:'বিপরীত শব্দ',title:'বিপরীত শব্দ লিখুন',def:5,match:n=>qmHas(n,'বিপরীত')},
+    {id:'somas',label:'সমাস',title:'সমাস নির্ণয় করুন',def:5,match:n=>qmHas(n,'সমাস')},
+    {id:'karok',label:'কারক ও বিভক্তি',title:'কারক ও বিভক্তি লিখুন',def:5,match:n=>qmHas(n,'কারক','বিভক্তি')},
+    {id:'sahitto',label:'বাংলা সাহিত্য',title:'বাংলা সাহিত্যের প্রশ্নের উত্তর লিখুন',def:5,match:n=>qmHas(n,'সাহিত্য')}
+  ]},
+  {id:'en',name:'ইংরেজি',topics:[
+    {id:'phrase',label:'Phrase',title:'Phrase এর অর্থ লিখুন',def:5,match:n=>qmHas(n,'phrase')},
+    {id:'prep',label:'Preposition',title:'Preposition নির্ণয় করুন',def:5,match:n=>qmHas(n,'preposition')},
+    {id:'voice',label:'Voice',title:'Voice পরিবর্তন করুন',def:5,match:n=>qmHas(n,'voice')},
+    {id:'transf',label:'Transformation',title:'Transformation করুন',def:5,match:n=>qmHas(n,'transformation')},
+    {id:'fill',label:'Fill in the Gaps',title:'Fill in the Gaps পূরণ করুন',def:5,match:n=>qmHas(n,'fill in','fill-in','gap')},
+    {id:'transl',label:'Translation',title:'Translation করুন',def:5,match:n=>qmHas(n,'translation')},
+    {id:'correct',label:'Correction',title:'Correction করুন',def:5,match:n=>qmHas(n,'correction')},
+    {id:'narr',label:'Narration',title:'Narration পরিবর্তন করুন',def:5,match:n=>qmHas(n,'narration')}
+  ]},
+  {id:'gk',name:'সাধারণ জ্ঞান',topics:[
+    {id:'gkbd',label:'সাধারণ জ্ঞান বাংলাদেশ',title:'সাধারণ জ্ঞান (বাংলাদেশ) প্রশ্নের উত্তর লিখুন',def:10,match:n=>qmHas(n,'সাধারণ জ্ঞান')&&qmHas(n,'বাংলাদেশ'),fallback:true},
+    {id:'gkint',label:'সাধারণ জ্ঞান আন্তর্জাতিক',title:'সাধারণ জ্ঞান (আন্তর্জাতিক) প্রশ্নের উত্তর লিখুন',def:10,match:n=>qmHas(n,'সাধারণ জ্ঞান')&&qmHas(n,'আন্তর্জাতিক','বিশ্ব','international'),fallback:true},
+    {id:'purno',label:'পূর্ণরূপ',title:'পূর্ণরূপ লিখুন',def:5,match:n=>qmHas(n,'পূর্ণরূপ','পূর্ণ রূপ')}
+  ]}
+];
+let qmShowAns=false, qmSub='bn', qmSel={}, qmPools={}, qmPlain=[], qmPaper=[], qmView='pick';
+QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{qmSel[tp.id]={on:false,n:tp.def};}));
+
+function qmBuildPools(){
+  qmPools={}; qmPlain=[];
+  QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{qmPools[tp.id]=[];}));
+  const seen={};
+  Object.keys(allDays).map(Number).sort((a,b)=>a-b).forEach(d=>{
+    const day=allDays[d]; if(!day||!day.topics) return;
+    day.topics.forEach(t=>{
+      const title=String(t.title||''); const low=title.toLowerCase();
+      if(low.includes('বাড়ির কাজ')||low.includes('বাড়িরকাজ')||low.includes('বাড়ীর কাজ')||low.includes('homework')) return;
+      let hit=null;
+      for(const s of QM_SUBJECTS){ for(const tp of s.topics){ if(tp.match(low)){hit=tp;break;} } if(hit) break; }
+      const plainGK=!hit&&low.includes('সাধারণ জ্ঞান');
+      if(!hit&&!plainGK) return;
+      (t.items||[]).forEach(it=>{
+        if(!it||!it.q) return;
+        const key=(hit?hit.id:'plain')+'⟂'+it.q;
+        if(seen[key]) return; seen[key]=1;
+        (hit?qmPools[hit.id]:qmPlain).push(it);
+      });
+    });
+  });
+  // সাধারণ জ্ঞান টাইটেলে বাংলাদেশ/আন্তর্জাতিক না থাকলে সেগুলো খালি পুলে ব্যবহার হবে
+  ['gkbd','gkint'].forEach(id=>{ if(!qmPools[id].length&&qmPlain.length) qmPools[id]=qmPlain.slice(); });
+}
+function qmAvail(id){ return (qmPools[id]||[]).length; }
+function qmClamp(tp){
+  const a=qmAvail(tp.id); let n=parseInt(qmSel[tp.id].n,10); if(!n||n<1) n=1;
+  return Math.min(n,a);
+}
+
+function openQM(){
+  qmBuildPools(); qmView='pick'; qmPaper=[]; qmShowAns=false;
+  showAppOverlay('qmOv'); qmRender();
+}
+function closeQM(){ closeAppOverlay('qmOv'); }
+function qmBackToPicker(){ qmView='pick'; qmRender(); }
+
+function qmRender(){
+  const body=document.getElementById('qmBody');
+  const back=document.getElementById('qmBack'), regen=document.getElementById('qmRegen');
+  body.scrollTop=0;
+  if(qmView==='paper'){
+    back.style.display=''; regen.style.display='';
+    document.getElementById('qmTitle').textContent='প্রশ্নপত্র';
+    if(!qmPaper.length){ body.innerHTML='<div class="qm-empty">কোনো প্রশ্ন তৈরি করা যায়নি।</div>'; return; }
+    body.innerHTML=qmPaper.map((sec,i)=>{
+      return `<div class="qm-t">${bn(i+1)}) ${esc(sec.title)}</div>`+sec.items.map((it,j)=>`<div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?`<div class="qm-a">উত্তর: ${br(esc(it.a))}</div>`:'')).join('');
+    }).join('')+`<div class="qm-ansbar"><button type="button" class="qm-btn main" onclick="qmToggleAns()">${qmShowAns?'উত্তর লুকান':'উত্তরসহ দেখুন'}</button></div>`;
+    return;
+  }
+  back.style.display='none'; regen.style.display='none';
+  document.getElementById('qmTitle').textContent='Question Maker';
+  if(!Object.keys(allDays).length){
+    body.innerHTML='<div class="qm-empty">কোনো পড়া লোড হয়নি।<br>আগে সেটিংস থেকে Drive বা JSON লোড করুন।</div>'; return;
+  }
+  const tabs=QM_SUBJECTS.map(s=>`<button type="button" class="qm-tab${qmSub===s.id?' on':''}" onclick="qmSetSub('${s.id}')">${s.name}</button>`).join('');
+  const sub=QM_SUBJECTS.find(s=>s.id===qmSub);
+  const rows=sub.topics.map(tp=>{
+    const a=qmAvail(tp.id), st=qmSel[tp.id], dis=a===0;
+    return `<div class="qm-row${st.on&&!dis?'':' off'}" id="qmRow_${tp.id}">
+      <input type="checkbox" id="qmCk_${tp.id}" ${st.on&&!dis?'checked':''} ${dis?'disabled':''} onchange="qmToggle('${tp.id}',this.checked)">
+      <label for="qmCk_${tp.id}">${esc(tp.label)}</label>
+      <span class="qm-avail">${dis?'প্রশ্ন নেই':'মোট '+bn(a)+'টি'}</span>
+      <input type="number" min="1" max="${a||1}" value="${st.n}" ${dis?'disabled':''} oninput="qmSetN('${tp.id}',this.value)" aria-label="${esc(tp.label)} প্রশ্ন সংখ্যা">
+    </div>`;
+  }).join('');
+  body.innerHTML=`<div class="qm-tabs">${tabs}</div>
+    <div class="qm-sub-head"><span>টপিক বেছে নিন · ডানের ঘরে প্রশ্ন সংখ্যা</span><button type="button" class="qm-btn" onclick="qmSelectAll()">সব সিলেক্ট / বাদ</button></div>
+    ${rows}
+    <div class="qm-foot"><div class="qm-sum" id="qmSum"></div><button type="button" class="qm-btn main" id="qmGo" onclick="qmGenerate()">প্রশ্ন তৈরি করুন</button></div>`;
+  qmUpdateSummary();
+}
+function qmToggleAns(){
+  const body=document.getElementById('qmBody'); const st=body.scrollTop;
+  qmShowAns=!qmShowAns; qmRender(); body.scrollTop=st;
+}
+function qmSetSub(id){ qmSub=id; qmRender(); }
+function qmToggle(id,on){
+  qmSel[id].on=on;
+  const row=document.getElementById('qmRow_'+id); if(row) row.classList.toggle('off',!on);
+  qmUpdateSummary();
+}
+function qmSetN(id,v){ qmSel[id].n=v; qmUpdateSummary(); }
+function qmSelectAll(){
+  const sub=QM_SUBJECTS.find(s=>s.id===qmSub);
+  const usable=sub.topics.filter(tp=>qmAvail(tp.id)>0);
+  const allOn=usable.length&&usable.every(tp=>qmSel[tp.id].on);
+  usable.forEach(tp=>{qmSel[tp.id].on=!allOn;});
+  qmRender();
+}
+function qmUpdateSummary(){
+  let topics=0,qs=0;
+  QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{
+    if(qmSel[tp.id].on&&qmAvail(tp.id)>0){ topics++; qs+=qmClamp(tp); }
+  }));
+  const sum=document.getElementById('qmSum'), go=document.getElementById('qmGo');
+  if(sum) sum.textContent=topics?`${bn(topics)}টি টপিক · মোট ${bn(qs)}টি প্রশ্ন (সব বিষয় মিলিয়ে)`:'অন্তত একটি টপিক সিলেক্ট করুন';
+  if(go) go.disabled=!topics;
+}
+function qmGenerate(){
+  const used=new Set(); const paper=[];
+  QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{
+    if(!qmSel[tp.id].on) return;
+    const pool=(qmPools[tp.id]||[]).filter(it=>!used.has(String(it.q).trim()));
+    if(!pool.length) return;
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    const picked=pool.slice(0,Math.min(qmClamp(tp),pool.length));
+    picked.forEach(it=>used.add(String(it.q).trim()));
+    if(picked.length) paper.push({title:tp.title,items:picked});
+  }));
+  if(!paper.length){ toast('কোনো প্রশ্ন পাওয়া যায়নি',true); return; }
+  qmPaper=paper; qmView='paper'; qmShowAns=false; qmRender();
+}
+</script>
 </body>
 </html>
