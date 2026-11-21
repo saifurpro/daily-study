@@ -1332,6 +1332,7 @@ const __appInit=()=>{
    তাই DOM তৈরি হওয়া মাত্র অ্যাপ চালু করা হচ্ছে (ডেটা সবই localStorage থেকে আসে)। */
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',__appInit);
 else __appInit();
+setTimeout(()=>{ try{ if(typeof _getSearchIndex==='function') _getSearchIndex(); }catch(e){} },1500);
 
 function initTrackerTopbar(){
   if(typeof loadTrackerData === 'function') loadTrackerData();
@@ -2547,12 +2548,20 @@ function _getSearchIndex(){
   _srIdx=out;_srIdxSig=sig;return out;
 }
 function handleSearch(q){
-  // debounce: টাইপ থামার 280ms পরে সার্চ হবে
+  // টাইপ করা মাত্র সার্চ-মোড: শুধু রেজাল্ট দেখাবে (টপিক লিস্ট/সিলেক্টর লুকানো)
+  const _sv=document.getElementById('studyView');
+  if(_sv) _sv.classList.toggle('sr-on',!!q.trim());
+  if(q.trim()){
+    const _mc=document.getElementById('mainContent'); if(_mc) _mc.style.display='none';
+    const _pw=document.querySelector('.progress-wrap'); if(_pw) _pw.style.display='none';
+  }
+  // debounce: টাইপ থামার 200ms পরে সার্চ হবে
   clearTimeout(_searchTimer);
-  _searchTimer = setTimeout(()=>_doSearch(q), 280);
+  _searchTimer = setTimeout(()=>_doSearch(q), 200);
 }
 function _doSearch(q){
   const sr=document.getElementById('searchResults'),mc=document.getElementById('mainContent'),pw=document.querySelector('.progress-wrap');
+  { const _sv=document.getElementById('studyView'); if(_sv) _sv.classList.toggle('sr-on',!!q.trim()); }
   if(!q.trim()){
     sr.style.display='none';mc.style.display='block';pw.style.display=studySelectionMade?'block':'none';
     // সার্চ শেষে পুরনো স্ক্রিন পজিশনে ফেরত যাও
@@ -5814,5 +5823,13 @@ function qmGenerate(){
   qmPaper=paper; qmView='paper'; qmShowAns=false; qmRender();
 }
 </script>
+<style>
+/* সার্চ চলাকালীন: শুধু রেজাল্ট + হালকা রেন্ডার */
+.study-overlay.sr-on{backdrop-filter:none;-webkit-backdrop-filter:none}
+.study-overlay.sr-on .study-selection-controls,
+.study-overlay.sr-on .study-option-grid,
+.study-overlay.sr-on .study-dialog-title{display:none!important}
+.study-overlay.sr-on .search-result-card{animation:none;content-visibility:auto;contain-intrinsic-size:auto 110px}
+</style>
 </body>
 </html>
