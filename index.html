@@ -442,20 +442,17 @@ body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] 
 .fav-empty .fe-emo{font-size:2.4rem;display:block;margin-bottom:12px}
 .fav-empty p{font-size:.88rem;line-height:1.9}
 
-/* ── PWA ইনস্টল ব্যানার ── */
+/* ── PWA ইনস্টল কার্ড ── */
 .pwa-banner{
   position:fixed;bottom:calc(78px + env(safe-area-inset-bottom));left:50%;
   transform:translateX(-50%);
-  width:calc(100% - 28px);max-width:440px;
-  display:grid;grid-template-columns:48px minmax(0,1fr) 34px;
-  align-items:center;gap:12px;
-  padding:16px;border:1px solid color-mix(in srgb,var(--accent) 24%,var(--border));
-  border-radius:22px;
-  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 8%,var(--surface)),var(--surface) 58%);
+  width:calc(100% - 28px);max-width:430px;box-sizing:border-box;
+  padding:24px 20px 20px;
+  background:#1b2037;color:#fff;
+  border:1px solid rgba(255,255,255,.07);border-radius:22px;
   z-index:500;
-  box-shadow:0 18px 48px rgba(0,0,0,.24),0 3px 12px rgba(0,0,0,.1);
+  box-shadow:0 18px 48px rgba(0,0,0,.45),0 3px 12px rgba(0,0,0,.25);
   animation:pwaBannerIn .32s cubic-bezier(.2,.8,.2,1) both;
-  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
   font-family:SolaimanLipi,sans-serif;
 }
 @keyframes pwaBannerIn{
@@ -463,46 +460,32 @@ body:not(.landscape) .table-wrap[data-topic*="বিপরীত শব্দ"] 
   to{opacity:1;transform:translate(-50%,0) scale(1)}
 }
 body.landscape .pwa-banner{bottom:14px}
-.pwa-icon{
-  width:48px;height:48px;display:grid;place-items:center;overflow:hidden;
-  border-radius:16px;background:color-mix(in srgb,var(--accent) 13%,var(--surface));
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent),0 5px 14px rgba(0,0,0,.08);
+.pwa-ico{font-size:3rem;line-height:1;margin-bottom:14px}
+.pwa-t{font-size:1.45rem;font-weight:800;line-height:1.35;color:#fff;margin-bottom:6px}
+.pwa-s{font-size:.92rem;color:#8d96b6;line-height:1.7;margin-bottom:20px}
+.pwa-s b{color:#cfd5ec;font-weight:700}
+.pwa-actions{display:grid;grid-template-columns:1.1fr 1fr;gap:12px}
+.pwa-go,.pwa-x{
+  min-height:54px;display:flex;align-items:center;justify-content:center;
+  border-radius:15px;padding:10px 14px;font-size:1rem;font-weight:800;
+  font-family:SolaimanLipi,sans-serif;color:#fff;cursor:pointer;
+  transition:transform .16s,filter .16s;
 }
-.pwa-icon img{width:36px;height:36px;object-fit:contain}
-.pwa-copy{min-width:0}
-.pwa-t{font-size:.96rem;font-weight:800;line-height:1.4;color:var(--text);margin-bottom:4px}
-.pwa-s{font-size:.75rem;color:var(--muted);line-height:1.6}
-.pwa-s b{color:var(--accent);font-weight:700}
-.pwa-go{
-  grid-column:1/-1;min-height:48px;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 72%,#123c48));
-  color:#fff;border:0;border-radius:15px;
-  padding:11px 16px;font-size:.9rem;font-weight:800;cursor:pointer;
-  font-family:SolaimanLipi,sans-serif;
-  box-shadow:0 7px 18px color-mix(in srgb,var(--accent) 28%,transparent);
-  transition:transform .16s,filter .16s,box-shadow .16s;
-}
-.pwa-go:hover{filter:brightness(1.06);box-shadow:0 7px 18px color-mix(in srgb,var(--accent) 32%,transparent)}
-.pwa-go:active{transform:scale(.98)}
-.pwa-go:focus-visible,.pwa-x:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,white);outline-offset:3px}
-.pwa-x{
-  width:34px;height:34px;display:grid;place-items:center;
-  border:1px solid var(--border);border-radius:11px;background:var(--card);
-  color:var(--muted);font-size:.9rem;cursor:pointer;
-}
-.pwa-x:hover{background:color-mix(in srgb,var(--accent) 10%,var(--card));color:var(--text)}
+.pwa-go{background:#33c98d;border:0}
+.pwa-go:disabled{opacity:.6;cursor:default}
+.pwa-x{background:#0d1122;border:1px solid #272e4b}
+.pwa-go:hover,.pwa-x:hover{filter:brightness(1.08)}
+.pwa-go:active,.pwa-x:active{transform:scale(.98)}
+.pwa-go:focus-visible,.pwa-x:focus-visible{outline:3px solid rgba(51,201,141,.55);outline-offset:3px}
 @media(max-width:380px){
-  .pwa-banner{width:calc(100% - 20px);padding:13px;gap:9px;grid-template-columns:42px minmax(0,1fr) 32px}
-  .pwa-icon{width:42px;height:42px;border-radius:13px}
-  .pwa-icon img{width:32px;height:32px}
-  .pwa-t{font-size:.88rem}
-  .pwa-s{font-size:.7rem}
-  .pwa-go{min-height:46px}
+  .pwa-banner{width:calc(100% - 20px);padding:20px 16px 16px}
+  .pwa-t{font-size:1.25rem}
+  .pwa-s{font-size:.85rem}
+  .pwa-go,.pwa-x{min-height:50px;font-size:.92rem}
 }
 @media(prefers-reduced-motion:reduce){
   .pwa-banner{animation:none}
-  .pwa-go{transition:none}
+  .pwa-go,.pwa-x{transition:none}
 }
 
 .ls-nav{display:none;align-items:center;gap:2px;flex-shrink:0}
@@ -1137,12 +1120,6 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
     <h1 id="studyHeroTitle">মন না চাইলেও পড়তে বসো,<br>কারণ, Success সব সময় Motivation থেকে আসে না... আসে পরিশ্রম থেকে</h1>
     <p class="study-hero-dua">রব্বি জিদনি ইলমা, রব্বি জিদনি ইলমা, রব্বি জিদনি ইলমা</p>
     <button class="study-hero-cta" onclick="openStudyMode('day')"><span>📚</span> পড়া শুরু করুন <span aria-hidden="true">→</span></button>
-  </div>
-  <div class="study-hero-art" aria-hidden="true">
-    <span class="hero-spark hero-spark-one">✦</span>
-    <span class="hero-spark hero-spark-two">✳</span>
-    <div class="hero-book"><span>📖</span></div>
-    <span class="hero-orbit"></span>
   </div>
   <div class="study-hero-tags" aria-label="অ্যাপের সুবিধা">
     <span>◷ নিজের সময়ে</span><span>✦ সহজ রিভিশন</span><span>↗ অগ্রগতি দেখুন</span>
@@ -3637,7 +3614,7 @@ window.addEventListener('appinstalled', ()=>{
   toast('✅ ইনস্টল হয়েছে! হোম স্ক্রিন থেকে খুলুন');
 });
 
-/* mode: 'auto' = আসল প্রম্পট আছে | 'ios' | 'manual' = নির্দেশনা */
+/* mode: 'auto' = ব্রাউজারের আসল ইনস্টল প্রম্পট তৈরি (এক ট্যাপে সরাসরি ইনস্টল) | 'ios' = iPhone (Apple সরাসরি ইনস্টল করতে দেয় না) */
 function showInstallBanner(mode){
   if(_pwaBannerShown) return;
   if(isStandalone()) return;            // ইতিমধ্যেই অ্যাপ হিসেবে চলছে
@@ -3646,47 +3623,41 @@ function showInstallBanner(mode){
   if(document.getElementById('pwaBanner')) return;
   _pwaBannerShown = true;
 
-  let body, btn;
-  if(mode==='auto'){
-    body='হোম স্ক্রিন থেকেই এক ট্যাপে পড়া শুরু করুন।';
-  } else if(mode==='ios'){
-    body='নিচের <b>শেয়ার</b> ⬆️ বাটন চাপুন, তারপর <b>Add to Home Screen</b> বেছে নিন।';
-  } else {
-    body='ব্রাউজার মেনু <b>⋮</b> খুলে <b>Install app</b> বা <b>Add to Home screen</b> চাপুন।';
-  }
-  btn='<button type="button" onclick="doInstallPWA()" class="pwa-go">📲 অ্যাপ ইনস্টল করুন</button>';
+  const ios = mode==='ios';
+  const body = ios
+    ? 'নিচের <b>শেয়ার</b> ⬆️ বাটন চাপুন, তারপর <b>Add to Home Screen</b> বেছে নিন।'
+    : 'দ্রুত খুলুন, হোম স্ক্রিন থেকেই পড়াশোনা শুরু করুন।';
 
   const banner = document.createElement('div');
   banner.id = 'pwaBanner';
   banner.className = 'pwa-banner';
   banner.setAttribute('role','region');
-  banner.setAttribute('aria-label','মোবাইলে অ্যাপ ইনস্টল করুন');
+  banner.setAttribute('aria-label','অ্যাপ হিসেবে ইনস্টল করুন');
   banner.innerHTML = `
-    <span class="pwa-icon" aria-hidden="true"><img src="./icon-192.png" alt=""></span>
-    <div class="pwa-copy">
-      <div class="pwa-t">লিখিত প্রস্তুতি অ্যাপ ইনস্টল করুন</div>
-      <div class="pwa-s">${body}</div>
-    </div>
-    <button type="button" onclick="dismissInstall()" class="pwa-x" aria-label="ইনস্টল বার্তা বন্ধ করুন">✕</button>
-    ${btn}`;
+    <div class="pwa-ico" aria-hidden="true">📲</div>
+    <div class="pwa-t">অ্যাপ হিসেবে ইনস্টল করুন</div>
+    <div class="pwa-s">${body}</div>
+    <div class="pwa-actions">
+      <button type="button" id="pwaGo" onclick="doInstallPWA()" class="pwa-go">${ios?'বুঝেছি':'ইনস্টল করুন'}</button>
+      <button type="button" onclick="dismissInstall()" class="pwa-x">এখন নয়</button>
+    </div>`;
   document.body.appendChild(banner);
 }
 
+/* ইনস্টল বাটন: ব্রাউজারের ইনস্টল ডায়ালগ সরাসরি খোলে — মেনুতে গিয়ে খুঁজতে হয় না */
 async function doInstallPWA(){
   if(!pwaInstallEvent){
-    if(isIOS()){
-      toast('শেয়ার বাটন ⬆️ চাপুন → Add to Home Screen নির্বাচন করুন', true);
-    }else{
-      toast('ব্রাউজার মেনু ⋮ খুলে Install app নির্বাচন করুন', true);
-    }
+    const b=document.getElementById('pwaBanner'); if(b) b.remove();
+    if(!isIOS()) toast('এই মুহূর্তে ইনস্টল অপশন পাওয়া যাচ্ছে না — একটু পরে আবার চেষ্টা করুন', true);
     return;
   }
+  const go=document.getElementById('pwaGo'); if(go) go.disabled=true;
   try{
     pwaInstallEvent.prompt();
     const result = await pwaInstallEvent.userChoice;
     if(result && result.outcome === 'accepted') toast('✅ ইনস্টল হচ্ছে…');
   }catch(e){
-    toast('ইনস্টল করা গেল না — মেনু ⋮ → Install app দেখুন', true);
+    toast('ইনস্টল করা গেল না — একটু পরে আবার চেষ্টা করুন', true);
   }
   pwaInstallEvent = null;
   const banner = document.getElementById('pwaBanner');
@@ -3699,15 +3670,15 @@ function dismissInstall(){
   if(banner) banner.remove();
 }
 
-/* beforeinstallprompt না এলে (iOS Safari, সার্ভিস ওয়ার্কার নেই,
-   বা ব্রাউজার সাপোর্ট করে না) — ৮ সেকেন্ড পরে ম্যানুয়াল নির্দেশনা */
+/* Android/Chrome: কার্ড দেখানো হয় ব্রাউজার ইনস্টল ইভেন্ট (beforeinstallprompt) দেওয়া মাত্র।
+   iPhone-এ ইভেন্ট নেই — তাই ৪ সেকেন্ড পরে শেয়ার-বাটনের ধাপ দেখানো হয়। */
 window.addEventListener('load', ()=>{
   setTimeout(()=>{
     if(pwaInstallEvent) return;          // আসল প্রম্পট এসে গেছে
     if(isStandalone() || pwaDismissed()) return;
     if(location.protocol==='file:') return;
-    showInstallBanner(isIOS() ? 'ios' : 'manual');
-  }, 8000);
+    if(isIOS()) showInstallBanner('ios');
+  }, 4000);
 });
 
 /* ডায়াগনস্টিক — কনসোলে pwaDebug() লিখলে কী কী বাকি আছে দেখাবে */
@@ -4227,6 +4198,9 @@ function showCompletionMessage(){
   <div class="qm-top">
     <b id="qmTitle">Question Maker</b>
     <div class="qm-top-btns">
+      <button type="button" class="qm-btn" id="qmShareImg" onclick="qmShareImage()" style="display:none">🖼️ ছবি শেয়ার</button>
+      <button type="button" class="qm-btn" id="qmShare" onclick="qmShare()" style="display:none">📤 PDF শেয়ার</button>
+      <button type="button" class="qm-btn" id="qmPrint" onclick="qmPrint()" style="display:none">🖨️ প্রিন্ট</button>
       <button type="button" class="qm-btn" id="qmRegen" onclick="qmGenerate()" style="display:none">🔄 নতুন প্রশ্ন</button>
       <button type="button" class="qm-btn" id="qmBack" onclick="qmBackToPicker()" style="display:none">← ফিরে যান</button>
       <button type="button" class="qm-btn" onclick="closeQM()">✕ বন্ধ</button>
@@ -4474,7 +4448,7 @@ body{
   position:relative;
   isolation:isolate;
   display:grid;
-  grid-template-columns:minmax(0,1.3fr) minmax(190px,.7fr);
+  grid-template-columns:minmax(0,1fr);
   align-items:center;
   gap:20px;
   max-width:1020px;
@@ -4496,7 +4470,7 @@ body{
 }
 .study-hero::before{width:360px;height:360px;right:4%;top:-180px}
 .study-hero::after{width:260px;height:260px;right:9%;top:-130px}
-.study-hero-copy{max-width:570px}
+.study-hero-copy{max-width:none;width:100%}
 .study-hero-kicker{
   display:inline-flex;
   align-items:center;
@@ -4520,13 +4494,13 @@ body{
   letter-spacing:-.025em;
 }
 .study-hero p{
-  max-width:450px;
+  max-width:none;
   color:rgba(255,255,255,.8);
   font-size:1rem;
   line-height:1.85;
 }
 .study-hero .study-hero-dua{
-  max-width:530px;
+  max-width:none;
   margin:12px 0 0;
   padding:9px 13px;
   border-left:3px solid var(--accent2);
@@ -4555,22 +4529,6 @@ body{
   box-shadow:0 5px 16px rgba(4,36,32,.2);
 }
 .study-hero-cta span:last-child{font-size:1.15rem}
-.study-hero-art{position:relative;display:grid;place-items:center;min-height:170px}
-.hero-book{
-  display:grid;
-  width:154px;height:154px;
-  place-items:center;
-  border:1px solid rgba(255,255,255,.28);
-  border-radius:42px;
-  background:linear-gradient(145deg,rgba(255,255,255,.2),rgba(255,255,255,.07));
-  box-shadow:0 20px 45px rgba(5,42,38,.22),inset 0 1px rgba(255,255,255,.2);
-  transform:rotate(7deg);
-}
-.hero-book span{font-size:4.7rem;filter:drop-shadow(0 8px 8px rgba(4,40,36,.2))}
-.hero-spark{position:absolute;color:#f2c77f}
-.hero-spark-one{top:12%;right:20%;font-size:1.8rem}
-.hero-spark-two{bottom:14%;left:17%;font-size:1.2rem}
-.hero-orbit{position:absolute;width:204px;height:204px;border:1px dashed rgba(255,255,255,.32);border-radius:50%}
 .study-hero-tags{
   position:absolute;
   right:clamp(24px,5vw,54px);
@@ -4916,7 +4874,7 @@ body{
   .exam-overlay .exam-body{padding:16px 12px 90px}
   .exam-result{padding:18px 13px}
   .study-hero{
-    grid-template-columns:minmax(0,1fr) 100px;
+    grid-template-columns:minmax(0,1fr);
     gap:4px;
     min-height:270px;
     margin:14px 14px 0;
@@ -4928,12 +4886,6 @@ body{
   .study-hero p{font-size:.88rem;line-height:1.7}
   .study-hero .study-hero-dua{margin-top:9px;padding:8px 10px;font-size:.76rem;line-height:1.65}
   .study-hero-cta{min-height:42px;margin-top:13px;padding:8px 13px;font-size:.84rem}
-  .study-hero-art{min-height:130px}
-  .hero-book{width:92px;height:92px;border-radius:28px}
-  .hero-book span{font-size:3rem}
-  .hero-orbit{width:126px;height:126px}
-  .hero-spark-one{right:7%;font-size:1.3rem}
-  .hero-spark-two{left:0}
   .study-hero-tags{right:18px;bottom:15px;left:18px;gap:5px}
   .study-hero-tags span{padding:4px 7px;font-size:.64rem}
   .home-shortcuts{grid-template-columns:1fr;gap:9px;margin:12px 14px 0;padding-bottom:120px}
@@ -4983,12 +4935,9 @@ body{
   }
 }
 @media (max-width:360px){
-  .study-hero{grid-template-columns:minmax(0,1fr) 74px;padding:22px 15px 72px}
+  .study-hero{grid-template-columns:minmax(0,1fr);padding:22px 15px 72px}
   .study-hero h1{font-size:1.55rem}
   .study-hero p{font-size:.82rem}
-  .hero-book{width:72px;height:72px;border-radius:22px}
-  .hero-book span{font-size:2.4rem}
-  .hero-orbit{width:100px;height:100px}
   .study-hero-tags{right:12px;left:12px}
   .study-hero-tags span{font-size:.58rem}
   .home-shortcut{gap:9px}
@@ -5751,7 +5700,7 @@ function qmRender(){
   const back=document.getElementById('qmBack'), regen=document.getElementById('qmRegen');
   body.scrollTop=0;
   if(qmView==='paper'){
-    back.style.display=''; regen.style.display='';
+    back.style.display=''; regen.style.display=''; document.getElementById('qmPrint').style.display=''; document.getElementById('qmShare').style.display=''; document.getElementById('qmShareImg').style.display='';
     document.getElementById('qmTitle').textContent='প্রশ্নপত্র';
     if(!qmPaper.length){ body.innerHTML='<div class="qm-empty">কোনো প্রশ্ন তৈরি করা যায়নি।</div>'; return; }
     body.innerHTML=qmPaper.map((sec,i)=>{
@@ -5759,7 +5708,7 @@ function qmRender(){
     }).join('')+`<div class="qm-ansbar"><button type="button" class="qm-btn main" onclick="qmToggleAns()">${qmShowAns?'উত্তর লুকান':'উত্তরসহ দেখুন'}</button></div>`;
     return;
   }
-  back.style.display='none'; regen.style.display='none';
+  back.style.display='none'; regen.style.display='none'; document.getElementById('qmPrint').style.display='none'; document.getElementById('qmShare').style.display='none'; document.getElementById('qmShareImg').style.display='none';
   document.getElementById('qmTitle').textContent='Question Maker';
   if(!Object.keys(allDays).length){
     body.innerHTML='<div class="qm-empty">কোনো পড়া লোড হয়নি।<br>আগে সেটিংস থেকে Drive বা JSON লোড করুন।</div>'; return;
@@ -5780,6 +5729,194 @@ function qmRender(){
     ${rows}
     <div class="qm-foot"><div class="qm-sum" id="qmSum"></div><button type="button" class="qm-btn main" id="qmGo" onclick="qmGenerate()">প্রশ্ন তৈরি করুন</button></div>`;
   qmUpdateSummary();
+}
+
+/* ══════════════════════════════════════
+   QUESTION MAKER — PDF বানিয়ে সরাসরি শেয়ার (WhatsApp, Facebook ইত্যাদি)
+   কোনো বাইরের লাইব্রেরি লাগে না: canvas-এ A4 পাতা এঁকে PDF বানানো হয়
+══════════════════════════════════════ */
+let qmPdfCache={key:'',blob:null}, qmSharing=false;
+
+async function qmRenderPages(){
+  const W=1588,H=2246,M=120,LH=1.65;
+  const family=getComputedStyle(document.getElementById('qmBody')).fontFamily||'sans-serif';
+  try{ await document.fonts.load('40px '+family,'অআকখ'); await document.fonts.load('bold 44px '+family,'অআকখ'); await document.fonts.ready; }catch(e){}
+  const pages=[]; let cv,ctx,y;
+  const newPage=()=>{
+    cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    ctx=cv.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+    ctx.textBaseline='alphabetic'; y=M; pages.push(cv);
+  };
+  const wrap=(text,font,maxW)=>{
+    ctx.font=font; const out=[];
+    String(text).split('\n').forEach(par=>{
+      const words=par.split(/\s+/).filter(Boolean); let line='';
+      if(!words.length){ out.push(''); return; }
+      words.forEach(w=>{
+        const test=line?line+' '+w:w;
+        if(ctx.measureText(test).width<=maxW){ line=test; return; }
+        if(line) out.push(line);
+        if(ctx.measureText(w).width<=maxW){ line=w; return; }
+        let part=''; // অতি লম্বা শব্দ অক্ষর ধরে ভাঙা
+        for(const ch of w){ if(ctx.measureText(part+ch).width>maxW){ out.push(part); part=ch; } else part+=ch; }
+        line=part;
+      });
+      if(line) out.push(line);
+    });
+    return out;
+  };
+  const draw=(lines,font,color,x,size)=>{
+    const step=Math.round(size*LH);
+    lines.forEach(l=>{
+      if(y+step>H-M){ newPage(); }
+      ctx.font=font; ctx.fillStyle=color; ctx.fillText(l,x,y+size); y+=step;
+    });
+  };
+  newPage();
+  qmPaper.forEach((sec,i)=>{
+    const tFont='bold 44px '+family, qFont='40px '+family, aFont='38px '+family;
+    const tLines=wrap(`${bn(i+1)}) ${sec.title}`,tFont,W-2*M);
+    // শিরোনাম একা পাতার শেষে পড়লে নতুন পাতায় নাও
+    if(y+Math.round(44*LH)*tLines.length+Math.round(40*LH)*2>H-M && y>M) newPage();
+    if(i>0) y+=36;
+    draw(tLines,tFont,'#111',M,44); y+=10;
+    sec.items.forEach((it,j)=>{
+      const qLines=wrap(`${QM_LETTERS[j]||bn(j+1)}) ${it.q}`,qFont,W-2*M-40);
+      draw(qLines,qFont,'#111',M+40,40);
+      if(qmShowAns){
+        const aLines=wrap(`উত্তর: ${it.a}`,aFont,W-2*M-80);
+        draw(aLines,aFont,'#0a6b3d',M+80,38);
+      }
+      y+=10;
+    });
+  });
+  return pages;
+}
+
+function qmMakePdf(jpegs){ // jpegs: [{data:Uint8Array,w,h}]
+  const enc=new TextEncoder(), parts=[], offs=[]; let len=0;
+  const push=b=>{ if(typeof b==='string') b=enc.encode(b); parts.push(b); len+=b.length; };
+  const obj=(id,fn)=>{ offs[id]=len; push(id+' 0 obj\n'); fn(); push('\nendobj\n'); };
+  const n=jpegs.length;
+  push('%PDF-1.4\n');
+  obj(1,()=>push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2,()=>push('<< /Type /Pages /Count '+n+' /Kids ['+jpegs.map((_,i)=>(3+i*3)+' 0 R').join(' ')+'] >>'));
+  jpegs.forEach((p,i)=>{
+    const pid=3+i*3, cid=4+i*3, iid=5+i*3, cs='q 595 0 0 842 0 0 cm /Im0 Do Q';
+    obj(pid,()=>push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 '+iid+' 0 R >> >> /Contents '+cid+' 0 R >>'));
+    obj(cid,()=>push('<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream'));
+    obj(iid,()=>{
+      push('<< /Type /XObject /Subtype /Image /Width '+p.w+' /Height '+p.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.data.length+' >>\nstream\n');
+      push(p.data); push('\nendstream');
+    });
+  });
+  const xref=len, total=3*n+3;
+  let x='xref\n0 '+total+'\n0000000000 65535 f \n';
+  for(let id=1;id<total;id++) x+=String(offs[id]).padStart(10,'0')+' 00000 n \n';
+  push(x); push('trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
+  return new Blob(parts,{type:'application/pdf'});
+}
+
+async function qmBuildPdf(){
+  const key=JSON.stringify(qmPaper.map(s=>[s.title,s.items.map(i=>i.q)]))+'|'+qmShowAns;
+  if(qmPdfCache.key===key&&qmPdfCache.blob) return qmPdfCache.blob;
+  const cvs=await qmRenderPages();
+  const jpegs=cvs.map(cv=>{
+    const b64=cv.toDataURL('image/jpeg',0.92).split(',')[1];
+    const bin=atob(b64), data=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) data[i]=bin.charCodeAt(i);
+    return {data,w:cv.width,h:cv.height};
+  });
+  const blob=qmMakePdf(jpegs);
+  qmPdfCache={key,blob};
+  return blob;
+}
+
+function qmDownload(blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Question-Paper.pdf';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+}
+
+async function qmShare(){
+  if(qmSharing||!qmPaper.length) return;
+  qmSharing=true;
+  const btn=document.getElementById('qmShare'), old=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ PDF হচ্ছে…';
+  try{
+    const blob=await qmBuildPdf();
+    const file=new File([blob],'Question-Paper.pdf',{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file],title:'প্রশ্নপত্র'});
+      }catch(e){
+        if(e&&e.name==='NotAllowedError') toast('PDF তৈরি — আবার "শেয়ার" চাপুন');
+        else if(!e||e.name!=='AbortError'){ qmDownload(blob); toast('শেয়ার হয়নি — PDF ডাউনলোড হয়েছে'); }
+      }
+    }else{
+      qmDownload(blob); toast('এই ব্রাউজারে সরাসরি শেয়ার নেই — PDF ডাউনলোড হয়েছে');
+    }
+  }catch(e){
+    toast('PDF বানানো যায়নি',true);
+  }finally{
+    qmSharing=false; btn.disabled=false; btn.textContent=old;
+  }
+}
+
+
+/* ── ছবি (PNG) আকারে শেয়ার: প্রতি পাতা একটা ছবি, একসাথে সব ছবি শেয়ার হয় ── */
+let qmImgCache={key:'',files:null};
+async function qmBuildImages(){
+  const key=JSON.stringify(qmPaper.map(s=>[s.title,s.items.map(i=>i.q)]))+'|'+qmShowAns;
+  if(qmImgCache.key===key&&qmImgCache.files) return qmImgCache.files;
+  const cvs=await qmRenderPages();
+  const files=[];
+  for(let i=0;i<cvs.length;i++){
+    const blob=await new Promise(res=>cvs[i].toBlob(res,'image/png'));
+    if(!blob) throw new Error('png');
+    files.push(new File([blob],cvs.length>1?`Question-Paper-${i+1}.png`:'Question-Paper.png',{type:'image/png'}));
+  }
+  qmImgCache={key,files};
+  return files;
+}
+async function qmShareImage(){
+  if(qmSharing||!qmPaper.length) return;
+  qmSharing=true;
+  const btn=document.getElementById('qmShareImg'), old=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ ছবি হচ্ছে…';
+  try{
+    const files=await qmBuildImages();
+    if(navigator.canShare&&navigator.canShare({files})){
+      try{
+        await navigator.share({files,title:'প্রশ্নপত্র'});
+      }catch(e){
+        if(e&&e.name==='NotAllowedError') toast('ছবি তৈরি — আবার "ছবি শেয়ার" চাপুন');
+        else if(!e||e.name!=='AbortError'){ qmDownloadFiles(files); toast('শেয়ার হয়নি — ছবি ডাউনলোড হয়েছে'); }
+      }
+    }else{
+      qmDownloadFiles(files); toast('এই ব্রাউজারে সরাসরি শেয়ার নেই — ছবি ডাউনলোড হয়েছে');
+    }
+  }catch(e){
+    toast('ছবি বানানো যায়নি',true);
+  }finally{
+    qmSharing=false; btn.disabled=false; btn.textContent=old;
+  }
+}
+function qmDownloadFiles(files){
+  files.forEach((fl,i)=>setTimeout(()=>{
+    const a=document.createElement('a'); a.href=URL.createObjectURL(fl); a.download=fl.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+  },i*400));
+}
+
+function qmPrint(){
+  /* শুধু প্রশ্নপত্র প্রিন্ট হবে (উত্তর চালু থাকলে উত্তরসহ) */
+  const root=document.documentElement;
+  root.classList.add('qm-printing');
+  const done=()=>{ root.classList.remove('qm-printing'); window.removeEventListener('afterprint',done); };
+  window.addEventListener('afterprint',done);
+  setTimeout(()=>{ try{ window.print(); }catch(e){ done(); } },50);
 }
 function qmToggleAns(){
   const body=document.getElementById('qmBody'); const st=body.scrollTop;
@@ -5830,6 +5967,17 @@ function qmGenerate(){
 .study-overlay.sr-on .study-option-grid,
 .study-overlay.sr-on .study-dialog-title{display:none!important}
 .study-overlay.sr-on .search-result-card{animation:none;content-visibility:auto;contain-intrinsic-size:auto 110px}
+</style>
+<style>
+@media print{
+  html.qm-printing,html.qm-printing body{position:static!important;height:auto!important;overflow:visible!important;background:#fff!important}
+  html.qm-printing body>*:not(#qmOv){display:none!important}
+  html.qm-printing #qmOv{display:block!important;position:static!important;inset:auto!important;height:auto!important;overflow:visible!important;z-index:auto!important}
+  html.qm-printing .qm-top,html.qm-printing .qm-ansbar{display:none!important}
+  html.qm-printing .qm-body{overflow:visible!important;max-width:none!important;padding:0!important;height:auto!important}
+  html.qm-printing .qm-t,html.qm-printing .qm-q,html.qm-printing .qm-a{break-inside:avoid}
+  html.qm-printing .qm-t{break-after:avoid}
+}
 </style>
 </body>
 </html>
