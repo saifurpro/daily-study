@@ -5682,17 +5682,17 @@ function qmBuildPools(){
         const key=(hit?hit.id:'plain')+'⟂'+it.q;
         if(seen[key]) return; seen[key]=1;
         const hd=t.columnHeaders||t.headers||null;
-        (hit?qmPools[hit.id]:qmPlain).push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null});
+        (hit?qmPools[hit.id]:qmPlain).push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null,tid:hit?hit.id:'plain'});
       });
     });
   });
   // সাধারণ জ্ঞান টাইটেলে বাংলাদেশ/আন্তর্জাতিক না থাকলে সেগুলো খালি পুলে ব্যবহার হবে
   ['gkbd','gkint'].forEach(id=>{ if(!qmPools[id].length&&qmPlain.length) qmPools[id]=qmPlain.slice(); });
 }
-/* উত্তর = a, আর তিন-অংশের টপিকে (যেমন সমাস) ex-ও। হেডার থাকলে তার নামে লেবেল */
+/* উত্তর = a; শুধু সমাস টপিকে ex-ও। হেডার থাকলে তার নামে লেবেল */
 function qmAnsParts(it){
   const h=it.h||[]; const out=[];
-  const hasEx=!!(it.ex&&String(it.ex).trim());
+  const hasEx=it.tid==='somas'&&!!(it.ex&&String(it.ex).trim()); // ex শুধু সমাস টপিকে
   const l1=hasEx&&h[1]?h[1]:'উত্তর';
   out.push(`${l1}: ${it.a}`);
   if(hasEx) out.push(`${h[2]||'Example'}: ${it.ex}`);
