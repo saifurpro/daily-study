@@ -5708,13 +5708,17 @@ function qmAnsParts(it){
   return out;
 }
 const QM_INSTITUTE='সলিড প্রিপারেশন';
+function qmMarksText(){
+  const n=qmPaper.reduce((s,p)=>s+p.items.length,0);
+  return 'পূর্ণমান: '+bn(n);
+}
 function qmTimeText(){
   const total=qmPaper.reduce((s,p)=>s+(p.min||0),0);
   const h=Math.floor(total/60), m=total%60;
   let txt='';
   if(h) txt+=bn(h)+' ঘণ্টা';
   if(m) txt+=(txt?' ':'')+bn(m)+' মিনিট';
-  return 'সময়: '+(txt||bn(0)+' মিনিট');
+  return 'সময়: '+(txt||bn(0)+' মিনিট')+'  |  '+qmMarksText();
 }
 function qmAvail(id){ return (qmPools[id]||[]).length; }
 function qmClamp(tp){
