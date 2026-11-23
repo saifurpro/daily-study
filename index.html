@@ -5675,12 +5675,22 @@ function qmBuildPools(){
         if(!it||!it.q) return;
         const key=(hit?hit.id:'plain')+'⟂'+it.q;
         if(seen[key]) return; seen[key]=1;
-        (hit?qmPools[hit.id]:qmPlain).push(it);
+        const hd=t.columnHeaders||t.headers||null;
+        (hit?qmPools[hit.id]:qmPlain).push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null});
       });
     });
   });
   // সাধারণ জ্ঞান টাইটেলে বাংলাদেশ/আন্তর্জাতিক না থাকলে সেগুলো খালি পুলে ব্যবহার হবে
   ['gkbd','gkint'].forEach(id=>{ if(!qmPools[id].length&&qmPlain.length) qmPools[id]=qmPlain.slice(); });
+}
+/* উত্তর = a, আর তিন-অংশের টপিকে (যেমন সমাস) ex-ও। হেডার থাকলে তার নামে লেবেল */
+function qmAnsParts(it){
+  const h=it.h||[]; const out=[];
+  const hasEx=!!(it.ex&&String(it.ex).trim());
+  const l1=hasEx&&h[1]?h[1]:'উত্তর';
+  out.push(`${l1}: ${it.a}`);
+  if(hasEx) out.push(`${h[2]||'Example'}: ${it.ex}`);
+  return out;
 }
 function qmAvail(id){ return (qmPools[id]||[]).length; }
 function qmClamp(tp){
@@ -5704,7 +5714,7 @@ function qmRender(){
     document.getElementById('qmTitle').textContent='প্রশ্নপত্র';
     if(!qmPaper.length){ body.innerHTML='<div class="qm-empty">কোনো প্রশ্ন তৈরি করা যায়নি।</div>'; return; }
     body.innerHTML=qmPaper.map((sec,i)=>{
-      return `<div class="qm-t">${bn(i+1)}) ${esc(sec.title)}</div>`+sec.items.map((it,j)=>`<div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?`<div class="qm-a">উত্তর: ${br(esc(it.a))}</div>`:'')).join('');
+      return `<div class="qm-t">${bn(i+1)}) ${esc(sec.title)}</div>`+sec.items.map((it,j)=>`<div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?qmAnsParts(it).map(p=>`<div class="qm-a">${br(esc(p))}</div>`).join(''):'')).join('');
     }).join('')+`<div class="qm-ansbar"><button type="button" class="qm-btn main" onclick="qmToggleAns()">${qmShowAns?'উত্তর লুকান':'উত্তরসহ দেখুন'}</button></div>`;
     return;
   }
@@ -5784,8 +5794,10 @@ async function qmRenderPages(){
       const qLines=wrap(`${QM_LETTERS[j]||bn(j+1)}) ${it.q}`,qFont,W-2*M-40);
       draw(qLines,qFont,'#111',M+40,40);
       if(qmShowAns){
-        const aLines=wrap(`উত্তর: ${it.a}`,aFont,W-2*M-80);
-        draw(aLines,aFont,'#0a6b3d',M+80,38);
+        qmAnsParts(it).forEach(p=>{
+          const aLines=wrap(p,aFont,W-2*M-80);
+          draw(aLines,aFont,'#0a6b3d',M+80,38);
+        });
       }
       y+=10;
     });
