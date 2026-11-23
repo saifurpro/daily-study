@@ -1117,7 +1117,7 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 
 <section class="study-hero" id="homeBanner" aria-labelledby="studyHeroTitle">
   <div class="study-hero-copy">
-    <h1 id="studyHeroTitle">মন না চাইলেও পড়তে বসো,<br>কারণ, Success সব সময় Motivation থেকে আসে না... আসে পরিশ্রম থেকে</h1>
+    <h1 id="studyHeroTitle">মন না চাইলেও পড়তে বসো । কারণ, Success সব সময় Motivation থেকে আসে না... আসে পরিশ্রম থেকে</h1>
     <p class="study-hero-dua">রব্বি জিদনি ইলমা, রব্বি জিদনি ইলমা, রব্বি জিদনি ইলমা</p>
     <button class="study-hero-cta" onclick="openStudyMode('day')"><span>📚</span> পড়া শুরু করুন <span aria-hidden="true">→</span></button>
   </div>
@@ -5614,7 +5614,13 @@ body{
 .qm-foot{position:sticky;bottom:0;background:#fff;border-top:1px solid #ddd;padding:12px 0 6px;margin-top:14px}
 .qm-sum{font-size:.85rem;color:#555;margin-bottom:8px}
 .qm-foot .qm-btn{width:100%;padding:11px;font-size:.98rem}
-.qm-t{font-weight:700;margin:20px 0 8px;font-size:1.02rem;color:#111}
+.qm-head{text-align:center;margin:2px 0 8px;padding-bottom:12px;border-bottom:1px solid #ddd}
+.qm-inst{font-size:1.45rem;font-weight:800;color:#111;line-height:1.4}
+.qm-time{font-size:1rem;color:#111;margin-top:4px}
+.qm-cols{column-count:1;column-gap:32px}
+@media(min-width:700px){.qm-body{max-width:1000px}.qm-cols{column-count:2;column-rule:1px solid #ddd}}
+.qm-item{break-inside:avoid;page-break-inside:avoid}
+.qm-t{break-after:avoid;font-weight:700;margin:20px 0 8px;font-size:1.02rem;color:#111}
 .qm-t:first-child{margin-top:4px}
 .qm-q{margin:6px 0 6px 20px;line-height:1.75;font-size:.98rem;color:#111}
 .qm-a{margin:0 0 8px 38px;line-height:1.7;font-size:.95rem;color:#0a6b3d}
@@ -5692,6 +5698,15 @@ function qmAnsParts(it){
   if(hasEx) out.push(`${h[2]||'Example'}: ${it.ex}`);
   return out;
 }
+const QM_INSTITUTE='সলিড প্রিপারেশন';
+function qmTimeText(){
+  const total=qmPaper.reduce((s,p)=>s+(p.min||0),0);
+  const h=Math.floor(total/60), m=total%60;
+  let txt='';
+  if(h) txt+=bn(h)+' ঘণ্টা';
+  if(m) txt+=(txt?' ':'')+bn(m)+' মিনিট';
+  return 'সময়: '+(txt||bn(0)+' মিনিট');
+}
 function qmAvail(id){ return (qmPools[id]||[]).length; }
 function qmClamp(tp){
   const a=qmAvail(tp.id); let n=parseInt(qmSel[tp.id].n,10); if(!n||n<1) n=1;
@@ -5713,9 +5728,9 @@ function qmRender(){
     back.style.display=''; regen.style.display=''; document.getElementById('qmPrint').style.display=''; document.getElementById('qmShare').style.display=''; document.getElementById('qmShareImg').style.display='';
     document.getElementById('qmTitle').textContent='প্রশ্নপত্র';
     if(!qmPaper.length){ body.innerHTML='<div class="qm-empty">কোনো প্রশ্ন তৈরি করা যায়নি।</div>'; return; }
-    body.innerHTML=qmPaper.map((sec,i)=>{
-      return `<div class="qm-t">${bn(i+1)}) ${esc(sec.title)}</div>`+sec.items.map((it,j)=>`<div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?qmAnsParts(it).map(p=>`<div class="qm-a">${br(esc(p))}</div>`).join(''):'')).join('');
-    }).join('')+`<div class="qm-ansbar"><button type="button" class="qm-btn main" onclick="qmToggleAns()">${qmShowAns?'উত্তর লুকান':'উত্তরসহ দেখুন'}</button></div>`;
+    body.innerHTML=`<div class="qm-head"><div class="qm-inst">${esc(QM_INSTITUTE)}</div><div class="qm-time">${esc(qmTimeText())}</div></div><div class="qm-cols">`+qmPaper.map((sec,i)=>{
+      return `<div class="qm-t">${bn(i+1)}) ${esc(sec.title)}</div>`+sec.items.map((it,j)=>`<div class="qm-item"><div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?qmAnsParts(it).map(p=>`<div class="qm-a">${br(esc(p))}</div>`).join(''):'')+`</div>`).join('');
+    }).join('')+`</div>`+`<div class="qm-ansbar"><button type="button" class="qm-btn main" onclick="qmToggleAns()">${qmShowAns?'উত্তর লুকান':'উত্তরসহ দেখুন'}</button></div>`;
     return;
   }
   back.style.display='none'; regen.style.display='none'; document.getElementById('qmPrint').style.display='none'; document.getElementById('qmShare').style.display='none'; document.getElementById('qmShareImg').style.display='none';
@@ -5748,15 +5763,21 @@ function qmRender(){
 let qmPdfCache={key:'',blob:null}, qmSharing=false;
 
 async function qmRenderPages(){
-  const W=1588,H=2246,M=120,LH=1.65;
+  const W=1588,H=2246,M=100,GAP=70,LH=1.6;
+  const CW=(W-2*M-GAP)/2; // এক কলামের প্রস্থ
   const family=getComputedStyle(document.getElementById('qmBody')).fontFamily||'sans-serif';
-  try{ await document.fonts.load('40px '+family,'অআকখ'); await document.fonts.load('bold 44px '+family,'অআকখ'); await document.fonts.ready; }catch(e){}
-  const pages=[]; let cv,ctx,y;
+  try{ await document.fonts.load('34px '+family,'অআকখ'); await document.fonts.load('bold 38px '+family,'অআকখ'); await document.fonts.ready; }catch(e){}
+  const pages=[]; let cv,ctx,y,col,top;
+  const step=s=>Math.round(s*LH);
   const newPage=()=>{
     cv=document.createElement('canvas'); cv.width=W; cv.height=H;
     ctx=cv.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
-    ctx.textBaseline='alphabetic'; y=M; pages.push(cv);
+    ctx.textBaseline='alphabetic'; pages.push({cv,two:false});
+    y=M; top=M; col=0;
   };
+  const nextCol=()=>{ if(col===0){ col=1; y=top; pages[pages.length-1].two=true; } else newPage(); };
+  const colX=()=>M+col*(CW+GAP);
+  const need=h=>{ if(y+h>H-M && y>top) nextCol(); };
   const wrap=(text,font,maxW)=>{
     ctx.font=font; const out=[];
     String(text).split('\n').forEach(par=>{
@@ -5775,34 +5796,49 @@ async function qmRenderPages(){
     });
     return out;
   };
-  const draw=(lines,font,color,x,size)=>{
-    const step=Math.round(size*LH);
+  const draw=(lines,font,color,indent,size)=>{
     lines.forEach(l=>{
-      if(y+step>H-M){ newPage(); }
-      ctx.font=font; ctx.fillStyle=color; ctx.fillText(l,x,y+size); y+=step;
+      if(y+step(size)>H-M) nextCol();
+      ctx.font=font; ctx.fillStyle=color; ctx.textAlign='left';
+      ctx.fillText(l,colX()+indent,y+size); y+=step(size);
     });
   };
   newPage();
+  { // একদম উপরে: প্রতিষ্ঠানের নাম ও সময় (পুরো প্রস্থ জুড়ে)
+    ctx.textAlign='center';
+    ctx.font='bold 60px '+family; ctx.fillStyle='#111'; ctx.fillText(QM_INSTITUTE,W/2,y+60); y+=Math.round(60*1.45);
+    ctx.font='40px '+family; ctx.fillText(qmTimeText(),W/2,y+40); y+=Math.round(40*1.5)+14;
+    ctx.fillStyle='#ccc'; ctx.fillRect(M,y,W-2*M,2); y+=36;
+    ctx.textAlign='left'; top=y; pages[0].colTop=y;
+  }
+  const tF='bold 38px '+family, qF='34px '+family, aF='32px '+family;
   qmPaper.forEach((sec,i)=>{
-    const tFont='bold 44px '+family, qFont='40px '+family, aFont='38px '+family;
-    const tLines=wrap(`${bn(i+1)}) ${sec.title}`,tFont,W-2*M);
-    // শিরোনাম একা পাতার শেষে পড়লে নতুন পাতায় নাও
-    if(y+Math.round(44*LH)*tLines.length+Math.round(40*LH)*2>H-M && y>M) newPage();
-    if(i>0) y+=36;
-    draw(tLines,tFont,'#111',M,44); y+=10;
+    const tLines=wrap(`${bn(i+1)}) ${sec.title}`,tF,CW);
+    const firstQ=wrap(`${QM_LETTERS[0]}) ${sec.items[0].q}`,qF,CW-30);
+    const gap=(y>top)?26:0;
+    // শিরোনাম + প্রথম প্রশ্ন একসাথে না ধরলে পরের কলামে
+    need(gap+step(38)*tLines.length+step(34)*firstQ.length);
+    if(y>top) y+=gap;
+    draw(tLines,tF,'#111',0,38); y+=8;
     sec.items.forEach((it,j)=>{
-      const qLines=wrap(`${QM_LETTERS[j]||bn(j+1)}) ${it.q}`,qFont,W-2*M-40);
-      draw(qLines,qFont,'#111',M+40,40);
-      if(qmShowAns){
-        qmAnsParts(it).forEach(p=>{
-          const aLines=wrap(p,aFont,W-2*M-80);
-          draw(aLines,aFont,'#0a6b3d',M+80,38);
-        });
-      }
-      y+=10;
+      const qL=wrap(`${QM_LETTERS[j]||bn(j+1)}) ${it.q}`,qF,CW-30);
+      const aParts=qmShowAns?qmAnsParts(it).map(p=>wrap(p,aF,CW-60)):[];
+      const h=step(34)*qL.length+aParts.reduce((s,a)=>s+step(32)*a.length,0)+8;
+      need(h); // একটা প্রশ্ন (উত্তরসহ) দুই কলামে ভাঙবে না
+      draw(qL,qF,'#111',30,34);
+      aParts.forEach(a=>draw(a,aF,'#0a6b3d',60,32));
+      y+=8;
     });
   });
-  return pages;
+  // কলামের মাঝে হালকা দাগ
+  pages.forEach((p,idx)=>{
+    if(!p.two) return;
+    const c=p.cv.getContext('2d'); c.fillStyle='#ddd';
+    const startY=idx===0?firstTop():M;
+    c.fillRect(W/2-1,startY,2,H-M-startY);
+  });
+  function firstTop(){ return pages[0].colTop||M; }
+  return pages.map(p=>p.cv);
 }
 
 function qmMakePdf(jpegs){ // jpegs: [{data:Uint8Array,w,h}]
@@ -5966,7 +6002,7 @@ function qmGenerate(){
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     const picked=pool.slice(0,Math.min(qmClamp(tp),pool.length));
     picked.forEach(it=>used.add(String(it.q).trim()));
-    if(picked.length) paper.push({title:tp.title,items:picked});
+    if(picked.length) paper.push({title:tp.title,items:picked,min:s.id==='gk'?10:5});
   }));
   if(!paper.length){ toast('কোনো প্রশ্ন পাওয়া যায়নি',true); return; }
   qmPaper=paper; qmView='paper'; qmShowAns=false; qmRender();
@@ -5987,7 +6023,11 @@ function qmGenerate(){
   html.qm-printing #qmOv{display:block!important;position:static!important;inset:auto!important;height:auto!important;overflow:visible!important;z-index:auto!important}
   html.qm-printing .qm-top,html.qm-printing .qm-ansbar{display:none!important}
   html.qm-printing .qm-body{overflow:visible!important;max-width:none!important;padding:0!important;height:auto!important}
-  html.qm-printing .qm-t,html.qm-printing .qm-q,html.qm-printing .qm-a{break-inside:avoid}
+  html.qm-printing .qm-cols{column-count:2!important;column-gap:24px;column-rule:1px solid #ccc}
+  html.qm-printing .qm-q{font-size:.92rem;margin-left:12px}
+  html.qm-printing .qm-a{font-size:.88rem;margin-left:24px}
+  html.qm-printing .qm-t{font-size:.98rem}
+  html.qm-printing .qm-t,html.qm-printing .qm-item{break-inside:avoid}
   html.qm-printing .qm-t{break-after:avoid}
 }
 </style>
