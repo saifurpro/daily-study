@@ -4202,6 +4202,7 @@ function showCompletionMessage(){
       <button type="button" class="qm-btn" id="qmShare" onclick="qmShare()" style="display:none">📤 PDF শেয়ার</button>
       <button type="button" class="qm-btn" id="qmPrint" onclick="qmPrint()" style="display:none">🖨️ প্রিন্ট</button>
       <button type="button" class="qm-btn" id="qmRegen" onclick="qmGenerate()" style="display:none">🔄 নতুন প্রশ্ন</button>
+      <button type="button" class="qm-btn" id="qmHist" onclick="qmOpenHistory()">🕘 হিস্টোরি <span id="qmHistCnt"></span></button>
       <button type="button" class="qm-btn" id="qmBack" onclick="qmBackToPicker()" style="display:none">← ফিরে যান</button>
       <button type="button" class="qm-btn" onclick="closeQM()">✕ বন্ধ</button>
     </div>
@@ -5627,6 +5628,14 @@ body{
 .qm-ansbar{margin-top:26px;padding-top:14px;border-top:1px solid #ddd}
 .qm-ansbar .qm-btn{width:100%;padding:11px;font-size:.98rem}
 .qm-empty{padding:30px 6px;text-align:center;color:#555;line-height:1.8}
+.qm-hnote{font-size:.82rem;color:#666;background:#f6f6f6;border:1px solid #e5e5e5;border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.6}
+.qm-hcard{display:flex;align-items:stretch;gap:8px;border:1px solid #ddd;border-radius:10px;padding:10px;margin-bottom:10px;background:#fff}
+.qm-hmain{flex:1;min-width:0;cursor:pointer}
+.qm-hh{font-size:.98rem;color:#111}
+.qm-hs{font-size:.82rem;color:#555;margin-top:2px}
+.qm-ht{font-size:.8rem;color:#777;margin-top:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.qm-hexp{font-size:.78rem;color:#a85e24;margin-top:6px}
+.qm-hcard>.qm-btn{align-self:center;flex-shrink:0}
 </style>
 <script>
 /* ══════════════════════════════════════
@@ -5661,7 +5670,7 @@ const QM_SUBJECTS=[
     {id:'purno',label:'পূর্ণরূপ',title:'পূর্ণরূপ লিখুন',def:5,match:n=>qmHas(n,'পূর্ণরূপ','পূর্ণ রূপ')}
   ]}
 ];
-let qmShowAns=false, qmSub='bn', qmSel={}, qmPools={}, qmPlain=[], qmPaper=[], qmView='pick';
+let qmShowAns=false, qmSub='bn', qmSel={}, qmPools={}, qmPlain=[], qmPaper=[], qmView='pick', qmFromHist=false;
 QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{qmSel[tp.id]={on:false,n:tp.def};}));
 
 function qmBuildPools(){
@@ -5714,16 +5723,25 @@ function qmClamp(tp){
 }
 
 function openQM(){
-  qmBuildPools(); qmView='pick'; qmPaper=[]; qmShowAns=false;
+  qmBuildPools(); qmView='pick'; qmPaper=[]; qmShowAns=false; qmFromHist=false; qmHistPrune();
   showAppOverlay('qmOv'); qmRender();
 }
 function closeQM(){ closeAppOverlay('qmOv'); }
-function qmBackToPicker(){ qmView='pick'; qmRender(); }
+function qmBackToPicker(){ qmView=(qmView==='paper'&&qmFromHist)?'history':'pick'; if(qmView==='pick') qmFromHist=false; qmRender(); }
 
 function qmRender(){
   const body=document.getElementById('qmBody');
   const back=document.getElementById('qmBack'), regen=document.getElementById('qmRegen');
   body.scrollTop=0;
+  const histBtn=document.getElementById('qmHist');
+  histBtn.style.display=(qmView==='history')?'none':'';
+  document.getElementById('qmHistCnt').textContent=(()=>{const n=qmHistPrune().length;return n?'('+bn(n)+')':'';})();
+  if(qmView==='history'){
+    back.style.display=''; regen.style.display='none'; document.getElementById('qmPrint').style.display='none'; document.getElementById('qmShare').style.display='none'; document.getElementById('qmShareImg').style.display='none';
+    document.getElementById('qmTitle').textContent='হিস্টোরি';
+    body.innerHTML=qmHistListHtml();
+    return;
+  }
   if(qmView==='paper'){
     back.style.display=''; regen.style.display=''; document.getElementById('qmPrint').style.display=''; document.getElementById('qmShare').style.display=''; document.getElementById('qmShareImg').style.display='';
     document.getElementById('qmTitle').textContent='প্রশ্নপত্র';
@@ -5993,6 +6011,80 @@ function qmUpdateSummary(){
   if(sum) sum.textContent=topics?`${bn(topics)}টি টপিক · মোট ${bn(qs)}টি প্রশ্ন (সব বিষয় মিলিয়ে)`:'অন্তত একটি টপিক সিলেক্ট করুন';
   if(go) go.disabled=!topics;
 }
+/* ══════════════════════════════════════
+   QUESTION MAKER — হিস্টোরি (সর্বোচ্চ ২ ঘণ্টা)
+══════════════════════════════════════ */
+const QM_HIST_KEY='qm_history_v1', QM_HIST_TTL=2*60*60*1000;
+function qmHistLoad(){
+  try{ const a=JSON.parse(localStorage.getItem(QM_HIST_KEY)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+}
+function qmHistSave(list){
+  const a=list.slice();
+  while(true){
+    try{ localStorage.setItem(QM_HIST_KEY,JSON.stringify(a)); return; }
+    catch(e){ if(a.length<=1) return; a.pop(); } /* জায়গা কম হলে সবচেয়ে পুরনোটা বাদ */
+  }
+}
+function qmHistPrune(){
+  const all=qmHistLoad(), now=Date.now();
+  const live=all.filter(e=>e&&e.paper&&e.exp>now);
+  if(live.length!==all.length) qmHistSave(live);
+  return live;
+}
+function qmHistAdd(paper){
+  const now=Date.now();
+  const entry={id:now.toString(36)+Math.random().toString(36).slice(2,6),ts:now,exp:now+QM_HIST_TTL,paper:paper.map(s=>({title:s.title,min:s.min,items:s.items}))};
+  qmHistSave([entry].concat(qmHistPrune()));
+}
+function qmClockText(ts){
+  const d=new Date(ts), h=d.getHours(), m=d.getMinutes();
+  const part=h<4?'রাত':h<12?'সকাল':h<15?'দুপুর':h<18?'বিকাল':h<20?'সন্ধ্যা':'রাত';
+  const h12=h%12||12;
+  return part+' '+bn(h12)+':'+bn(String(m).padStart(2,'0'));
+}
+function qmRemText(ms){
+  const mins=Math.max(1,Math.ceil(ms/60000)), h=Math.floor(mins/60), m=mins%60;
+  let txt=''; if(h) txt+=bn(h)+' ঘণ্টা'; if(m) txt+=(txt?' ':'')+bn(m)+' মিনিট';
+  return '⏳ বাকি '+txt;
+}
+function qmHistListHtml(){
+  const list=qmHistPrune(), now=Date.now();
+  const note='<div class="qm-hnote">তৈরি করা প্রশ্নপত্র সর্বোচ্চ ২ ঘণ্টা এখানে থাকবে। এরপর নিজে থেকেই মুছে যাবে।</div>';
+  if(!list.length) return note+'<div class="qm-empty">এখন কোনো হিস্টোরি নেই।<br>প্রশ্ন তৈরি করলে এখানে জমা হবে।</div>';
+  return note+list.map(e=>{
+    const n=e.paper.reduce((s,p)=>s+p.items.length,0);
+    const titles=e.paper.map(p=>p.title).join(' · ');
+    return `<div class="qm-hcard"><div class="qm-hmain" onclick="qmHistOpen('${e.id}')">
+      <div class="qm-hh"><b>প্রশ্নপত্র</b> · ${esc(qmClockText(e.ts))}</div>
+      <div class="qm-hs">${bn(n)}টি প্রশ্ন · ${bn(e.paper.length)}টি বিভাগ</div>
+      <div class="qm-ht">${esc(titles)}</div>
+      <div class="qm-hexp" data-exp="${e.exp}">${qmRemText(e.exp-now)}</div>
+    </div><button type="button" class="qm-btn" onclick="qmHistDel('${e.id}')" aria-label="মুছুন">🗑</button></div>`;
+  }).join('')+'<div class="qm-ansbar"><button type="button" class="qm-btn" onclick="qmHistClear()">সব হিস্টোরি মুছুন</button></div>';
+}
+function qmOpenHistory(){ qmView='history'; qmRender(); }
+function qmHistOpen(id){
+  const e=qmHistPrune().find(x=>x.id===id);
+  if(!e){ toast('মেয়াদ শেষ — হিস্টোরি মুছে গেছে',true); qmRender(); return; }
+  qmPaper=e.paper; qmView='paper'; qmShowAns=false; qmFromHist=true; qmRender();
+}
+function qmHistDel(id){
+  qmHistSave(qmHistPrune().filter(x=>x.id!==id)); qmRender();
+}
+function qmHistClear(){
+  if(!confirm('সব হিস্টোরি মুছে ফেলবেন?')) return;
+  qmHistSave([]); qmRender();
+}
+setInterval(()=>{
+  const before=qmHistLoad().length, after=qmHistPrune().length;
+  const ov=document.getElementById('qmOv');
+  if(!ov||!ov.classList.contains('show')) return;
+  if(qmView==='history'){
+    if(before!==after){ qmRender(); return; }
+    document.querySelectorAll('.qm-hexp').forEach(el=>{ el.textContent=qmRemText(+el.dataset.exp-Date.now()); });
+  }
+},20000);
+
 function qmGenerate(){
   const used=new Set(); const paper=[];
   QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{
@@ -6005,7 +6097,7 @@ function qmGenerate(){
     if(picked.length) paper.push({title:tp.title,items:picked,min:s.id==='gk'?10:5});
   }));
   if(!paper.length){ toast('কোনো প্রশ্ন পাওয়া যায়নি',true); return; }
-  qmPaper=paper; qmView='paper'; qmShowAns=false; qmRender();
+  qmPaper=paper; qmView='paper'; qmShowAns=false; qmFromHist=false; qmHistAdd(paper); qmRender();
 }
 </script>
 <style>
