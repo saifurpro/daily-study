@@ -5623,6 +5623,8 @@ body{
 .qm-item{break-inside:avoid;page-break-inside:avoid}
 .qm-t{break-after:avoid;font-weight:700;margin:20px 0 8px;font-size:1.02rem;color:#111}
 .qm-t:first-child{margin-top:4px}
+.qm-th{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.qm-th .qm-mk{white-space:nowrap;flex-shrink:0}
 .qm-q{margin:6px 0 6px 20px;line-height:1.75;font-size:.98rem;color:#111}
 .qm-a{margin:0 0 8px 38px;line-height:1.7;font-size:.95rem;color:#0a6b3d}
 .qm-ansbar{margin-top:26px;padding-top:14px;border-top:1px solid #ddd}
@@ -5670,15 +5672,30 @@ const QM_SUBJECTS=[
     {id:'purno',label:'পূর্ণরূপ',title:'পূর্ণরূপ লিখুন',def:5,match:n=>qmHas(n,'পূর্ণরূপ','পূর্ণ রূপ')}
   ]}
 ];
+/* গণিত: day100.json (allDays[100]) থেকে লোড হয় — চ্যাপ্টার সিলেক্ট লাগে না, সব টপিকের প্রশ্ন এক পুলে জমে, প্রতিবার ৫টি র‍্যান্ডম আসে */
+const QM_MATH={id:'math',day:100,count:5,marks:5,min:20};
 let qmShowAns=false, qmSub='bn', qmSel={}, qmPools={}, qmPlain=[], qmPaper=[], qmView='pick', qmFromHist=false;
 QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{qmSel[tp.id]={on:false,n:tp.def};}));
 
 function qmBuildPools(){
   qmPools={}; qmPlain=[];
   QM_SUBJECTS.forEach(s=>s.topics.forEach(tp=>{qmPools[tp.id]=[];}));
+  qmPools[QM_MATH.id]=[];
   const seen={};
   Object.keys(allDays).map(Number).sort((a,b)=>a-b).forEach(d=>{
     const day=allDays[d]; if(!day||!day.topics) return;
+    if(d===QM_MATH.day){
+      day.topics.forEach(t=>{
+        const hd=t.columnHeaders||t.headers||null;
+        (t.items||[]).forEach(it=>{
+          if(!it||!it.q) return;
+          const key=QM_MATH.id+'⟂'+it.q;
+          if(seen[key]) return; seen[key]=1;
+          qmPools[QM_MATH.id].push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null,tid:QM_MATH.id});
+        });
+      });
+      return;
+    }
     day.topics.forEach(t=>{
       const title=String(t.title||''); const low=title.toLowerCase();
       if(low.includes('বাড়ির কাজ')||low.includes('বাড়িরকাজ')||low.includes('বাড়ীর কাজ')||low.includes('homework')) return;
@@ -5686,12 +5703,14 @@ function qmBuildPools(){
       for(const s of QM_SUBJECTS){ for(const tp of s.topics){ if(tp.match(low)){hit=tp;break;} } if(hit) break; }
       const plainGK=!hit&&low.includes('সাধারণ জ্ঞান');
       if(!hit&&!plainGK) return;
+      const tid=hit?hit.id:'plain';
+      const target=hit?qmPools[hit.id]:qmPlain;
       (t.items||[]).forEach(it=>{
         if(!it||!it.q) return;
-        const key=(hit?hit.id:'plain')+'⟂'+it.q;
+        const key=tid+'⟂'+it.q;
         if(seen[key]) return; seen[key]=1;
         const hd=t.columnHeaders||t.headers||null;
-        (hit?qmPools[hit.id]:qmPlain).push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null,tid:hit?hit.id:'plain'});
+        target.push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null,tid});
       });
     });
   });
@@ -5701,15 +5720,17 @@ function qmBuildPools(){
 /* উত্তর = a; শুধু সমাস টপিকে ex-ও। হেডার থাকলে তার নামে লেবেল */
 function qmAnsParts(it){
   const h=it.h||[]; const out=[];
-  const hasEx=it.tid==='somas'&&!!(it.ex&&String(it.ex).trim()); // ex শুধু সমাস টপিকে
+  const hasEx=(it.tid==='somas'||it.tid==='math')&&!!(it.ex&&String(it.ex).trim()); // ex শুধু সমাস ও গণিত টপিকে
   const l1=hasEx&&h[1]?h[1]:'উত্তর';
   out.push(`${l1}: ${it.a}`);
-  if(hasEx) out.push(`${h[2]||'Example'}: ${it.ex}`);
+  if(hasEx) out.push(`${h[2]||(it.tid==='math'?'সমাধান':'Example')}: ${it.ex}`);
   return out;
 }
+/* হেডিং: বামে টাইটেল, ডানে (১x৫ = ৫) */
+function qmSplitTitle(t){ const m=String(t).match(/^(.*?)\s*(\([০-৯0-9]+x[^()]*\))\s*$/); return m?[m[1],m[2]]:[String(t),'']; }
 const QM_INSTITUTE='সলিড প্রিপারেশন';
 function qmMarksText(){
-  const n=qmPaper.reduce((s,p)=>s+p.items.length,0);
+  const n=qmPaper.reduce((s,p)=>s+p.items.length*(p.marks||1),0);
   return 'পূর্ণমান: '+bn(n);
 }
 function qmTimeText(){
@@ -5751,7 +5772,8 @@ function qmRender(){
     document.getElementById('qmTitle').textContent='প্রশ্নপত্র';
     if(!qmPaper.length){ body.innerHTML='<div class="qm-empty">কোনো প্রশ্ন তৈরি করা যায়নি।</div>'; return; }
     body.innerHTML=`<div class="qm-head"><div class="qm-inst">${esc(QM_INSTITUTE)}</div><div class="qm-time">${esc(qmTimeText())}</div></div><div class="qm-cols">`+qmPaper.map((sec,i)=>{
-      return `<div class="qm-t">${bn(i+1)}) ${esc(sec.title)}</div>`+sec.items.map((it,j)=>`<div class="qm-item"><div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?qmAnsParts(it).map(p=>`<div class="qm-a">${br(esc(p))}</div>`).join(''):'')+`</div>`).join('');
+      const [tl,tr]=qmSplitTitle(sec.title);
+      return `<div class="qm-t qm-th"><span>${bn(i+1)}) ${esc(tl)}</span>${tr?`<span class="qm-mk">${esc(tr)}</span>`:''}</div>`+sec.items.map((it,j)=>`<div class="qm-item"><div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?qmAnsParts(it).map(p=>`<div class="qm-a">${br(esc(p))}</div>`).join(''):'')+`</div>`).join('');
     }).join('')+`</div>`+`<div class="qm-ansbar"><button type="button" class="qm-btn main" onclick="qmToggleAns()">${qmShowAns?'উত্তর লুকান':'উত্তরসহ দেখুন'}</button></div>`;
     return;
   }
@@ -5774,6 +5796,7 @@ function qmRender(){
   body.innerHTML=`<div class="qm-tabs">${tabs}</div>
     <div class="qm-sub-head"><span>টপিক বেছে নিন · ডানের ঘরে প্রশ্ন সংখ্যা</span><button type="button" class="qm-btn" onclick="qmSelectAll()">সব সিলেক্ট / বাদ</button></div>
     ${rows}
+    <div class="qm-hnote" style="margin-top:12px">📐 গণিত: প্রতিবার যেকোনো অধ্যায় থেকে র‍্যান্ডম ${bn(QM_MATH.count)}টি প্রশ্ন নিজে থেকেই যুক্ত হবে (প্রতিটি ${bn(QM_MATH.marks)} নম্বর, গণিতের জন্য ${bn(QM_MATH.min)} মিনিট)।${qmAvail(QM_MATH.id)?'':' এখনো কোনো গণিত প্রশ্ন পাওয়া যায়নি (day100.json লোড করুন)।'}</div>
     <div class="qm-foot"><div class="qm-sum" id="qmSum"></div><button type="button" class="qm-btn main" id="qmGo" onclick="qmGenerate()">প্রশ্ন তৈরি করুন</button></div>`;
   qmUpdateSummary();
 }
@@ -5835,13 +5858,16 @@ async function qmRenderPages(){
   }
   const tF='bold 38px '+family, qF='34px '+family, aF='32px '+family;
   qmPaper.forEach((sec,i)=>{
-    const tLines=wrap(`${bn(i+1)}) ${sec.title}`,tF,CW);
+    const [tl,tr]=qmSplitTitle(sec.title);
+    ctx.font=tF; const rW=tr?Math.ceil(ctx.measureText(tr).width)+24:0;
+    const tLines=wrap(`${bn(i+1)}) ${tl}`,tF,CW-rW);
     const firstQ=wrap(`${QM_LETTERS[0]}) ${sec.items[0].q}`,qF,CW-30);
     const gap=(y>top)?26:0;
     // শিরোনাম + প্রথম প্রশ্ন একসাথে না ধরলে পরের কলামে
     need(gap+step(38)*tLines.length+step(34)*firstQ.length);
     if(y>top) y+=gap;
-    draw(tLines,tF,'#111',0,38); y+=8;
+    const ty=y; draw(tLines,tF,'#111',0,38); y+=8;
+    if(tr){ ctx.font=tF; ctx.fillStyle='#111'; ctx.textAlign='right'; ctx.fillText(tr,colX()+CW,ty+38); ctx.textAlign='left'; }
     sec.items.forEach((it,j)=>{
       const qL=wrap(`${QM_LETTERS[j]||bn(j+1)}) ${it.q}`,qF,CW-30);
       const aParts=qmShowAns?qmAnsParts(it).map(p=>wrap(p,aF,CW-60)):[];
@@ -6012,7 +6038,8 @@ function qmUpdateSummary(){
     if(qmSel[tp.id].on&&qmAvail(tp.id)>0){ topics++; qs+=qmClamp(tp); }
   }));
   const sum=document.getElementById('qmSum'), go=document.getElementById('qmGo');
-  if(sum) sum.textContent=topics?`${bn(topics)}টি টপিক · মোট ${bn(qs)}টি প্রশ্ন (সব বিষয় মিলিয়ে)`:'অন্তত একটি টপিক সিলেক্ট করুন';
+  const mq=Math.min(QM_MATH.count,qmAvail(QM_MATH.id));
+  if(sum) sum.textContent=topics?`${bn(topics)}টি টপিক · মোট ${bn(qs)}টি প্রশ্ন (সব বিষয় মিলিয়ে)`+(mq?` + গণিত ${bn(mq)}টি (${bn(mq*QM_MATH.marks)} নম্বর)`:''):'অন্তত একটি টপিক সিলেক্ট করুন';
   if(go) go.disabled=!topics;
 }
 /* ══════════════════════════════════════
@@ -6037,7 +6064,7 @@ function qmHistPrune(){
 }
 function qmHistAdd(paper){
   const now=Date.now();
-  const entry={id:now.toString(36)+Math.random().toString(36).slice(2,6),ts:now,exp:now+QM_HIST_TTL,paper:paper.map(s=>({title:s.title,min:s.min,items:s.items}))};
+  const entry={id:now.toString(36)+Math.random().toString(36).slice(2,6),ts:now,exp:now+QM_HIST_TTL,paper:paper.map(s=>({title:s.title,min:s.min,marks:s.marks,items:s.items}))};
   qmHistSave([entry].concat(qmHistPrune()));
 }
 function qmClockText(ts){
@@ -6098,8 +6125,15 @@ function qmGenerate(){
     for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
     const picked=pool.slice(0,Math.min(qmClamp(tp),pool.length));
     picked.forEach(it=>used.add(String(it.q).trim()));
-    if(picked.length) paper.push({title:tp.title,items:picked,min:s.id==='gk'?10:5});
+    if(picked.length) paper.push({title:`${tp.title} (${bn(1)}x${bn(picked.length)} = ${bn(picked.length)})`,items:picked,min:s.id==='gk'?10:5,marks:1});
   }));
+  // গণিত: সব অধ্যায়ের পুল থেকে র‍্যান্ডম ৫টি, প্রতিটি ৫ নম্বর, মোট ২০ মিনিট
+  if(paper.length){
+    const mpool=(qmPools[QM_MATH.id]||[]).filter(it=>!used.has(String(it.q).trim()));
+    for(let i=mpool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[mpool[i],mpool[j]]=[mpool[j],mpool[i]];}
+    const mp=mpool.slice(0,QM_MATH.count);
+    if(mp.length) paper.push({title:`গণিত (${bn(QM_MATH.marks)}x${bn(mp.length)} = ${bn(QM_MATH.marks*mp.length)})`,items:mp,min:QM_MATH.min,marks:QM_MATH.marks});
+  }
   if(!paper.length){ toast('কোনো প্রশ্ন পাওয়া যায়নি',true); return; }
   qmPaper=paper; qmView='paper'; qmShowAns=false; qmFromHist=false; qmHistAdd(paper); qmRender();
 }
