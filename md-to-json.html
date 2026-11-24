@@ -59,6 +59,7 @@ ol.steps{margin:8px 0;padding-left:20px;color:var(--mut);font-size:.9rem}ol.step
 #tq{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--card2);border:1px solid var(--bd);padding:10px 16px;border-radius:10px;z-index:60;max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 #tq[hidden]{display:none}#tq.bd{border-color:var(--bad);color:var(--bad)}
 #dvs{font-size:.85rem}
+#fm{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:4px}#fm>*{flex:none;white-space:nowrap}#fm .ti{flex:1 1 110px;min-width:90px}#fm button{padding:7px 10px}#fm .dn{width:64px}
 </style>
 </head>
 <body>
@@ -80,6 +81,7 @@ ol.steps{margin:8px 0;padding-left:20px;color:var(--mut);font-size:.9rem}ol.step
 <li>পরে স্ক্রিপ্ট বদলালে Deploy → Manage deployments → ✏️ → <b>New version</b> দিতে হবে।</li></ol></details>
 </details>
 <div class="ctl">
+<button class="p" id="nf" title="ফাঁকা নমুনা ফরম্যাটের নতুন JSON ফাইল">＋ নতুন JSON ফাইল</button>
 <label>ফাইল <select id="fs" disabled></select></label>
 <label>টপিক <select id="ts" disabled></select></label>
 <button id="pr" disabled>← আগের</button><button id="nx" disabled>পরের →</button>
@@ -663,6 +665,14 @@ try{
   if(u)$('#dvu').value=u;if(p)$('#dvp').value=p;$('#dva').checked=!!localStorage.getItem('mj_auto');
   if(u&&p){dv.url=u;dv.pass=p;refreshList()}else if(!u)$('#dv').open=true;
 }catch(_){$('#dv').open=true}
+function newFile(){
+  let k=1;while(files.some(f=>f.name==='new'+k+'.json'))k++;
+  const day=Math.max(0,...files.map(f=>+f.day||0))+1;
+  files.push({name:'new'+k+'.json',day,title:'Day-'+day,warns:[],
+    topics:[fixTopic({title:'নতুন টপিক',icon:'📖',columns:2,headers:['প্রশ্ন','উত্তর'],items:[{q:'',a:''}]})]});
+  af=files.length-1;at=0;hist=[];render(0,'q');
+}
+$('#nf').onclick=newFile;
 const dz=$('#drop'),fi=$('#fi');
 dz.onclick=()=>fi.click();fi.onchange=()=>{addFiles(fi.files);fi.value=''};
 ['dragenter','dragover'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add('on')}));
