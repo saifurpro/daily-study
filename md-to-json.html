@@ -51,6 +51,14 @@ td textarea.bad{border-color:var(--bad)!important;background:rgba(255,138,122,.1
 #pk[hidden]{display:none}#pk .cu{display:flex;gap:6px;position:sticky;top:-10px;background:var(--card);padding:4px 0 6px}#pk .cu input{flex:1;min-width:0}
 #pk h4{margin:10px 0 4px;font-size:.8rem;color:var(--mut);font-weight:600}#pk .g{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
 #pk button.e{border:0;background:transparent;font-size:1.4rem;padding:6px 0;border-radius:8px;line-height:1}#pk button.e:hover{background:var(--card2)}#pk button.e.on{outline:2px solid var(--ac)}
+details.dvp{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;margin:12px 0}
+details.dvp>summary{cursor:pointer;font-weight:600}details.dvp .ctl{margin:10px 0 4px}
+.mut{color:var(--mut)}.wr{color:var(--warn)}.ok{color:var(--ok)}.er{color:var(--bad)}
+.dt{min-width:520px}.dt td,.dt th{padding:8px 10px}.dt td.ac{width:auto;min-width:0}
+ol.steps{margin:8px 0;padding-left:20px;color:var(--mut);font-size:.9rem}ol.steps li{margin:3px 0}
+#tq{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--card2);border:1px solid var(--bd);padding:10px 16px;border-radius:10px;z-index:60;max-width:92vw;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+#tq[hidden]{display:none}#tq.bd{border-color:var(--bad);color:var(--bad)}
+#dvs{font-size:.85rem}
 </style>
 </head>
 <body>
@@ -59,6 +67,18 @@ td textarea.bad{border-color:var(--bad)!important;background:rgba(255,138,122,.1
 <p class="sub">Google Docs থেকে নামানো .md (বা আগের .json) ছেড়ে দিন, প্রিভিউতে যেকোনো লেখা বদলান, মুছুন বা নতুন সারি যোগ করুন, তারপর JSON নামিয়ে নিন।</p>
 <div id="drop"><b>📂 .md বা .json ফাইল এখানে ড্র্যাগ করুন (একাধিক হলেও চলবে)</b><span>অথবা ক্লিক করে বেছে নিন</span>
 <input type="file" id="fi" accept=".md,.markdown,.txt,.json,application/json" multiple hidden></div>
+<details class="dvp" id="dv"><summary>☁️ Google Drive ড্যাশবোর্ড <span id="dvsum" class="mut">— সংযুক্ত নয়</span></summary>
+<div class="ctl"><input class="ti" id="dvu" placeholder="Web App URL (https://script.google.com/macros/s/…/exec)" autocomplete="off"><input id="dvp" type="password" placeholder="পাসকোড" autocomplete="off"><button class="p" id="dvc">সংযোগ ও তালিকা আনুন</button></div>
+<div class="ctl"><label><input type="checkbox" id="dvr" checked> এই ব্রাউজারে মনে রাখুন</label><label><input type="checkbox" id="dva"> কনভার্টের সাথে সাথে অটো-আপলোড (ভুল না থাকলে)</label><button id="dvf">↻ রিফ্রেশ</button></div>
+<div id="dst" class="mut"></div>
+<div id="dvl"></div>
+<details style="margin-top:10px"><summary class="mut">প্রথমবার সেটআপ (আলাদা নতুন স্ক্রিপ্ট — পুরনোটায় হাত দিতে হবে না)</summary>
+<ol class="steps"><li>script.google.com → <b>New project</b> খুলুন।</li>
+<li><button id="cpg">📋 স্ক্রিপ্ট কোড কপি করুন</button> — সব পুরনো লেখা মুছে পেস্ট করুন। উপরের দুই লাইনে <b>ফোল্ডার আইডি</b> (ফোল্ডার লিংকের <code>/folders/</code> এর পরের অংশ) ও আপনার <b>গোপন পাসকোড</b> বসান, তারপর Save।</li>
+<li><b>Deploy → New deployment → Web app</b>: Execute as = <b>Me</b>, Who has access = <b>Anyone</b> → Deploy। অনুমতি চাইলে Authorize করুন (“Google hasn’t verified this app” এলে Advanced → Go to … চাপুন)।</li>
+<li>দেওয়া <b>Web app URL</b> কপি করে উপরের ঘরে বসান, পাসকোড দিন, “সংযোগ” চাপুন।</li>
+<li>পরে স্ক্রিপ্ট বদলালে Deploy → Manage deployments → ✏️ → <b>New version</b> দিতে হবে।</li></ol></details>
+</details>
 <div class="ctl">
 <label>ফাইল <select id="fs" disabled></select></label>
 <label>টপিক <select id="ts" disabled></select></label>
@@ -68,12 +88,125 @@ td textarea.bad{border-color:var(--bad)!important;background:rgba(255,138,122,.1
 <div class="ctl" id="fm" hidden>
 <label>দিন <input class="dn" id="dy" type="number" min="1"></label>
 <input class="ti" id="ft" aria-label="শিরোনাম" placeholder="শিরোনাম">
-<button class="p" id="dl">⬇️ JSON ডাউনলোড</button><button id="da">⬇️ সব ফাইল</button><button class="d" id="rf">ফাইল সরান</button>
+<input class="ti" id="dvn" aria-label="Drive-এ ফাইলের নাম" placeholder="Drive ফাইলের নাম (day20.json)"><button class="p" id="up">☁️ Drive-এ আপলোড</button><button id="ua">☁️ সব আপলোড</button><span id="dvs"></span>
+<button id="dl">⬇️ JSON ডাউনলোড</button><button id="da">⬇️ সব ফাইল</button><button class="d" id="rf">ফাইল সরান</button>
 </div>
 <div id="st">এখনো কোনো ফাইল নেওয়া হয়নি।</div>
 <div id="wn"></div>
+<div id="tq" hidden></div>
 <section id="pv"><div class="em">ফাইল ছাড়লে এখানে প্রিভিউ দেখা যাবে।</div></section>
 </main>
+<script type="text/plain" id="gs">
+/**
+ * JSON ড্যাশবোর্ড স্ক্রিপ্ট (আলাদা নতুন প্রজেক্ট — পুরনো স্ক্রিপ্ট অক্ষত থাকবে)
+ * কাজ: একটি নির্দিষ্ট ফোল্ডারের JSON ফাইল তালিকা / পড়া / সেভ (একই নাম হলে আপডেট, না হলে নতুন) / ট্র্যাশ।
+ * সব কাজে পাসকোড লাগে। শুধু .json ফাইল সেভ হয়, আর শুধু এই ফোল্ডারেই কাজ করে।
+ */
+
+// ===== শুধু এই দুটো লাইন বদলান =====
+const FOLDER_ID = 'এখানে_ফোল্ডার_আইডি';      // ফোল্ডার লিংকের /folders/ এর পরের অংশ
+const PASSCODE  = 'এখানে_লম্বা_গোপন_পাসকোড';   // কমপক্ষে ১২ অক্ষর, কঠিন কিছু দিন
+// ====================================
+
+function doGet() {
+  return out_({ ok: true, info: 'JSON ড্যাশবোর্ড স্ক্রিপ্ট চালু আছে' });
+}
+
+function doPost(e) {
+  try {
+    const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (!PASSCODE || PASSCODE.indexOf('এখানে') === 0 || !FOLDER_ID || FOLDER_ID.indexOf('এখানে') === 0) {
+      return out_({ ok: false, error: 'script_not_configured' });
+    }
+    if (req.pass !== PASSCODE) return out_({ ok: false, error: 'bad_pass' });
+
+    const folder = DriveApp.getFolderById(FOLDER_ID);
+    switch (req.action) {
+      case 'list':   return out_({ ok: true, files: list_(folder) });
+      case 'read':   return out_(read_(req));
+      case 'save':   return locked_(function () { return save_(folder, req); });
+      case 'delete': return locked_(function () { return trash_(req); });
+      default:       return out_({ ok: false, error: 'unknown_action' });
+    }
+  } catch (err) {
+    return out_({ ok: false, error: String((err && err.message) || err) });
+  }
+}
+
+// প্রথমবার একবার চালিয়ে অনুমতি দেওয়ার জন্য (ঐচ্ছিক)
+function authorize() {
+  DriveApp.getFolderById(FOLDER_ID);
+  LockService.getScriptLock();
+}
+
+function out_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function locked_(fn) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try { return out_(fn()); } finally { lock.releaseLock(); }
+}
+
+function list_(folder) {
+  const it = folder.getFiles(), res = [];
+  while (it.hasNext()) {
+    const f = it.next();
+    if (/\.json$/i.test(f.getName())) {
+      res.push({ id: f.getId(), name: f.getName(), modifiedTime: f.getLastUpdated().toISOString(), size: f.getSize() });
+    }
+  }
+  res.sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true }); });
+  return res;
+}
+
+// ফাইলটি সত্যিই এই ফোল্ডারে আছে কি না যাচাই করে তবেই ফেরত দেয়
+function inFolder_(id) {
+  const f = DriveApp.getFileById(id);
+  if (f.isTrashed()) throw new Error('file_trashed');
+  const ps = f.getParents();
+  while (ps.hasNext()) { if (ps.next().getId() === FOLDER_ID) return f; }
+  throw new Error('not_in_folder');
+}
+
+function read_(req) {
+  const f = inFolder_(req.id);
+  return { ok: true, id: f.getId(), name: f.getName(), modifiedTime: f.getLastUpdated().toISOString(), content: f.getBlob().getDataAsString('UTF-8') };
+}
+
+function save_(folder, req) {
+  const name = String(req.name || '').trim();
+  if (!/^[^\/\\:*?"<>|]{1,100}\.json$/i.test(name)) return { ok: false, error: 'শুধু .json নামের ফাইল সেভ করা যায় (নামে / \\ : * ? " < > | চলবে না)' };
+  const content = String(req.content || '');
+  if (content.length > 5 * 1024 * 1024) return { ok: false, error: 'ফাইল ৫MB-এর বেশি' };
+  try { JSON.parse(content); } catch (e) { return { ok: false, error: 'কনটেন্ট বৈধ JSON নয়' }; }
+
+  const it = folder.getFilesByName(name);
+  if (it.hasNext()) {
+    const f = it.next();
+    const mod = f.getLastUpdated().toISOString();
+    if (req.overwrite !== true) {
+      if (req.expectedModified) {
+        if (mod !== req.expectedModified) return { ok: false, conflict: true, modifiedTime: mod };
+      } else {
+        return { ok: false, exists: true, modifiedTime: mod };
+      }
+    }
+    f.setContent(content);
+    return { ok: true, action: 'updated', id: f.getId(), name: f.getName(), modifiedTime: f.getLastUpdated().toISOString() };
+  }
+  const nf = folder.createFile(name, content, 'application/json');
+  return { ok: true, action: 'created', id: nf.getId(), name: nf.getName(), modifiedTime: nf.getLastUpdated().toISOString() };
+}
+
+// স্থায়ীভাবে নয়, ট্র্যাশে পাঠায় (Drive-এর ট্র্যাশ থেকে ফেরানো যায়)
+function trash_(req) {
+  const f = inFolder_(req.id);
+  f.setTrashed(true);
+  return { ok: true, name: f.getName() };
+}
+</script>
 <script>
 const Q=['প্রশ্ন','উত্তর'];
 const N=s=>s.normalize('NFC');
@@ -245,10 +378,18 @@ function ingest(name,text){
   af=k>=0?k:files.length-1;at=0;dirty=true;return '';
 }
 async function addFiles(fl){
-  const errs=[];
+  const errs=[],fresh=[];
   for(const f of fl){if(!/\.(md|markdown|txt|json)$/i.test(f.name))continue;
-    const m=ingest(f.name,await f.text());if(m)errs.push(m)}
+    const m=ingest(f.name,await f.text());if(m)errs.push(m);else if(!/\.json$/i.test(f.name))fresh.push(files[af])}
   hist=[];render();if(errs.length)$('#st').textContent=errs.join(' · ');
+  if($('#dva').checked&&fresh.length){
+    if(!dv.ok){toast('অটো-আপলোড চালু, কিন্তু Drive সংযুক্ত নয় — আগে সংযোগ করুন',1);return}
+    for(const r of fresh){
+      const n=errCount(r);
+      if(n){toast('“'+r.name+'”-এ '+n+'টি ভুল আছে, তাই অটো-আপলোড থামানো হয়েছে — ঠিক করে ☁️ চাপুন',1);continue}
+      await upload(r,true);
+    }
+  }
 }
 const snap=()=>{hist.push(JSON.stringify({files,af,at}));if(hist.length>50)hist.shift();dirty=true;$('#un').disabled=false};
 function undo(){if(!hist.length)return;const s=JSON.parse(hist.pop());files.splice(0,files.length,...s.files);af=s.af;at=s.at;render()}
@@ -264,8 +405,8 @@ function dl(r,skip){
   if(!skip&&errCount(r)&&!confirm(errCount(r)+'টি ভুল (ফাঁকা প্রশ্ন/উত্তর) এখনো আছে। তবুও ডাউনলোড করবেন?'))return;
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(exportFile(r),null,2)],{type:'application/json'}));
-  a.download='day'+(+r.day||1)+'.json';document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href),3000);dirty=false;
+  a.download=driveNameOf(r);document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);dirty=false;r.lastDl=JSON.stringify(exportFile(r));renderDrv();
 }
 const fit=el=>{el.style.height='auto';el.style.height=Math.max(36,el.scrollHeight+2)+'px'};
 function render(focusRow,focusField){
@@ -275,7 +416,7 @@ function render(focusRow,focusField){
   $('#fs').disabled=!has;$('#fm').hidden=!has;$('#un').disabled=!hist.length;
   if(!has){$('#ts').innerHTML='';$('#ts').disabled=true;$('#pr').disabled=$('#nx').disabled=true;
     $('#wn').innerHTML='';$('#st').textContent='এখনো কোনো ফাইল নেওয়া হয়নি।';
-    $('#pv').innerHTML='<div class="em">ফাইল ছাড়লে এখানে প্রিভিউ দেখা যাবে।</div>';return}
+    $('#pv').innerHTML='<div class="em">ফাইল ছাড়লে এখানে প্রিভিউ দেখা যাবে।</div>';renderDrv();return}
   $('#fs').value=af;$('#dy').value=r.day;$('#ft').value=r.title;
   at=Math.max(0,Math.min(at,r.topics.length-1));
   $('#ts').innerHTML=r.topics.map((t,i)=>`<option value="${i}">${esc(t.icon)} ${esc(t.title||'টপিক '+(i+1))} (${t.items.length})</option>`).join('');
@@ -356,7 +497,7 @@ function markAll(){const t=files[af]&&files[af].topics[at];if(t)t.items.forEach(
 let wopen=true;
 function renderIssues(){
   const r=files[af],box=$('#wn');
-  if(!r){box.innerHTML='';return}
+  if(!r){box.innerHTML='';renderDrv();return}
   const is=issues(r),er=is.filter(x=>x.lv==='e'),inf=is.filter(x=>x.lv==='i'),st=r.warns||[],bad=new Set(er.map(x=>x.ti));
   [...$('#ts').options].forEach((o,i)=>{const t=r.topics[i];if(t)o.textContent=(bad.has(i)?'⚠️ ':'')+t.icon+' '+(t.title||'টপিক '+(i+1))+' ('+t.items.length+')'});
   const go=(x,c)=>`<p class="${c}"><button class="lk" data-go="1" data-ti="${x.ti}"${x.r!==undefined?` data-r="${x.r}" data-f="${x.f}"`:''}>${esc(x.text)}</button></p>`;
@@ -365,6 +506,7 @@ function renderIssues(){
   const n=inf.length+st.length;
   box.innerHTML=`<details class="wd"${wopen?' open':''}><summary>${er.length?`<b class="e">⚠️ ${er.length}টি ভুল</b>`:'<b class="ok">✅ কোনো ভুল নেই</b>'}${n?` · ℹ️ ${n}টি তথ্য`:''}</summary>${body||'<p class="mut">কিছু দেখানোর নেই।</p>'}</details>`;
   box.firstChild.ontoggle=e=>{wopen=e.target.open};
+  renderDrv();
 }
 $('#wn').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const r=files[af];
@@ -421,13 +563,113 @@ function dragEnd(ok){
 window.addEventListener('pointerup',()=>dragEnd(true));
 window.addEventListener('pointercancel',()=>dragEnd(false));
 window.addEventListener('keydown',e=>{if(e.key==='Escape')dragEnd(false)});
+/* ===== Google Drive ড্যাশবোর্ড ===== */
+const dv={url:'',pass:'',ok:false,files:[]};
+const safe=r=>{const s=JSON.stringify(exportFile(r));return s===r.lastUp||s===r.lastDl};
+const timeNow=()=>new Date().toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'});
+const fmtT=s=>{try{return new Date(s).toLocaleString('bn-BD',{dateStyle:'medium',timeStyle:'short'})}catch(_){return s}};
+function driveNameOf(r){
+  let n=(r.upName||r.driveName||('day'+(+r.day||1)+'.json')).trim().replace(/[\/\\:*?"<>|]/g,'');
+  return /\.json$/i.test(n)?n:n+'.json';
+}
+function toast(m,bad){const e=$('#tq');e.textContent=m;e.className=bad?'bd':'';e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,4200)}
+function dst(m,cls){const e=$('#dst');e.textContent=m;e.className=cls||'mut'}
+const ERR={bad_pass:'পাসকোড ভুল',script_not_configured:'স্ক্রিপ্টে FOLDER_ID/PASSCODE বসানো হয়নি',net:'স্ক্রিপ্টে পৌঁছানো যায়নি — URL, ইন্টারনেট ও “Who has access = Anyone” দেখুন',html:'উত্তর JSON নয় — Deploy-এ “Who has access = Anyone” আছে কি? নতুন ভার্সন Deploy করেছেন কি?',not_in_folder:'ফাইলটি নির্ধারিত ফোল্ডারে নেই',file_trashed:'ফাইলটি আগেই ট্র্যাশে'};
+const errMsg=r=>ERR[r.error]||r.error||'অজানা সমস্যা';
+async function api(body){
+  let res;
+  try{res=await fetch(dv.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...body,pass:dv.pass})})}catch(e){return{ok:false,error:'net'}}
+  try{return await res.json()}catch(e){return{ok:false,error:'html'}}
+}
+function renderDrv(){
+  const e=$('#dvs');if(!e)return;const r=files[af];
+  if(!r){e.textContent='';return}
+  const same=JSON.stringify(exportFile(r))===r.lastUp;
+  e.textContent=same?'☁️ Drive-এ সেভ আছে ('+(r.upTime||'')+')':(r.lastUp?'● Drive-এ বদল সেভ হয়নি':'☁️ Drive-এ এখনো নেই');
+  e.className=same?'ok':'wr';
+  if(document.activeElement!==$('#dvn'))$('#dvn').value=driveNameOf(r);
+}
+function renderDvl(){
+  const el=$('#dvl');$('#dvsum').textContent=dv.ok?'— সংযুক্ত ✓ ('+dv.files.length+'টি JSON)':'— সংযুক্ত নয়';
+  if(!dv.ok){el.innerHTML='';return}
+  const kb=n=>n?(n/1024).toFixed(1)+' KB':'';
+  el.innerHTML=dv.files.length?`<div class="tw"><table class="dt"><thead><tr><th>ফাইল</th><th>শেষ আপডেট</th><th>সাইজ</th><th></th></tr></thead><tbody>${dv.files.map(f=>`<tr><td>${esc(f.name)}${files.some(x=>x.driveId===f.id)?' <small class="mut">✏️ এডিটরে খোলা</small>':''}</td><td>${esc(fmtT(f.modifiedTime))}</td><td>${kb(f.size)}</td><td class="ac"><button data-o="${f.id}">✏️ খুলুন</button> <button class="d" data-t="${f.id}">🗑 ট্র্যাশ</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="mut">ফোল্ডারে কোনো .json ফাইল নেই।</p>';
+}
+async function refreshList(){
+  dst('তালিকা আনা হচ্ছে…');
+  const r=await api({action:'list'});
+  if(r.ok){dv.files=r.files;dv.ok=true;dst('✅ সংযুক্ত — '+r.files.length+'টি JSON ফাইল','ok')}
+  else{dv.ok=false;dv.files=[];dst('❌ '+errMsg(r),'er')}
+  renderDvl();return dv.ok;
+}
+function prefs(){try{localStorage.setItem('mj_url',dv.url);localStorage.setItem('mj_auto',$('#dva').checked?'1':'');
+  if($('#dvr').checked)localStorage.setItem('mj_pass',dv.pass);else localStorage.removeItem('mj_pass')}catch(_){}}
+async function connect(){
+  dv.url=$('#dvu').value.trim();dv.pass=$('#dvp').value;
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(dv.url)){dst('❌ সঠিক Web App URL দিন (…/exec দিয়ে শেষ)','er');return}
+  if(!dv.pass){dst('❌ পাসকোড দিন','er');return}
+  prefs();await refreshList();
+}
+async function upload(r,auto){
+  if(!dv.ok){toast('আগে ☁️ Drive সংযোগ করুন',1);$('#dv').open=true;return false}
+  const n=errCount(r);
+  if(n&&!auto&&!confirm(n+'টি ভুল (ফাঁকা প্রশ্ন/উত্তর) এখনো আছে। তবুও Drive-এ আপলোড করবেন?'))return false;
+  const name=driveNameOf(r),content=JSON.stringify(exportFile(r),null,2);
+  const base={action:'save',name,content};
+  if(r.driveId&&name===r.driveName&&r.driveModified)base.expectedModified=r.driveModified;
+  toast('☁️ “'+name+'” আপলোড হচ্ছে…');
+  let res=await api(base);
+  if(res.exists){
+    if(!confirm('“'+name+'” নামে ফাইল Drive-এ আগে থেকেই আছে (শেষ আপডেট: '+fmtT(res.modifiedTime)+')।\nএগিয়ে গেলে ফাইলটি এই নতুন কনটেন্ট দিয়ে আপডেট হবে। এগিয়ে যাবেন?')){toast('আপলোড বাতিল',1);return false}
+    res=await api({...base,overwrite:true});
+  }else if(res.conflict){
+    if(!confirm('“'+name+'” আপনি খোলার পরে Drive-এ (অন্য জায়গা থেকে) বদলে গেছে ('+fmtT(res.modifiedTime)+')।\nওভাররাইট করলে ওই বদল হারাবে। ওভাররাইট করবেন?')){toast('আপলোড বাতিল',1);return false}
+    res=await api({...base,overwrite:true});
+  }
+  if(!res.ok){toast('❌ '+errMsg(res),1);return false}
+  r.driveId=res.id;r.driveName=res.name;r.driveModified=res.modifiedTime;r.upName=null;
+  r.lastUp=JSON.stringify(exportFile(r));r.upTime=timeNow();
+  toast('✅ '+res.name+(res.action==='created'?' — নতুন ফাইল Drive-এ যোগ হয়েছে':' — Drive-এ আপডেট হয়েছে'));
+  await refreshList();renderDrv();return true;
+}
+async function openFromDrive(id){
+  const ex=files.find(x=>x.driveId===id);
+  if(ex&&!safe(ex)&&!confirm('এই ফাইলটি এডিটরে আগে থেকেই খোলা এবং সেভ না-করা বদল আছে। Drive-এর ভার্সন দিয়ে বদলে দেবেন?'))return;
+  const res=await api({action:'read',id});
+  if(!res.ok){toast('❌ '+errMsg(res),1);return}
+  const m=ingest(res.name,res.content);
+  if(m){toast('❌ “'+res.name+'” এডিটরে খোলা যায় না (দিন/টপিকের ফরম্যাট নয়, যেমন routine.json)',1);return}
+  const r=files[af];r.driveId=id;r.driveName=res.name;r.driveModified=res.modifiedTime;r.lastUp=JSON.stringify(exportFile(r));r.upTime=timeNow();
+  hist=[];render();window.scrollTo({top:$('#fm').offsetTop-10,behavior:'smooth'});
+}
+async function trashFile(id){
+  const f=dv.files.find(x=>x.id===id);if(!f)return;
+  if(!confirm('“'+f.name+'” Drive-এর ট্র্যাশে পাঠাবেন?\n(ট্র্যাশ থেকে ফেরানো যায়, স্থায়ী মোছা নয়)'))return;
+  const res=await api({action:'delete',id});
+  if(!res.ok){toast('❌ '+errMsg(res),1);return}
+  files.forEach(x=>{if(x.driveId===id){x.driveId=null;x.driveModified=null;x.lastUp=null}});
+  toast('🗑 “'+f.name+'” ট্র্যাশে গেছে');await refreshList();renderDrv();
+}
+$('#dvc').onclick=connect;$('#dvf').onclick=()=>{if(dv.url)refreshList();else connect()};
+$('#dvl').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.o)openFromDrive(b.dataset.o);else if(b.dataset.t)trashFile(b.dataset.t)});
+$('#up').onclick=async()=>{const b=$('#up');b.disabled=true;try{await upload(files[af])}finally{b.disabled=false}};
+$('#ua').onclick=async()=>{const b=$('#ua');b.disabled=true;try{for(const r of files.slice())await upload(r)}finally{b.disabled=false}};
+$('#dvn').oninput=e=>{files[af].upName=e.target.value.trim()||null;renderDrv()};
+$('#cpg').onclick=async()=>{const code=$('#gs').textContent.trim();
+  try{await navigator.clipboard.writeText(code);toast('✅ কোড কপি হয়েছে — script.google.com-এ পেস্ট করুন')}
+  catch(_){const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('✅ কোড কপি হয়েছে')}catch(__){toast('কপি হয়নি — ম্যানুয়ালি কপি করুন',1)}ta.remove()}};
+try{
+  const u=localStorage.getItem('mj_url'),p=localStorage.getItem('mj_pass');
+  if(u)$('#dvu').value=u;if(p)$('#dvp').value=p;$('#dva').checked=!!localStorage.getItem('mj_auto');
+  if(u&&p){dv.url=u;dv.pass=p;refreshList()}else if(!u)$('#dv').open=true;
+}catch(_){$('#dv').open=true}
 const dz=$('#drop'),fi=$('#fi');
 dz.onclick=()=>fi.click();fi.onchange=()=>{addFiles(fi.files);fi.value=''};
 ['dragenter','dragover'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add('on')}));
 ['dragleave','drop'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove('on')}));
 dz.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
 window.addEventListener('dragover',e=>e.preventDefault());window.addEventListener('drop',e=>e.preventDefault());
-window.addEventListener('beforeunload',e=>{if(dirty&&files.length){e.preventDefault();e.returnValue=''}});
+window.addEventListener('beforeunload',e=>{if(files.some(r=>!safe(r))){e.preventDefault();e.returnValue=''}});
 </script>
 </body>
 </html>
