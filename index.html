@@ -5638,12 +5638,46 @@ body{
 .qm-ht{font-size:.8rem;color:#777;margin-top:4px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .qm-hexp{font-size:.78rem;color:#a85e24;margin-top:6px}
 .qm-hcard>.qm-btn{align-self:center;flex-shrink:0}
+.qm-fx{display:inline-flex;align-items:center;vertical-align:middle;margin:0 .15em;white-space:nowrap}
+.qm-fw{margin-right:.2em}
+.qm-fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15;font-size:.9em}
+.qm-fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .25em .05em}
+.qm-fr>span:last-child{padding:.05em .25em 0}
 </style>
 <script>
 /* ══════════════════════════════════════
    QUESTION MAKER
    লোড করা পড়া (allDays) থেকে টপিক-অনুযায়ী প্রশ্নপত্র
 ══════════════════════════════════════ */
+/* ── ভগ্নাংশ: {{৩/২}} = ৩ উপরে, ২ নিচে · {{৪ ৩/২}} = মিশ্র ভগ্নাংশ (৪ পূর্ণ, ৩ উপরে, ২ নিচে) ── */
+function qmParseFx(inner){
+  const s=String(inner).trim(); let m;
+  if((m=s.match(/^([0-9\u09E6-\u09EF]+)\s+([^\s\/]+)\s*\/\s*([^\s\/]+)$/))) return {w:m[1],n:m[2],d:m[3]};
+  if((m=s.match(/^(.+?)\s*\/\s*(.+)$/))) return {n:m[1],d:m[2]};
+  return null;
+}
+/* HTML (স্ক্রিন ও প্রিন্ট): esc() করা লেখার ভেতরের {{…}} বদলে ভগ্নাংশ-HTML */
+function qmFx(h){
+  return String(h==null?'':h).replace(/\{\{([^{}]+?)\}\}/g,(all,inner)=>{
+    const f=qmParseFx(inner); if(!f) return all;
+    return `<span class="qm-fx">${f.w!=null?`<span class="qm-fw">${f.w}</span>`:''}<span class="qm-fr"><span>${f.n}</span><span>${f.d}</span></span></span>`;
+  });
+}
+/* canvas (PDF ও ছবি): লেখাকে সাধারণ টুকরো ও ভগ্নাংশ-টুকরোয় ভাঙা */
+function qmRichParts(s){
+  const out=[]; let last=0; const re=/\{\{([^{}]+?)\}\}/g; let m;
+  s=String(s);
+  while((m=re.exec(s))){
+    const f=qmParseFx(m[1]);
+    if(!f) continue;
+    if(m.index>last) out.push({t:s.slice(last,m.index)});
+    out.push({f}); last=m.index+m[0].length;
+  }
+  if(last<s.length) out.push({t:s.slice(last)});
+  return out;
+}
+function qmHasFx(s){ return qmRichParts(s).some(p=>p.f); }
+
 const QM_LETTERS=['ক','খ','গ','ঘ','ঙ','চ','ছ','জ','ঝ','ঞ','ট','ঠ','ড','ঢ','ণ','ত','থ','দ','ধ','ন'];
 const qmHas=(n,...ks)=>ks.some(k=>n.includes(k));
 const QM_SUBJECTS=[
@@ -5773,7 +5807,7 @@ function qmRender(){
     if(!qmPaper.length){ body.innerHTML='<div class="qm-empty">কোনো প্রশ্ন তৈরি করা যায়নি।</div>'; return; }
     body.innerHTML=`<div class="qm-head"><div class="qm-inst">${esc(QM_INSTITUTE)}</div><div class="qm-time">${esc(qmTimeText())}</div></div><div class="qm-cols">`+qmPaper.map((sec,i)=>{
       const [tl,tr]=qmSplitTitle(sec.title);
-      return `<div class="qm-t qm-th"><span>${bn(i+1)}) ${esc(tl)}</span>${tr?`<span class="qm-mk">${esc(tr)}</span>`:''}</div>`+sec.items.map((it,j)=>`<div class="qm-item"><div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(esc(it.q))}</div>`+(qmShowAns?qmAnsParts(it).map(p=>`<div class="qm-a">${br(esc(p))}</div>`).join(''):'')+`</div>`).join('');
+      return `<div class="qm-t qm-th"><span>${bn(i+1)}) ${esc(tl)}</span>${tr?`<span class="qm-mk">${esc(tr)}</span>`:''}</div>`+sec.items.map((it,j)=>`<div class="qm-item"><div class="qm-q">${QM_LETTERS[j]||bn(j+1)}) ${br(qmFx(esc(it.q)))}</div>`+(qmShowAns?qmAnsParts(it).map(p=>`<div class="qm-a">${br(qmFx(esc(p)))}</div>`).join(''):'')+`</div>`).join('');
     }).join('')+`</div>`+`<div class="qm-ansbar"><button type="button" class="qm-btn main" onclick="qmToggleAns()">${qmShowAns?'উত্তর লুকান':'উত্তরসহ দেখুন'}</button></div>`;
     return;
   }
@@ -5823,16 +5857,33 @@ async function qmRenderPages(){
   const nextCol=()=>{ if(col===0){ col=1; y=top; pages[pages.length-1].two=true; } else newPage(); };
   const colX=()=>M+col*(CW+GAP);
   const need=h=>{ if(y+h>H-M && y>top) nextCol(); };
+  const szOf=font=>parseInt((String(font).match(/(\d+)px/)||[0,34])[1],10);
+  const fracW=(f,font,size)=>{
+    const fs=Math.round(size*0.8); ctx.font=font.replace(/\d+px/,fs+'px');
+    return Math.max(ctx.measureText(f.n).width,ctx.measureText(f.d).width)+Math.round(size*0.35);
+  };
+  const fxW=(f,font,size)=>{
+    let w=fracW(f,font,size)+Math.round(size*0.12)*2;
+    if(f.w!=null){ ctx.font=font; w+=ctx.measureText(f.w).width+Math.round(size*0.2); }
+    return w;
+  };
+  const meas=(s,font)=>{
+    const size=szOf(font); let w=0;
+    qmRichParts(s).forEach(p=>{ if(p.f) w+=fxW(p.f,font,size); else { ctx.font=font; w+=ctx.measureText(p.t).width; } });
+    return w;
+  };
+  const ls=(l,size)=>step(size)+(qmHasFx(l)?Math.round(size*0.7):0); // ভগ্নাংশওয়ালা লাইনে বাড়তি উচ্চতা
+  const sumH=(lines,size)=>lines.reduce((s,l)=>s+ls(l,size),0);
   const wrap=(text,font,maxW)=>{
     ctx.font=font; const out=[];
     String(text).split('\n').forEach(par=>{
-      const words=par.split(/\s+/).filter(Boolean); let line='';
+      const words=par.match(/(?:\{\{[^{}]*\}\}|\S)+/g)||[]; let line='';
       if(!words.length){ out.push(''); return; }
       words.forEach(w=>{
         const test=line?line+' '+w:w;
-        if(ctx.measureText(test).width<=maxW){ line=test; return; }
+        if(meas(test,font)<=maxW){ line=test; return; }
         if(line) out.push(line);
-        if(ctx.measureText(w).width<=maxW){ line=w; return; }
+        if(meas(w,font)<=maxW||w.indexOf('{{')>=0){ line=w; return; }
         let part=''; // অতি লম্বা শব্দ অক্ষর ধরে ভাঙা
         for(const ch of w){ if(ctx.measureText(part+ch).width>maxW){ out.push(part); part=ch; } else part+=ch; }
         line=part;
@@ -5841,11 +5892,30 @@ async function qmRenderPages(){
     });
     return out;
   };
+  const drawFrac=(f,x,by,font,color,size)=>{
+    const fs=Math.round(size*0.8), sf=font.replace(/\d+px/,fs+'px');
+    const gap=Math.round(size*0.12);
+    x+=gap;
+    if(f.w!=null){ ctx.font=font; ctx.fillStyle=color; ctx.textAlign='left'; ctx.fillText(f.w,x,by); x+=ctx.measureText(f.w).width+Math.round(size*0.2); }
+    const w=fracW(f,font,size), bar=by-Math.round(size*0.3), th=Math.max(2,Math.round(size*0.06));
+    ctx.font=sf; ctx.fillStyle=color; ctx.textAlign='center';
+    ctx.fillText(f.n,x+w/2,bar-Math.round(size*0.16));
+    ctx.fillText(f.d,x+w/2,bar+Math.round(size*0.16)+Math.round(fs*0.85));
+    ctx.fillRect(x,bar-Math.floor(th/2),w,th);
+    ctx.textAlign='left';
+    return x+w+gap;
+  };
+  const drawRich=(l,font,color,x,by,size)=>{
+    qmRichParts(l).forEach(p=>{
+      if(p.f){ x=drawFrac(p.f,x,by,font,color,size); }
+      else { ctx.font=font; ctx.fillStyle=color; ctx.textAlign='left'; ctx.fillText(p.t,x,by); x+=ctx.measureText(p.t).width; }
+    });
+  };
   const draw=(lines,font,color,indent,size)=>{
     lines.forEach(l=>{
-      if(y+step(size)>H-M) nextCol();
-      ctx.font=font; ctx.fillStyle=color; ctx.textAlign='left';
-      ctx.fillText(l,colX()+indent,y+size); y+=step(size);
+      const fx=qmHasFx(l), st=ls(l,size);
+      if(y+st>H-M) nextCol();
+      drawRich(l,font,color,colX()+indent,y+size+(fx?Math.round(size*0.35):0),size); y+=st;
     });
   };
   newPage();
@@ -5864,14 +5934,14 @@ async function qmRenderPages(){
     const firstQ=wrap(`${QM_LETTERS[0]}) ${sec.items[0].q}`,qF,CW-30);
     const gap=(y>top)?26:0;
     // শিরোনাম + প্রথম প্রশ্ন একসাথে না ধরলে পরের কলামে
-    need(gap+step(38)*tLines.length+step(34)*firstQ.length);
+    need(gap+sumH(tLines,38)+sumH(firstQ,34));
     if(y>top) y+=gap;
     const ty=y; draw(tLines,tF,'#111',0,38); y+=8;
     if(tr){ ctx.font=tF; ctx.fillStyle='#111'; ctx.textAlign='right'; ctx.fillText(tr,colX()+CW,ty+38); ctx.textAlign='left'; }
     sec.items.forEach((it,j)=>{
       const qL=wrap(`${QM_LETTERS[j]||bn(j+1)}) ${it.q}`,qF,CW-30);
       const aParts=qmShowAns?qmAnsParts(it).map(p=>wrap(p,aF,CW-60)):[];
-      const h=step(34)*qL.length+aParts.reduce((s,a)=>s+step(32)*a.length,0)+8;
+      const h=sumH(qL,34)+aParts.reduce((s,a)=>s+sumH(a,32),0)+8;
       need(h); // একটা প্রশ্ন (উত্তরসহ) দুই কলামে ভাঙবে না
       draw(qL,qF,'#111',30,34);
       aParts.forEach(a=>draw(a,aF,'#0a6b3d',60,32));
