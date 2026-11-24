@@ -1227,7 +1227,7 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 <!-- DRIVE OVERLAY -->
 <div class="overlay" id="driveOv">
   <div class="overlay-box">
-    <button class="settings-section-back drive-back-btn" id="driveBackBtn" onclick="closeDrive()">← ফিরে যান</button>
+    <div class="settings-back-row"><button class="settings-section-back drive-back-btn" id="driveBackBtn" onclick="closeDrive()">← ফিরে যান</button><button class="settings-close" id="driveCloseBtn" onclick="closeSettingsAll()" aria-label="বন্ধ করুন" hidden>✕</button></div>
     <div class="ov-title">☁️ Google Drive অটো সিংক</div>
     <div class="ov-sub">ফোল্ডার লিংক একবার দিন — সব day1.json, day2.json অটোমেটিক লোড হবে।</div>
 
@@ -1239,15 +1239,14 @@ body.no-scroll{overflow:hidden;position:fixed;width:100%;height:100%}
 
     <!-- Folder sync tab -->
     <div id="panelFolder">
-      <div class="guide-box">
-        <div class="g-step"><span class="g-num">১</span><span>Google Drive এ JSON ফাইলগুলো একটা ফোল্ডারে রাখুন</span></div>
-        <div class="g-step"><span class="g-num">২</span><span>ফোল্ডারে Right click → <b>Share</b> → <b>Anyone with the link</b></span></div>
-        <div class="g-step"><span class="g-num">৩</span><span>ফোল্ডারের লিংক নিচে পেস্ট করুন → <b>সিংক করুন</b></span></div>
-      </div>
       <div class="fl">Drive Folder Link:</div>
       <input class="link-inp" id="folderInp" placeholder="https://drive.google.com/drive/folders/XXXX" value="https://drive.google.com/drive/folders/1II32nWydobACdl7eKzyi0s7jy2H5Nz8X?usp=drive_link">
       <button class="primary-btn" id="syncBtn" onclick="syncFolder()">🔄 সিংক করুন</button>
       <div id="syncStatus" style="font-size:.75rem;color:var(--muted);text-align:center;margin-bottom:8px;min-height:18px;"></div>
+      <label style="display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--card);border:1px solid var(--border);border-radius:9px;margin-bottom:8px;cursor:pointer;">
+        <input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync(this.checked)" checked style="width:18px;height:18px;accent-color:var(--accent);flex-shrink:0;">
+        <span style="flex:1;font-size:.8rem;font-weight:600;color:var(--text);">🔁 প্রতিদিন অটো চেক ও আপডেট<small id="autoSyncInfo" style="display:block;font-size:.68rem;font-weight:400;color:var(--muted);margin-top:2px;"></small></span>
+      </label>
       <div class="saved-section" id="savedFolderSection"></div>
     </div>
 
@@ -1295,7 +1294,7 @@ let fileModTimeCache={}; // {fileId: modifiedTime} — স্মার্ট স
 const __appInit=()=>{
   try{
     loadState(); initRoutine(); syncStudyDialog(); updateFavBadge(); renderDays(); renderContent();
-    recalcStreak(); updateStreak(); requestWakeLock(); setTimeout(initTrackerTopbar, 0); switchTab('home');
+    recalcStreak(); updateStreak(); requestWakeLock(); setTimeout(initTrackerTopbar, 0); switchTab('home'); setTimeout(()=>autoDailySync(),3000);
   }finally{
     setTimeout(()=>{
       const preloader=document.getElementById('appPreloader');
@@ -1972,7 +1971,7 @@ async function syncFolder(){
     if(toFetch.length===0){
       if(status) status.textContent=`✅ সব ফাইল আপ-টু-ডেট (${bn(files.length)}টি)`;
       toast(`✅ কোনো পরিবর্তন নেই — সব আপ-টু-ডেট!`);
-      savedFolderUrl=url; save(true);
+      savedFolderUrl=url; save(true); markAutoChecked();
       setTimeout(()=>closeDrive(),1600);
       if(btn){btn.disabled=false;btn.textContent='🔄 সিংক করুন';}
       return;
@@ -2005,6 +2004,7 @@ async function syncFolder(){
     // routine.json ও sync করো
     await syncRoutineFromDrive(folderId);
     save(true);renderDays();renderContent();renderSavedFolder();
+    if(!failed) markAutoChecked();
     if(document.getElementById('examOv').classList.contains('show')) renderExamPicker();
     const skipMsg=skipped>0?`, ${bn(skipped)}টি অপরিবর্তিত`:'';
     if(status) status.textContent=`✅ ${bn(loaded)}টি আপডেট হয়েছে${skipMsg}${failed?` (${bn(failed)}টি ব্যর্থ)`:''}`;
@@ -2016,6 +2016,89 @@ async function syncFolder(){
   }
   if(btn){btn.disabled=false;btn.textContent='🔄 সিংক করুন';}
 }
+
+/* ══════════════════════════════════════
+   AUTO DAILY SYNC — দিনে একবার নিজে চেক করে প্রয়োজনে আপডেট
+══════════════════════════════════════ */
+const AUTO_SYNC_TS_KEY='ds_auto_last';
+const AUTO_SYNC_ON_KEY='ds_auto_on';
+let _autoSyncRunning=false;
+function autoSyncEnabled(){
+  try{return localStorage.getItem(AUTO_SYNC_ON_KEY)!=='0';}catch(e){return true;}
+}
+function autoSyncLastTs(){
+  try{return Number(localStorage.getItem(AUTO_SYNC_TS_KEY))||0;}catch(e){return 0;}
+}
+function markAutoChecked(){
+  try{localStorage.setItem(AUTO_SYNC_TS_KEY,String(Date.now()));}catch(e){}
+  updateAutoSyncInfo();
+}
+function toggleAutoSync(on){
+  try{localStorage.setItem(AUTO_SYNC_ON_KEY,on?'1':'0');}catch(e){}
+  updateAutoSyncInfo();
+  if(on) autoDailySync();
+}
+function updateAutoSyncInfo(){
+  const cb=document.getElementById('autoSyncToggle');
+  if(cb) cb.checked=autoSyncEnabled();
+  const el=document.getElementById('autoSyncInfo');
+  if(!el) return;
+  const ts=autoSyncLastTs();
+  if(!ts){el.textContent='এখনো চেক করা হয়নি';return;}
+  const dt=new Date(ts);
+  el.textContent='সর্বশেষ চেক: '+dt.toLocaleDateString('bn-BD')+', '+dt.toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'});
+}
+async function autoDailySync(force){
+  if(_autoSyncRunning||!savedFolderUrl) return;
+  if(navigator.onLine===false) return;
+  if(!force){
+    if(!autoSyncEnabled()) return;
+    const ts=autoSyncLastTs();
+    if(ts&&new Date(ts).toDateString()===new Date().toDateString()) return; // আজ আগেই চেক হয়েছে
+  }
+  const folderId=extractFolderId(savedFolderUrl);
+  if(!folderId) return;
+  _autoSyncRunning=true;
+  try{
+    const listResp=await fetch(`${APPS_SCRIPT_URL}?folderId=${folderId}`);
+    if(!listResp.ok) throw new Error('list failed');
+    const files=await listResp.json();
+    if(!Array.isArray(files)) throw new Error('bad list');
+    const toFetch=files.filter(f=>f.modifiedTime&&fileModTimeCache[f.id]!==f.modifiedTime);
+    let loaded=0,failed=0,routineChanged=false;
+    for(const file of toFetch){
+      try{
+        const resp=await fetch(`${APPS_SCRIPT_URL}?fileId=${file.id}`);
+        if(!resp.ok) throw new Error();
+        const data=await resp.json();
+        if(data.day&&data.topics){allDays[data.day]=data;loaded++;}
+        else if(/^routine(_short)?\.json$/i.test(file.name||'')) routineChanged=true;
+        fileModTimeCache[file.id]=file.modifiedTime;
+      }catch(e){failed++;}
+    }
+    if(routineChanged){
+      await syncRoutineFromDrive(folderId);
+      if(document.getElementById('trackerOv').classList.contains('show')||settingsSection) renderTracker();
+    }
+    if(loaded>0){
+      const k=Object.keys(allDays).map(Number).sort((a,b)=>a-b);
+      if(k.length&&!allDays[currentDay]) currentDay=k[0];
+      save(true);renderDays();renderContent();renderSavedFolder();
+      if(document.getElementById('examOv').classList.contains('show')) renderExamPicker();
+      toast(`🔄 অটো আপডেট: ${bn(loaded)}টি ফাইল নতুন হয়েছে`);
+    }else if(toFetch.length){
+      save(true);
+    }
+    if(!failed) markAutoChecked(); // ব্যর্থ হলে চিহ্ন দেব না, পরের বার আবার চেষ্টা করবে
+  }catch(e){
+    /* অফলাইন বা Apps Script সমস্যা — চুপচাপ বাদ, পরের বার আবার চেষ্টা */
+  }finally{
+    _autoSyncRunning=false;
+  }
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') autoDailySync();});
+window.addEventListener('online',()=>autoDailySync());
+setInterval(()=>autoDailySync(),60*60*1000); // অ্যাপ খোলা থাকলে তারিখ বদলালে ধরবে
 
 function reSyncFolder(){
   const inp=document.getElementById('folderInp');
@@ -2685,6 +2768,9 @@ document.addEventListener('keydown',event=>{
 function openDrive(fromSettings=false){
  const backBtn=document.getElementById('driveBackBtn');
  if(backBtn) backBtn.textContent=fromSettings?'← সেটিংসে ফিরুন':'← ফিরে যান';
+ updateAutoSyncInfo();
+ const closeBtn=document.getElementById('driveCloseBtn');
+ if(closeBtn) closeBtn.hidden=!fromSettings;
  if(savedFolderUrl){const inp=document.getElementById('folderInp');if(inp)inp.value=savedFolderUrl;}
  renderSavedFolder();
  switchDriveTab('folder');
@@ -2798,6 +2884,11 @@ function openSettings(){
   syncNavActive('navSettings');
 }
 function closeSettings(fromHistory=false){closeAppOverlay('settingsOv',fromHistory);syncNavActive(activeTab==='study'?null:'navHome');}
+function closeSettingsAll(){
+  const i=appOverlayStack.findIndex(entry=>entry.id==='settingsOv');
+  if(i<0){closeTopAppOverlay();return;}
+  history.go(-(appOverlayStack.length-i));
+}
 function showSettingsMenu(){
   settingsSection = null;
   document.getElementById('settingsMenuContent').hidden = false;
@@ -4216,6 +4307,7 @@ function showCompletionMessage(){
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <button class="theme-back-btn" onclick="closeThemePicker()">← সেটিংসে ফিরুন</button>
       <span style="font-size:.97rem;font-weight:700;color:var(--text)">🎨 থিম বেছে নিন</span>
+      <button class="settings-close" onclick="closeSettingsAll()" aria-label="বন্ধ করুন">✕</button>
     </div>
     <div id="themeGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:68vh;overflow-y:auto;padding-right:2px"></div>
   </div>
@@ -4620,6 +4712,9 @@ body{
   font-size:1rem;
   cursor:pointer;
 }
+.settings-back-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.settings-back-row .settings-section-back{margin:8px 0 12px}
+.settings-back-row .settings-close{flex-shrink:0;width:34px;height:34px;margin:8px 0 12px;font-size:.9rem}
 .settings-intro{margin:8px 0 18px;color:var(--muted);font-size:.88rem}
 .settings-grid{display:grid;gap:9px}
 .settings-item{
