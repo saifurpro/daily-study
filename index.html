@@ -1455,7 +1455,7 @@ function loadState(){
    অবস্থা সব ভিউতে এক থাকে।
 ══════════════════════════════════════ */
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-function br(s){ return String(s==null?'':s).replace(/\n/g,'<br>'); }
+function br(s){ return qmFx(String(s==null?'':s).replace(/\n/g,'<br>')); }
 
 function favKey(t,q){ return (t||'')+'⟂'+(q||''); }
 function favCount(){ return Object.keys(favs).length; }
@@ -2652,7 +2652,7 @@ function _doSearch(q){
   sr.innerHTML=shown.map((r,i)=>{
     const ex=r.item.ex||r.item.example||'';
     const on=!!favs[favKey(r.tt,r.item.q)];
-    return`<div class="search-result-card"><button class="star-btn ${on?'on':''}" id="srs${i}" onclick="toggleFavSr(${i})" title="রিভিশনে রাখুন">${on?'★':'☆'}</button><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${hlWords(r.item.q,words)}</div><div class="sr-a">→ ${br(hlWords(r.item.a,words))}</div>${ex?`<div class="sr-ex">${hlWords(ex,words)}</div>`:''}</div>`}).join('');
+    return`<div class="search-result-card"><button class="star-btn ${on?'on':''}" id="srs${i}" onclick="toggleFavSr(${i})" title="রিভিশনে রাখুন">${on?'★':'☆'}</button><div class="sr-badge">দিন ${bn(+r.dn)} · ${r.tt}</div><div class="sr-q">${qmFx(hlWords(r.item.q,words))}</div><div class="sr-a">→ ${br(hlWords(r.item.a,words))}</div>${ex?`<div class="sr-ex">${qmFx(hlWords(ex,words))}</div>`:''}</div>`}).join('');
 }
 function clearStudySearch(){
     clearTimeout(_searchTimer);
@@ -3429,14 +3429,14 @@ function renderExamCard(){
     </div>`:'';
   const hasEx=item.cols===3&&item.ex;
   const hdrs=item.headers||(hasEx?['প্রশ্ন','উত্তর','Example']:['প্রশ্ন','উত্তর']);
-  const exHtml=hasEx?`<div class="exam-ans-wrap" id="examExWrap" onclick="toggleExamAns()" style="margin-top:8px;"><span style="font-size:.65rem;color:var(--muted);display:block;margin-bottom:3px;">${hdrs[2]||'Example'}</span><span class="exam-ans-text" id="examExText" style="color:var(--muted);">${item.ex}</span></div>`:'';
+  const exHtml=hasEx?`<div class="exam-ans-wrap" id="examExWrap" onclick="toggleExamAns()" style="margin-top:8px;"><span style="font-size:.65rem;color:var(--muted);display:block;margin-bottom:3px;">${hdrs[2]||'Example'}</span><span class="exam-ans-text" id="examExText" style="color:var(--muted);">${qmFx(item.ex)}</span></div>`:'';
   const ansLabel=hasEx?`<span style="font-size:.65rem;color:var(--muted);display:block;margin-bottom:3px;">${hdrs[1]||'উত্তর'}</span>`:'';
   const h=`
     <div class="exam-counter">${bn(examIdx+1)} / ${bn(total)}</div>
     <div class="exam-topic-badge">${item.topic}</div>
-    <div class="exam-q-card">${item.q}</div>
+    <div class="exam-q-card">${qmFx(item.q)}</div>
     <div class="exam-ans-wrap" id="examAnsWrap" onclick="toggleExamAns()" role="group" aria-label="উত্তর">
-      ${ansLabel}<span class="exam-ans-text" id="examAnsText">${item.a.replace(/\n/g,'<br>')}</span>
+      ${ansLabel}<span class="exam-ans-text" id="examAnsText">${qmFx(item.a.replace(/\n/g,'<br>'))}</span>
       <button type="button" class="exam-eye" id="examEyeBtn" aria-label="উত্তর দেখুন" aria-pressed="false">👁</button>
     </div>
     ${exHtml}
@@ -3566,9 +3566,9 @@ function renderExamResult(){
       // টেবিল বডি - নরমাল ডে এর মতো
       data.items.forEach((item, idx) => {
         dontKnowHTML += `<div class="t-row col${cols}">
-          <div class="t-cell q-cell" title="${item.q}">${item.q.replace(/\n/g,'<br>')}</div>
+          <div class="t-cell q-cell" title="${item.q}">${qmFx(item.q.replace(/\n/g,'<br>'))}</div>
           <div class="t-cell a-cell revealed" title="${item.a}">
-            <span class="a-text">${item.a.replace(/\n/g,'<br>')}</span>
+            <span class="a-text">${qmFx(item.a.replace(/\n/g,'<br>'))}</span>
           </div>`;
         
         if(hasEx){
@@ -5842,13 +5842,14 @@ function qmBuildPools(){
   Object.keys(allDays).map(Number).sort((a,b)=>a-b).forEach(d=>{
     const day=allDays[d]; if(!day||!day.topics) return;
     if(d===QM_MATH.day){
-      day.topics.forEach(t=>{
+      day.topics.forEach((t,ti)=>{
         const hd=t.columnHeaders||t.headers||null;
+        const mtopic=String(t.title||'').trim()||('#'+ti);
         (t.items||[]).forEach(it=>{
           if(!it||!it.q) return;
           const key=QM_MATH.id+'⟂'+it.q;
           if(seen[key]) return; seen[key]=1;
-          qmPools[QM_MATH.id].push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null,tid:QM_MATH.id});
+          qmPools[QM_MATH.id].push({q:it.q,a:it.a,ex:it.ex||it.example||'',h:Array.isArray(hd)?hd:null,tid:QM_MATH.id,mtopic});
         });
       });
       return;
@@ -6350,8 +6351,11 @@ function qmGenerate(){
   // গণিত: সব অধ্যায়ের পুল থেকে র‍্যান্ডম ৫টি, প্রতিটি ৩ নম্বর, ৫ প্রশ্নে ১৫ মিনিট
   if(paper.length){
     const mpool=(qmPools[QM_MATH.id]||[]).filter(it=>!used.has(String(it.q).trim()));
-    for(let i=mpool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[mpool[i],mpool[j]]=[mpool[j],mpool[i]];}
-    const mp=mpool.slice(0,QM_MATH.count);
+    const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;};
+    // topic-wise grouping: at most ONE question per topic
+    const byTopicM={};
+    mpool.forEach(it=>{ const k=it.mtopic||'?'; (byTopicM[k]=byTopicM[k]||[]).push(it); });
+    const mp=shuf(Object.keys(byTopicM)).slice(0,QM_MATH.count).map(k=>{ const g=byTopicM[k]; return g[Math.floor(Math.random()*g.length)]; });
     if(mp.length) paper.push({title:`গণিত (${bn(QM_MATH.marks)}x${bn(mp.length)} = ${bn(QM_MATH.marks*mp.length)})`,items:mp,sec:mp.length*QM_MATH.secPerQ,marks:QM_MATH.marks});
   }
   if(!paper.length){ toast('কোনো প্রশ্ন পাওয়া যায়নি',true); return; }
