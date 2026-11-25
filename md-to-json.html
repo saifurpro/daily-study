@@ -60,6 +60,30 @@ ol.steps{margin:8px 0;padding-left:20px;color:var(--mut);font-size:.9rem}ol.step
 #tq[hidden]{display:none}#tq.bd{border-color:var(--bad);color:var(--bad)}
 #dvs{font-size:.85rem}
 #fm{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding-bottom:4px}#fm>*{flex:none;white-space:nowrap}#fm .ti{flex:1 1 110px;min-width:90px}#fm button{padding:7px 10px}#fm .dn{width:64px}
+/* ── হেল্প বাটন ও শর্টকাট প্যানেল ── */
+#hlb{position:fixed;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:55;display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--card2);border:1px solid var(--bd);box-shadow:0 6px 20px rgba(0,0,0,.45)}
+#hlb:hover{border-color:var(--ac)}#hlb[aria-expanded=true]{border-color:var(--ac);background:var(--card)}
+#hlb .hi{width:30px;height:30px;border-radius:50%;background:var(--ac);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem;line-height:1}
+#hlp{position:fixed;left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:55;width:min(460px,calc(100vw - 28px));max-height:min(72vh,640px);overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:14px;box-shadow:0 14px 38px rgba(0,0,0,.6)}
+#hlp .hh{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 14px;background:var(--card2);border-bottom:1px solid var(--bd);font-weight:650}
+#hlp .hh button{padding:2px 9px;line-height:1.4}
+#hlp .hb{padding:2px 14px 12px}
+#hlp h4{margin:14px 0 2px;font-size:.82rem;color:var(--ac);font-weight:650}
+#hlp .hr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--bd)}
+#hlp h4+.hr{border-top:0}
+#hlp .hc{min-width:0}#hlp .hn{display:block;color:var(--mut);font-size:.78rem}
+#hlp .hk{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#hlp code{background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:2px 7px;font:.9rem/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,"Noto Sans Bengali","SolaimanLipi",monospace;color:var(--ok);word-break:break-all}
+#hlp button.cp{padding:1px 7px;font-size:.85rem;line-height:1.5}
+#hlp .hv{flex:none;font-size:1.1rem;min-width:70px;text-align:right}
+#hlp ul{margin:6px 0 0;padding-left:18px;color:var(--mut);font-size:.84rem}#hlp li{margin:3px 0}
+#hlp .qm-fx{display:inline-flex;align-items:center;vertical-align:middle;margin:0 .15em;white-space:nowrap}
+#hlp .qm-fw{margin-right:.2em}
+#hlp .qm-fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15;font-size:.9em}
+#hlp .qm-fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .25em .05em}
+#hlp .qm-fr>span:last-child{padding:.05em .25em 0}
+#hlp .qm-sup,#hlp .qm-sub{font-size:.76em;line-height:0;position:relative;vertical-align:baseline;white-space:nowrap}
+#hlp .qm-sup{top:-.5em}#hlp .qm-sub{top:.32em}
 </style>
 </head>
 <body>
@@ -73,12 +97,6 @@ ol.steps{margin:8px 0;padding-left:20px;color:var(--mut);font-size:.9rem}ol.step
 <div class="ctl"><label><input type="checkbox" id="dvr" checked> এই ব্রাউজারে মনে রাখুন</label><label><input type="checkbox" id="dva"> কনভার্টের সাথে সাথে অটো-আপলোড (ভুল না থাকলে)</label><button id="dvf">↻ রিফ্রেশ</button></div>
 <div id="dst" class="mut"></div>
 <div id="dvl"></div>
-<details style="margin-top:10px"><summary class="mut">প্রথমবার সেটআপ (আলাদা নতুন স্ক্রিপ্ট — পুরনোটায় হাত দিতে হবে না)</summary>
-<ol class="steps"><li>script.google.com → <b>New project</b> খুলুন।</li>
-<li><button id="cpg">📋 স্ক্রিপ্ট কোড কপি করুন</button> — সব পুরনো লেখা মুছে পেস্ট করুন। উপরের দুই লাইনে <b>ফোল্ডার আইডি</b> (ফোল্ডার লিংকের <code>/folders/</code> এর পরের অংশ) ও আপনার <b>গোপন পাসকোড</b> বসান, তারপর Save।</li>
-<li><b>Deploy → New deployment → Web app</b>: Execute as = <b>Me</b>, Who has access = <b>Anyone</b> → Deploy। অনুমতি চাইলে Authorize করুন (“Google hasn’t verified this app” এলে Advanced → Go to … চাপুন)।</li>
-<li>দেওয়া <b>Web app URL</b> কপি করে উপরের ঘরে বসান, পাসকোড দিন, “সংযোগ” চাপুন।</li>
-<li>পরে স্ক্রিপ্ট বদলালে Deploy → Manage deployments → ✏️ → <b>New version</b> দিতে হবে।</li></ol></details>
 </details>
 <div class="ctl">
 <button class="p" id="nf" title="ফাঁকা নমুনা ফরম্যাটের নতুন JSON ফাইল">＋ নতুন JSON ফাইল</button>
@@ -98,6 +116,27 @@ ol.steps{margin:8px 0;padding-left:20px;color:var(--mut);font-size:.9rem}ol.step
 <div id="tq" hidden></div>
 <section id="pv"><div class="em">ফাইল ছাড়লে এখানে প্রিভিউ দেখা যাবে।</div></section>
 </main>
+<button type="button" id="hlb" aria-expanded="false" aria-controls="hlp" aria-haspopup="dialog" title="ভগ্নাংশ, পাওয়ার, সাবস্ক্রিপ্টের শর্টকাট"><span class="hi" aria-hidden="true">?</span><span>হেল্প</span></button>
+<div id="hlp" role="dialog" aria-label="লেখার শর্টকাট" hidden>
+<div class="hh"><span>✍️ লেখার শর্টকাট (Question Maker)</span><button type="button" id="hlx" aria-label="বন্ধ করুন">✕</button></div>
+<div class="hb">
+<h4>ভগ্নাংশ</h4>
+<div class="hr"><div class="hc"><span class="hn">সাধারণ — উপরে, নিচে</span><div class="hk"><code>{{৩/২}}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv"><span class="qm-fx"><span class="qm-fr"><span>৩</span><span>২</span></span></span></div></div><div class="hr"><div class="hc"><span class="hn">মিশ্র — পূর্ণ, উপরে, নিচে</span><div class="hk"><code>{{৪ ৩/২}}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv"><span class="qm-fx"><span class="qm-fw">৪</span><span class="qm-fr"><span>৩</span><span>২</span></span></span></div></div>
+<h4>পাওয়ার (উপরে ছোট করে)</h4>
+<div class="hr"><div class="hc"><span class="hn">সংখ্যা বা অক্ষরের ওপর</span><div class="hk"><code>x^{২}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv">x<span class="qm-sup">২</span></div></div><div class="hr"><div class="hc"><span class="hn">শর্ট ফর্ম — শুধু সংখ্যা হলে</span><div class="hk"><code>y^২</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv">y<span class="qm-sup">২</span></div></div><div class="hr"><div class="hc"><span class="hn">ঋণাত্মক পাওয়ার</span><div class="hk"><code>১০^{-৩}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv">১০<span class="qm-sup">−৩</span></div></div><div class="hr"><div class="hc"><span class="hn">বন্ধনীর ওপর</span><div class="hk"><code>(a+b)^{২}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv">(a+b)<span class="qm-sup">২</span></div></div><div class="hr"><div class="hc"><span class="hn">এক্সপ্রেশন পাওয়ার</span><div class="hk"><code>x^{n+1}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv">x<span class="qm-sup">n+1</span></div></div>
+<h4>সাবস্ক্রিপ্ট (নিচে ছোট করে)</h4>
+<div class="hr"><div class="hc"><span class="hn">রাসায়নিক সংকেত</span><div class="hk"><code>H_{২}O</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv">H<span class="qm-sub">২</span>O</div></div><div class="hr"><div class="hc"><span class="hn">লগারিদম / ভিত্তি</span><div class="hk"><code>log_{২}৮</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv">log<span class="qm-sub">২</span>৮</div></div>
+<h4>মিলিয়ে ব্যবহার</h4>
+<div class="hr"><div class="hc"><span class="hn">ভগ্নাংশের ভেতরে পাওয়ার</span><div class="hk"><code>{{x^{২}/y^{২}}}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv"><span class="qm-fx"><span class="qm-fr"><span>x<span class="qm-sup">২</span></span><span>y<span class="qm-sup">২</span></span></span></span></div></div><div class="hr"><div class="hc"><span class="hn">ভগ্নাংশের ওপর পাওয়ার</span><div class="hk"><code>{{১/২}}^{২}</code><button type="button" class="cp" aria-label="কপি করুন" title="কপি">📋</button></div></div><div class="hv"><span class="qm-fx"><span class="qm-fr"><span>১</span><span>২</span></span></span><span class="qm-sup">২</span></div></div>
+<ul>
+<li>সবকিছু প্রশ্ন, উত্তর ও সমাধান — তিন ঘরেই লেখা যায়।</li>
+<li>পাওয়ারের শর্ট ফর্ম (<code>^২</code>) শুধু সংখ্যায়; অক্ষর বা যোগ-বিয়োগ থাকলে <code>^{ }</code> দিন।</li>
+<li>সাবস্ক্রিপ্ট সবসময় <code>_{ }</code> দিয়ে লিখতে হবে।</li>
+<li>পাওয়ারের ভেতরে আরেকটা পাওয়ার বা সাবস্ক্রিপ্ট চলে না।</li>
+<li>এগুলো শুধু Question Maker-এ (স্ক্রিন, প্রিন্ট, PDF, ছবি) ঠিকভাবে দেখায়।</li>
+<li>📋 চাপলে লেখাটা কপি হয়, তারপর ঘরে পেস্ট করুন।</li>
+</ul>
+</div></div>
 <script type="text/plain" id="gs">
 /**
  * JSON ড্যাশবোর্ড স্ক্রিপ্ট (আলাদা নতুন প্রজেক্ট — পুরনো স্ক্রিপ্ট অক্ষত থাকবে)
@@ -657,14 +696,11 @@ $('#dvl').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)
 $('#up').onclick=async()=>{const b=$('#up');b.disabled=true;try{await upload(files[af])}finally{b.disabled=false}};
 $('#ua').onclick=async()=>{const b=$('#ua');b.disabled=true;try{for(const r of files.slice())await upload(r)}finally{b.disabled=false}};
 $('#dvn').oninput=e=>{files[af].upName=e.target.value.trim()||null;renderDrv()};
-$('#cpg').onclick=async()=>{const code=$('#gs').textContent.trim();
-  try{await navigator.clipboard.writeText(code);toast('✅ কোড কপি হয়েছে — script.google.com-এ পেস্ট করুন')}
-  catch(_){const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('✅ কোড কপি হয়েছে')}catch(__){toast('কপি হয়নি — ম্যানুয়ালি কপি করুন',1)}ta.remove()}};
 try{
   const u=localStorage.getItem('mj_url'),p=localStorage.getItem('mj_pass');
   if(u)$('#dvu').value=u;if(p)$('#dvp').value=p;$('#dva').checked=!!localStorage.getItem('mj_auto');
-  if(u&&p){dv.url=u;dv.pass=p;refreshList()}else if(!u)$('#dv').open=true;
-}catch(_){$('#dv').open=true}
+  if(u&&p){dv.url=u;dv.pass=p;refreshList()}
+}catch(_){}
 function newFile(){
   let k=1;while(files.some(f=>f.name==='new'+k+'.json'))k++;
   const day=Math.max(0,...files.map(f=>+f.day||0))+1;
@@ -680,6 +716,27 @@ dz.onclick=()=>fi.click();fi.onchange=()=>{addFiles(fi.files);fi.value=''};
 dz.addEventListener('drop',e=>addFiles(e.dataTransfer.files));
 window.addEventListener('dragover',e=>e.preventDefault());window.addEventListener('drop',e=>e.preventDefault());
 window.addEventListener('beforeunload',e=>{if(files.some(r=>!safe(r))){e.preventDefault();e.returnValue=''}});
+/* ── হেল্প বাটন: শর্টকাট প্যানেল ── */
+(function(){
+  const b=document.getElementById('hlb'),p=document.getElementById('hlp');
+  const set=o=>{p.hidden=!o;b.setAttribute('aria-expanded',o?'true':'false')};
+  b.addEventListener('click',e=>{e.stopPropagation();set(p.hidden)});
+  document.getElementById('hlx').addEventListener('click',()=>set(false));
+  document.addEventListener('click',e=>{if(!p.hidden&&!p.contains(e.target)&&!b.contains(e.target))set(false)});
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!p.hidden){set(false);b.focus()}});
+  p.addEventListener('click',async e=>{
+    const t=e.target.closest('button.cp'); if(!t) return;
+    const code=t.parentNode.querySelector('code').textContent;
+    try{await navigator.clipboard.writeText(code);toast('✅ কপি হয়েছে: '+code)}
+    catch(_){const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('✅ কপি হয়েছে: '+code)}catch(__){toast('কপি হয়নি — ম্যানুয়ালি কপি করুন',1)}ta.remove()}
+  });
+})();
+/* ── Drive ড্যাশবোর্ড: ডিফল্ট বন্ধ; ক্লিক করলে খোলে, বাইরে ক্লিক করলে নিজে থেকে বন্ধ হয় ── */
+document.addEventListener('click',e=>{
+  const d=$('#dv'); if(!d||!d.open) return;
+  if(e.composedPath().includes(d)) return;
+  d.open=false;
+},true); // capture: বাইরের বাটনের নিজস্ব কাজ (যেমন আপলোডে ড্যাশবোর্ড খোলা) এর আগে চলে, তাই সেটা আর উল্টে বন্ধ হয় না
 </script>
 </body>
 </html>
