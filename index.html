@@ -5738,6 +5738,9 @@ body{
 .qm-fr{display:inline-flex;flex-direction:column;align-items:center;line-height:1.15;font-size:.9em}
 .qm-fr>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .25em .05em}
 .qm-fr>span:last-child{padding:.05em .25em 0}
+.qm-sup,.qm-sub{font-size:.76em;line-height:0;position:relative;vertical-align:baseline;white-space:nowrap}
+.qm-sup{top:-.5em}
+.qm-sub{top:.32em}
 </style>
 <script>
 /* ══════════════════════════════════════
@@ -5752,23 +5755,46 @@ function qmParseFx(inner){
   return null;
 }
 /* HTML (স্ক্রিন ও প্রিন্ট): esc() করা লেখার ভেতরের {{…}} বদলে ভগ্নাংশ-HTML */
+/* ── পাওয়ার ও সাবস্ক্রিপ্ট: x^{২} · x^২ · ১০^{-৩} · H_{২}O ── */
+function qmScRe(){ return /\^\{([^{}]*)\}|\^([\u2212\-]?[0-9\u09E6-\u09EF]+)|_\{([^{}]*)\}/g; }
+function qmScNorm(t){ return String(t).replace(/^[-\u2212]/,'\u2212'); }
+function qmFxRe(){ return /\{\{((?:[^{}]|\^\{[^{}]*\}|_\{[^{}]*\})+?)\}\}/g; }
+function qmSc(h){
+  return String(h==null?'':h).replace(qmScRe(),(all,a,b,c)=>c!=null
+    ?`<span class="qm-sub">${qmScNorm(c)}</span>`
+    :`<span class="qm-sup">${qmScNorm(a!=null?a:b)}</span>`);
+}
 function qmFx(h){
-  return String(h==null?'':h).replace(/\{\{([^{}]+?)\}\}/g,(all,inner)=>{
+  const out=String(h==null?'':h).replace(qmFxRe(),(all,inner)=>{
     const f=qmParseFx(inner); if(!f) return all;
     return `<span class="qm-fx">${f.w!=null?`<span class="qm-fw">${f.w}</span>`:''}<span class="qm-fr"><span>${f.n}</span><span>${f.d}</span></span></span>`;
   });
+  return qmSc(out);
 }
-/* canvas (PDF ও ছবি): লেখাকে সাধারণ টুকরো ও ভগ্নাংশ-টুকরোয় ভাঙা */
+/* লেখাকে সাধারণ টুকরো ও পাওয়ার/সাবস্ক্রিপ্ট টুকরোয় ভাঙা */
+function qmScParts(s){
+  const out=[]; let last=0,m; const re=qmScRe(); s=String(s);
+  while((m=re.exec(s))){
+    if(m.index>last) out.push({t:s.slice(last,m.index)});
+    if(m[3]!=null) out.push({sc:'sub',t:qmScNorm(m[3])});
+    else out.push({sc:'sup',t:qmScNorm(m[1]!=null?m[1]:m[2])});
+    last=m.index+m[0].length;
+  }
+  if(last<s.length) out.push({t:s.slice(last)});
+  return out;
+}
+/* canvas (PDF ও ছবি): লেখাকে সাধারণ, ভগ্নাংশ ও পাওয়ার/সাবস্ক্রিপ্ট টুকরোয় ভাঙা */
 function qmRichParts(s){
-  const out=[]; let last=0; const re=/\{\{([^{}]+?)\}\}/g; let m;
+  const out=[]; let last=0; const re=qmFxRe(); let m;
   s=String(s);
+  const pushText=t=>{ qmScParts(t).forEach(p=>out.push(p)); };
   while((m=re.exec(s))){
     const f=qmParseFx(m[1]);
     if(!f) continue;
-    if(m.index>last) out.push({t:s.slice(last,m.index)});
+    if(m.index>last) pushText(s.slice(last,m.index));
     out.push({f}); last=m.index+m[0].length;
   }
-  if(last<s.length) out.push({t:s.slice(last)});
+  if(last<s.length) pushText(s.slice(last));
   return out;
 }
 function qmHasFx(s){ return qmRichParts(s).some(p=>p.f); }
@@ -5957,9 +5983,30 @@ async function qmRenderPages(){
   const colX=()=>M+col*(CW+GAP);
   const need=h=>{ if(y+h>H-M && y>top) nextCol(); };
   const szOf=font=>parseInt((String(font).match(/(\d+)px/)||[0,34])[1],10);
+  const scSize=size=>Math.round(size*0.72);
+  const inlineW=(str,font,size)=>{ // পাওয়ার/সাবস্ক্রিপ্টসহ লেখার প্রস্থ
+    let w=0;
+    qmScParts(str).forEach(p=>{
+      ctx.font=p.sc?font.replace(/\d+px/,scSize(size)+'px'):font;
+      w+=ctx.measureText(p.t).width;
+    });
+    return w;
+  };
+  const drawInline=(str,x,by,font,color,size)=>{ // পাওয়ার/সাবস্ক্রিপ্টসহ লেখা আঁকা; শেষ x ফেরত দেয়
+    ctx.fillStyle=color; ctx.textAlign='left';
+    qmScParts(str).forEach(p=>{
+      if(p.sc){
+        ctx.font=font.replace(/\d+px/,scSize(size)+'px');
+        const dy=p.sc==='sup'?-Math.round(size*0.4):Math.round(size*0.2);
+        ctx.fillText(p.t,x,by+dy);
+      } else { ctx.font=font; ctx.fillText(p.t,x,by); }
+      x+=ctx.measureText(p.t).width;
+    });
+    return x;
+  };
   const fracW=(f,font,size)=>{
-    const fs=Math.round(size*0.8); ctx.font=font.replace(/\d+px/,fs+'px');
-    return Math.max(ctx.measureText(f.n).width,ctx.measureText(f.d).width)+Math.round(size*0.35);
+    const fs=Math.round(size*0.8), sf=font.replace(/\d+px/,fs+'px');
+    return Math.max(inlineW(f.n,sf,fs),inlineW(f.d,sf,fs))+Math.round(size*0.35);
   };
   const fxW=(f,font,size)=>{
     let w=fracW(f,font,size)+Math.round(size*0.12)*2;
@@ -5968,7 +6015,10 @@ async function qmRenderPages(){
   };
   const meas=(s,font)=>{
     const size=szOf(font); let w=0;
-    qmRichParts(s).forEach(p=>{ if(p.f) w+=fxW(p.f,font,size); else { ctx.font=font; w+=ctx.measureText(p.t).width; } });
+    qmRichParts(s).forEach(p=>{
+      if(p.f) w+=fxW(p.f,font,size);
+      else { ctx.font=p.sc?font.replace(/\d+px/,scSize(size)+'px'):font; w+=ctx.measureText(p.t).width; }
+    });
     return w;
   };
   const ls=(l,size)=>step(size)+(qmHasFx(l)?Math.round(size*0.7):0); // ভগ্নাংশওয়ালা লাইনে বাড়তি উচ্চতা
@@ -5976,13 +6026,13 @@ async function qmRenderPages(){
   const wrap=(text,font,maxW)=>{
     ctx.font=font; const out=[];
     String(text).split('\n').forEach(par=>{
-      const words=par.match(/(?:\{\{[^{}]*\}\}|\S)+/g)||[]; let line='';
+      const words=par.match(/(?:\{\{(?:[^{}]|\^\{[^{}]*\}|_\{[^{}]*\})+\}\}|\^\{[^{}]*\}|_\{[^{}]*\}|\S)+/g)||[]; let line='';
       if(!words.length){ out.push(''); return; }
       words.forEach(w=>{
         const test=line?line+' '+w:w;
         if(meas(test,font)<=maxW){ line=test; return; }
         if(line) out.push(line);
-        if(meas(w,font)<=maxW||w.indexOf('{{')>=0){ line=w; return; }
+        if(meas(w,font)<=maxW||w.indexOf('{{')>=0||/[\^_]\{/.test(w)){ line=w; return; }
         let part=''; // অতি লম্বা শব্দ অক্ষর ধরে ভাঙা
         for(const ch of w){ if(ctx.measureText(part+ch).width>maxW){ out.push(part); part=ch; } else part+=ch; }
         line=part;
@@ -5997,16 +6047,17 @@ async function qmRenderPages(){
     x+=gap;
     if(f.w!=null){ ctx.font=font; ctx.fillStyle=color; ctx.textAlign='left'; ctx.fillText(f.w,x,by); x+=ctx.measureText(f.w).width+Math.round(size*0.2); }
     const w=fracW(f,font,size), bar=by-Math.round(size*0.3), th=Math.max(2,Math.round(size*0.06));
-    ctx.font=sf; ctx.fillStyle=color; ctx.textAlign='center';
-    ctx.fillText(f.n,x+w/2,bar-Math.round(size*0.16));
-    ctx.fillText(f.d,x+w/2,bar+Math.round(size*0.16)+Math.round(fs*0.85));
-    ctx.fillRect(x,bar-Math.floor(th/2),w,th);
+    const nw=inlineW(f.n,sf,fs), dw=inlineW(f.d,sf,fs);
+    drawInline(f.n,x+w/2-nw/2,bar-Math.round(size*0.16),sf,color,fs);
+    drawInline(f.d,x+w/2-dw/2,bar+Math.round(size*0.16)+Math.round(fs*0.85),sf,color,fs);
+    ctx.fillStyle=color; ctx.fillRect(x,bar-Math.floor(th/2),w,th);
     ctx.textAlign='left';
     return x+w+gap;
   };
   const drawRich=(l,font,color,x,by,size)=>{
     qmRichParts(l).forEach(p=>{
       if(p.f){ x=drawFrac(p.f,x,by,font,color,size); }
+      else if(p.sc){ x=drawInline((p.sc==='sup'?'^{':'_{')+p.t+'}',x,by,font,color,size); }
       else { ctx.font=font; ctx.fillStyle=color; ctx.textAlign='left'; ctx.fillText(p.t,x,by); x+=ctx.measureText(p.t).width; }
     });
   };
